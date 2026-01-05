@@ -606,6 +606,65 @@ EOF
 
 ---
 
+## 常见问题
+
+<details>
+<summary><strong>Q: codex 总是思考太久超时该怎么办？</strong></summary>
+
+**问题描述**：在使用 `/ccg:dev` 等命令时，Codex 后端思考时间过长，导致超时。
+
+**解决方案**：
+- 参考社区讨论：[linux.do - Codex 超时问题解决方案](https://linux.do/t/topic/1405588/256?u=feng_li)
+
+**常见优化方法**：
+- 减少任务复杂度，拆分为更小的子任务
+- 调整 Codex CLI 的超时配置
+- 使用 `--backend gemini` 切换到 Gemini 后端测试
+</details>
+
+<details>
+<summary><strong>Q: 如何更新到最新版本？</strong></summary>
+
+**一键更新，无需卸载重装**：
+```bash
+npx ccg-workflow
+# 选择 "更新工作流"
+```
+
+更新会自动：
+- 检测 npm 最新版本
+- 增量更新命令模板和提示词
+- 保留用户配置和 MCP 设置
+</details>
+
+<details>
+<summary><strong>Q: MCP 动态选择系统是什么？</strong></summary>
+
+**v1.3.0 核心特性**：安装时可以选择：
+- **ace-tool**（第三方）：开箱即用，包含 Prompt 增强 + 代码检索
+- **auggie**（官方）：代码检索 + 可选 Prompt 增强（需配置）
+
+命令模板会根据配置自动适配对应的 MCP 工具调用。
+</details>
+
+<details>
+<summary><strong>Q: codeagent-wrapper 是什么？</strong></summary>
+
+来自 [cexll/myclaude](https://github.com/cexll/myclaude) 的 Go 工具，封装了多 CLI 调用：
+- 支持 `--backend codex/gemini/claude` 切换
+- 会话管理（SESSION_ID）
+- ROLE_FILE 动态注入
+- 自动安装到 `~/.claude/bin/`
+</details>
+
+<details>
+<summary><strong>更多问题？</strong></summary>
+
+查看完整 Q&A：[POST_DRAFT.md](POST_DRAFT.md) 包含 11 个常见问题的详细解答。
+</details>
+
+---
+
 ## 📄 许可证
 
 本项目采用 [MIT License](LICENSE) 开源协议。
