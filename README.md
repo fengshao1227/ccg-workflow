@@ -6,13 +6,19 @@
 
 [![npm version](https://img.shields.io/npm/v/ccg-workflow.svg)](https://www.npmjs.com/package/ccg-workflow) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green.svg)](https://claude.ai/code) [![Codex CLI](https://img.shields.io/badge/Codex%20CLI-Supported-orange.svg)](https://github.com/openai/openai-python) [![Gemini CLI](https://img.shields.io/badge/Gemini%20CLI-Supported-purple.svg)](https://ai.google.dev/)
 
-> **最新版本 v1.3.5**：MCP 工具选择功能 + 默认中文界面
+> **最新版本 v1.3.6**：修复 Codex API 客户端认证问题
 
 </div>
 
 ---
 
 ## 🎉 最新更新
+
+### v1.3.6 - Codex API 认证修复 🔧
+- ✅ **环境变量开关**：新增 `CODEX_DISABLE_SKIP_GIT_CHECK` 环境变量
+- ✅ **认证兼容**：修复部分用户 Codex API 返回 403 "Client not allowed" 错误
+- ✅ **灵活配置**：保持默认行为，允许用户按需禁用 `--skip-git-repo-check`
+- ✅ **故障排除**：README 添加完整的 Codex 认证问题解决方案
 
 ### v1.3.5 - MCP 工具选择功能 🎯
 - ✅ **交互式选择**：新增 MCP 工具选择菜单（ace-tool / auggie / 跳过）
@@ -624,6 +630,54 @@ EOF
 ---
 
 ## 常见问题
+
+<details>
+<summary><strong>Q: Codex API 返回 403 "Client not allowed" 错误</strong></summary>
+
+**问题描述**：
+```json
+{
+  "error": "Client not allowed",
+  "message": "Your client is not authorized to use this API key"
+}
+```
+
+**原因**：Codex API 对客户端验证有严格限制，`--skip-git-repo-check` 参数可能触发不同的认证逻辑。
+
+**解决方案 1：禁用 git-repo-check（推荐）**
+
+设置环境变量来禁用该参数：
+```bash
+# 临时禁用
+export CODEX_DISABLE_SKIP_GIT_CHECK=true
+/ccg:dev "your task"
+
+# 永久禁用（添加到 ~/.zshrc 或 ~/.bashrc）
+echo 'export CODEX_DISABLE_SKIP_GIT_CHECK=true' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**解决方案 2：检查 Codex 配置**
+
+如果方案 1 无效，检查 Codex CLI 配置：
+```bash
+# 重新登录 Codex
+codex logout
+codex login
+
+# 验证直接调用是否正常
+codex e "test task"
+```
+
+**解决方案 3：更新 Codex CLI**
+
+```bash
+# 更新到最新版本
+pip install --upgrade codex-cli
+# 或
+npm install -g @codex/cli
+```
+</details>
 
 <details>
 <summary><strong>Q: codex 总是思考太久超时该怎么办？</strong></summary>

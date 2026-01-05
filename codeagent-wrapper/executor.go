@@ -744,7 +744,10 @@ func buildCodexArgs(cfg *Config, targetArg string) []string {
 		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
 	}
 
-	args = append(args, "--skip-git-repo-check")
+	// Skip git repo check by default, but allow users to disable it if it causes API auth issues
+	if !envFlagEnabled("CODEX_DISABLE_SKIP_GIT_CHECK") {
+		args = append(args, "--skip-git-repo-check")
+	}
 
 	if isResume {
 		return append(args,
