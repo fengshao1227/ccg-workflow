@@ -7,6 +7,99 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.3.7] - 2026-01-06 🐛
+
+### 修复 1：ace-tool MCP 配置兼容性问题
+
+#### 问题描述
+- 用户反馈 ace-tool MCP "安装不上去"
+- 代码准备了参数数组（`--base-url`, `--token`）但实际写入配置时未使用
+- 使用环境变量模式（`env: { ACE_BASE_URL, ACE_TOKEN }`）可能不被 ace-tool 支持
+
+#### 修复方案
+
+**修改位置**：`src/utils/installer.ts:567-630`
+
+**旧代码**（环境变量模式）：
+```typescript
+existingConfig.mcpServers['ace-tool'] = {
+  type: 'stdio',
+  command: 'npx',
+  args: ['-y', 'ace-tool@latest'],  // 硬编码，未使用准备的 args
+  env: {
+    ACE_BASE_URL: baseUrl || 'https://api.augmentcode.com',
+    ACE_TOKEN: token || '',
+  },
+}
+```
+
+**新代码**（参数传递模式）：
+```typescript
+existingConfig.mcpServers['ace-tool'] = {
+  type: 'stdio',
+  command: 'npx',
+  args,  // 使用动态构建的 args 数组（包含 --base-url 和 --token）
+}
+```
+
+#### 生成的配置格式
+```json
+{
+  "mcpServers": {
+    "ace-tool": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "ace-tool@latest",
+        "--base-url", "https://api.augmentcode.com",
+        "--token", "YOUR_TOKEN"
+      ]
+    }
+  }
+}
+```
+
+#### 修复效果
+- ✅ **兼容性更好**：参数传递模式不依赖 ace-tool 的环境变量支持
+- ✅ **符合预期**：使用之前准备的 `args` 数组，避免重复代码
+- ✅ **用户验证**：符合社区用户反馈的正确配置格式
+- ✅ **包含必需字段**：`type: "stdio"` + `-y` 标志 + `@latest` 版本
+
+### 修复 2：Subagents 安装路径修正
+
+#### 问题描述
+- Subagents 被安装到 `~/.claude/commands/ccg/agents/`（错误路径）
+- Claude Code 无法识别，因为 subagents 应该在 `~/.claude/agents/ccg/`
+
+#### 修复方案
+
+**修改位置**：
+- `src/utils/installer.ts:318-320` - 修改安装目标路径
+- `config.json:19-23` - 添加 agents 安装配置（Python 安装器）
+
+**旧代码**：
+```typescript
+const agentsDestDir = join(commandsDir, 'agents')
+```
+
+**新代码**：
+```typescript
+const agentsDestDir = join(installDir, 'agents', 'ccg')
+```
+
+#### 修复效果
+- ✅ **正确识别**：Subagents 安装到 `~/.claude/agents/ccg/`，Claude Code 可以识别
+- ✅ **符合规范**：遵循 Claude Code 的 agents 目录结构
+- ✅ **不影响命令**：Slash commands 仍在 `~/.claude/commands/ccg/`
+
+#### 影响范围
+- **所有平台**：通过 `npx ccg-workflow init` 或 `python3 install.py` 安装的用户
+- **Subagents**：planner, ui-ux-designer, init-architect, get-current-datetime
+- **向下兼容**：旧路径的 agents 不会被自动清理，需要手动删除
+
+---
+
 ## [1.3.3] - 2026-01-05 🔒
 
 ### 安全修复：Windows PATH 配置方法

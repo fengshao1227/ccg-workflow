@@ -16,6 +16,12 @@
           "description": "安装 /ccg:xxx 命令 (17个斜杠命令)"
         },
         {
+          "type": "copy_dir",
+          "source": "templates/commands/agents",
+          "target": "agents/ccg",
+          "description": "安装 CCG subagents 到 ~/.claude/agents/ccg/ (4个子智能体)"
+        },
+        {
           "type": "build_go",
           "source": "codeagent-wrapper",
           "binary": "codeagent-wrapper",

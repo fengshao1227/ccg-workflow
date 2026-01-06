@@ -315,9 +315,9 @@ ${workflow.description}
     }
   }
 
-  // Install agents directory (subagents for init-project command)
+  // Install agents directory (subagents - should go to ~/.claude/agents/ccg/)
   const agentsSrcDir = join(templateDir, 'commands', 'agents')
-  const agentsDestDir = join(commandsDir, 'agents')
+  const agentsDestDir = join(installDir, 'agents', 'ccg')
   if (await fs.pathExists(agentsSrcDir)) {
     try {
       await fs.ensureDir(agentsDestDir)
@@ -568,6 +568,7 @@ export async function installAceTool(config: AceToolConfig): Promise<{ success: 
   const { baseUrl, token } = config
 
   // Build args array (with -y flag for npx auto-confirm)
+  // Using parameter passing mode for better compatibility
   const args = ['-y', 'ace-tool@latest']
   if (baseUrl) {
     args.push('--base-url', baseUrl)
@@ -602,15 +603,13 @@ export async function installAceTool(config: AceToolConfig): Promise<{ success: 
       existingConfig.mcpServers = {}
     }
 
-    // Add or update ace-tool config (uses env vars for credentials, more secure)
+    // Add or update ace-tool config
+    // Using parameter passing mode (--base-url, --token) for better compatibility
+    // This ensures the config works even if ace-tool doesn't support env vars
     existingConfig.mcpServers['ace-tool'] = {
       type: 'stdio',
       command: 'npx',
-      args: ['-y', 'ace-tool@latest'],
-      env: {
-        ACE_BASE_URL: baseUrl || 'https://api.augmentcode.com',
-        ACE_TOKEN: token || '',
-      },
+      args,
     }
 
     // Write config back (preserve all other fields)
