@@ -7,6 +7,80 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.2] - 2026-01-06
+
+### ✨ 新特性
+
+**Windows MCP 配置自动修复**：从 ZCF 项目移植跨平台 MCP 配置逻辑，彻底解决 Windows 用户 MCP 安装问题。
+
+#### 新增功能
+
+1. **自动 Windows 命令包装**：
+   - Windows 环境下 `npx`/`uvx` 命令自动包装为 `cmd /c` 格式
+   - 用户无需手动设置环境变量或修改配置
+   - 安装时自动应用，无需额外操作
+
+2. **MCP 配置自动备份**：
+   - 修改 `~/.claude.json` 前自动备份到 `~/.claude/backup/`
+   - 时间戳命名，支持回滚恢复
+
+3. **新增诊断工具**：
+   ```bash
+   # 诊断 MCP 配置问题
+   npx ccg diagnose-mcp
+
+   # 修复 Windows MCP 配置（Windows 用户）
+   npx ccg fix-mcp
+   ```
+
+#### 新增文件
+
+- `src/utils/platform.ts` - 跨平台检测和命令包装工具
+- `src/utils/mcp.ts` - MCP 配置管理和自动修复逻辑
+- `src/commands/diagnose-mcp.ts` - MCP 诊断和修复命令
+
+#### 优化内容
+
+- `installAceTool()` - 使用新的 `buildMcpServerConfig()` 和 `fixWindowsMcpConfig()`
+- `uninstallAceTool()` - 添加自动备份功能
+- 所有 MCP 配置操作现在都支持自动备份和 Windows 兼容性
+
+#### 技术细节
+
+**Windows 命令包装示例**：
+```json
+// Before (不工作)
+{
+  "mcpServers": {
+    "ace-tool": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "ace-tool@latest"]
+    }
+  }
+}
+
+// After (自动修复)
+{
+  "mcpServers": {
+    "ace-tool": {
+      "type": "stdio",
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "ace-tool@latest"]
+    }
+  }
+}
+```
+
+#### 升级说明
+
+已安装 v1.4.1 的用户：
+1. 运行 `npx ccg-workflow@latest init` 更新
+2. Windows 用户可运行 `npx ccg fix-mcp` 修复现有配置
+3. 所有用户可运行 `npx ccg diagnose-mcp` 验证配置
+
+---
+
 ## [1.4.1] - 2026-01-06
 
 ### 🐛 Bug Fixes

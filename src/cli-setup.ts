@@ -2,6 +2,7 @@ import type { CAC } from 'cac'
 import type { CliOptions } from './types'
 import ansis from 'ansis'
 import { version } from '../package.json'
+import { diagnoseMcp, fixMcp } from './commands/diagnose-mcp'
 import { init } from './commands/init'
 import { showMainMenu } from './commands/menu'
 import { i18n, initI18n } from './i18n'
@@ -102,6 +103,20 @@ export async function setupCommands(cli: CAC): Promise<void> {
         await initI18n(options.lang)
       }
       await init(options)
+    })
+
+  // Diagnose MCP command
+  cli
+    .command('diagnose-mcp', 'Diagnose MCP configuration issues')
+    .action(async () => {
+      await diagnoseMcp()
+    })
+
+  // Fix MCP command (Windows only)
+  cli
+    .command('fix-mcp', 'Fix Windows MCP configuration issues')
+    .action(async () => {
+      await fixMcp()
     })
 
   cli.help(sections => customizeHelp(sections))

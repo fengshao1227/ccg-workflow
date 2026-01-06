@@ -3,6 +3,8 @@ import { homedir } from 'node:os'
 import fs from 'fs-extra'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'pathe'
+import { backupClaudeCodeConfig, buildMcpServerConfig, fixWindowsMcpConfig, mergeMcpServers, readClaudeCodeConfig, writeClaudeCodeConfig } from './mcp'
+import { isWindows } from './platform'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -433,14 +435,7 @@ ${workflow.description}
   return result
 }
 
-/**
- * Get global MCP config path for Claude Code
- * Claude Code reads MCP servers from ~/.claude.json (top-level mcpServers field)
- * Note: ~/.mcp.json is for Claude Desktop, NOT Claude Code CLI!
- */
-function getClaudeCodeConfigPath(): string {
-  return join(homedir(), '.claude.json')
-}
+// Removed: getClaudeCodeConfigPath - now imported from './mcp'
 
 /**
  * Install and configure ace-tool MCP for Claude Code
@@ -516,26 +511,13 @@ export async function uninstallWorkflows(installDir: string): Promise<UninstallR
  * Uninstall ace-tool MCP configuration from ~/.claude.json
  */
 export async function uninstallAceTool(): Promise<{ success: boolean, message: string }> {
-  const mcpConfigPath = getClaudeCodeConfigPath()
-
   try {
-    if (!(await fs.pathExists(mcpConfigPath))) {
+    const existingConfig = await readClaudeCodeConfig()
+
+    if (!existingConfig) {
       return {
         success: true,
         message: 'No ~/.claude.json found, nothing to remove',
-      }
-    }
-
-    const content = await fs.readFile(mcpConfigPath, 'utf-8')
-    let existingConfig: Record<string, any>
-
-    try {
-      existingConfig = JSON.parse(content)
-    }
-    catch {
-      return {
-        success: false,
-        message: 'Failed to parse ~/.claude.json',
       }
     }
 
@@ -547,11 +529,14 @@ export async function uninstallAceTool(): Promise<{ success: boolean, message: s
       }
     }
 
+    // Backup before modifying
+    await backupClaudeCodeConfig()
+
     // Remove ace-tool from mcpServers
     delete existingConfig.mcpServers['ace-tool']
 
     // Write back
-    await fs.writeFile(mcpConfigPath, JSON.stringify(existingConfig, null, 2), 'utf-8')
+    await writeClaudeCodeConfig(existingConfig)
 
     return {
       success: true,
@@ -569,58 +554,58 @@ export async function uninstallAceTool(): Promise<{ success: boolean, message: s
 export async function installAceTool(config: AceToolConfig): Promise<{ success: boolean, message: string, configPath?: string }> {
   const { baseUrl, token } = config
 
-  // Build args array (with -y flag for npx auto-confirm)
-  // Using parameter passing mode for better compatibility
-  const args = ['-y', 'ace-tool@latest']
-  if (baseUrl) {
-    args.push('--base-url', baseUrl)
-  }
-  if (token) {
-    args.push('--token', token)
-  }
-
-  const mcpConfigPath = getClaudeCodeConfigPath()
-
   try {
     // Read existing config or create new one
-    // Important: ~/.claude.json has many other fields, we only modify mcpServers
-    let existingConfig: Record<string, any> = {}
+    let existingConfig = await readClaudeCodeConfig()
 
-    if (await fs.pathExists(mcpConfigPath)) {
-      try {
-        const content = await fs.readFile(mcpConfigPath, 'utf-8')
-        existingConfig = JSON.parse(content)
-      }
-      catch {
-        // If parse fails, preserve existing file and report error
-        return {
-          success: false,
-          message: 'Failed to parse existing ~/.claude.json - please check the file format',
-        }
+    if (!existingConfig) {
+      existingConfig = { mcpServers: {} }
+    }
+
+    // Backup before modifying (if config exists)
+    if (existingConfig.mcpServers && Object.keys(existingConfig.mcpServers).length > 0) {
+      const backupPath = await backupClaudeCodeConfig()
+      if (backupPath) {
+        console.log(`  ✓ Backup created: ${backupPath}`)
       }
     }
 
-    // Ensure mcpServers field exists
-    if (!existingConfig.mcpServers) {
-      existingConfig.mcpServers = {}
+    // Build args array (with -y flag for npx auto-confirm)
+    const args = ['-y', 'ace-tool@latest']
+    if (baseUrl) {
+      args.push('--base-url', baseUrl)
+    }
+    if (token) {
+      args.push('--token', token)
     }
 
-    // Add or update ace-tool config
-    // Using parameter passing mode (--base-url, --token) for better compatibility
-    // This ensures the config works even if ace-tool doesn't support env vars
-    existingConfig.mcpServers['ace-tool'] = {
-      type: 'stdio',
+    // Create base ace-tool MCP server config
+    const aceToolConfig = buildMcpServerConfig({
+      type: 'stdio' as const,
       command: 'npx',
       args,
+    })
+
+    // Merge new server into existing config
+    let mergedConfig = mergeMcpServers(existingConfig, {
+      'ace-tool': aceToolConfig,
+    })
+
+    // Apply Windows fixes if needed
+    if (isWindows()) {
+      mergedConfig = fixWindowsMcpConfig(mergedConfig)
+      console.log('  ✓ Applied Windows MCP configuration fixes')
     }
 
     // Write config back (preserve all other fields)
-    await fs.writeFile(mcpConfigPath, JSON.stringify(existingConfig, null, 2), 'utf-8')
+    await writeClaudeCodeConfig(mergedConfig)
 
     return {
       success: true,
-      message: 'ace-tool MCP configured successfully in ~/.claude.json',
-      configPath: mcpConfigPath,
+      message: isWindows()
+        ? 'ace-tool MCP configured successfully with Windows compatibility'
+        : 'ace-tool MCP configured successfully',
+      configPath: join(homedir(), '.claude.json'),
     }
   }
   catch (error) {
