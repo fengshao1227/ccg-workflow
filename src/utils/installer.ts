@@ -568,13 +568,16 @@ export async function installAceTool(config: AceToolConfig): Promise<{ success: 
   const { baseUrl, token } = config
 
   // Build args array (with -y flag for npx auto-confirm)
-  const args = ['-y', 'ace-tool@latest']
-  if (baseUrl) {
-    args.push('--base-url', baseUrl)
-  }
-  if (token) {
-    args.push('--token', token)
-  }
+  const resolvedBaseUrl = baseUrl || 'https://api.augmentcode.com'
+  const resolvedToken = token || ''
+  const args = [
+    '-y',
+    'ace-tool@latest',
+    '--base-url',
+    resolvedBaseUrl,
+    '--token',
+    resolvedToken,
+  ]
 
   const mcpConfigPath = getClaudeCodeConfigPath()
 
@@ -602,15 +605,11 @@ export async function installAceTool(config: AceToolConfig): Promise<{ success: 
       existingConfig.mcpServers = {}
     }
 
-    // Add or update ace-tool config (uses env vars for credentials, more secure)
+    // Add or update ace-tool config (write credentials into args for compatibility)
     existingConfig.mcpServers['ace-tool'] = {
       type: 'stdio',
       command: 'npx',
-      args: ['-y', 'ace-tool@latest'],
-      env: {
-        ACE_BASE_URL: baseUrl || 'https://api.augmentcode.com',
-        ACE_TOKEN: token || '',
-      },
+      args,
     }
 
     // Write config back (preserve all other fields)

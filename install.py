@@ -241,15 +241,18 @@ def install_ace_tool(verbose: bool = False) -> Tuple[bool, str]:
     if "mcpServers" not in existing_config:
         existing_config["mcpServers"] = {}
 
-    # 添加或更新 ace-tool 配置（使用环境变量方式，更安全）
+    # 添加或更新 ace-tool 配置（直接将 base-url 与 token 写入 args）
     existing_config["mcpServers"]["ace-tool"] = {
         "type": "stdio",
         "command": "npx",
-        "args": ["-y", "ace-tool@latest"],
-        "env": {
-            "ACE_BASE_URL": base_url,
-            "ACE_TOKEN": token
-        }
+        "args": [
+            "-y",
+            "ace-tool@latest",
+            "--base-url",
+            base_url,
+            "--token",
+            token,
+        ],
     }
 
     # 写入配置（保留所有其他字段）
