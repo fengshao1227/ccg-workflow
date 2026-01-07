@@ -2,8 +2,6 @@
 description: 多模型代码审查（并行执行），无参数时自动审查 git diff
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/review [CODE_OR_DESCRIPTION]`
 

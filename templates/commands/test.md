@@ -2,8 +2,6 @@
 description: 多模型测试生成（Codex 后端测试 + Gemini 前端测试）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/test <测试目标>`
 

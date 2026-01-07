@@ -2,6 +2,7 @@ import type { CAC } from 'cac'
 import type { CliOptions } from './types'
 import ansis from 'ansis'
 import { version } from '../package.json'
+import { configMcp } from './commands/config-mcp'
 import { diagnoseMcp, fixMcp } from './commands/diagnose-mcp'
 import { init } from './commands/init'
 import { showMainMenu } from './commands/menu'
@@ -19,6 +20,9 @@ function customizeHelp(sections: any[]): any[] {
     body: [
       `  ${ansis.cyan('ccg')}              ${i18n.t('cli:help.commandDescriptions.showMenu')}`,
       `  ${ansis.cyan('ccg init')} | ${ansis.cyan('i')}     ${i18n.t('cli:help.commandDescriptions.initConfig')}`,
+      `  ${ansis.cyan('ccg config mcp')}   配置 ace-tool MCP Token`,
+      `  ${ansis.cyan('ccg diagnose-mcp')} 诊断 MCP 配置问题`,
+      `  ${ansis.cyan('ccg fix-mcp')}      修复 Windows MCP 配置`,
       '',
       ansis.gray(`  ${i18n.t('cli:help.shortcuts')}`),
       `  ${ansis.cyan('ccg i')}            ${i18n.t('cli:help.shortcutDescriptions.quickInit')}`,
@@ -117,6 +121,19 @@ export async function setupCommands(cli: CAC): Promise<void> {
     .command('fix-mcp', 'Fix Windows MCP configuration issues')
     .action(async () => {
       await fixMcp()
+    })
+
+  // Config MCP command
+  cli
+    .command('config <subcommand>', 'Configure CCG settings')
+    .action(async (subcommand: string) => {
+      if (subcommand === 'mcp') {
+        await configMcp()
+      }
+      else {
+        console.log(ansis.red(`Unknown subcommand: ${subcommand}`))
+        console.log(ansis.gray('Available subcommands: mcp'))
+      }
     })
 
   cli.help(sections => customizeHelp(sections))

@@ -2,8 +2,6 @@
 description: UltraThink 多模型调试（Codex 后端诊断 + Gemini 前端诊断）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/debug <问题描述>`
 

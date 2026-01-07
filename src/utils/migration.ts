@@ -20,7 +20,6 @@ export interface MigrationResult {
  * Changes:
  * 1. ~/.ccg/ → ~/.claude/.ccg/
  * 2. ~/.claude/prompts/ccg/ → ~/.claude/.ccg/prompts/
- * 3. ~/.claude/commands/ccg/_config.md → ~/.claude/.ccg/shared-config.md
  */
 export async function migrateToV1_4_0(): Promise<MigrationResult> {
   const result: MigrationResult = {
@@ -34,8 +33,6 @@ export async function migrateToV1_4_0(): Promise<MigrationResult> {
   const newCcgDir = join(homedir(), '.claude', '.ccg')
   const oldPromptsDir = join(homedir(), '.claude', 'prompts', 'ccg')
   const newPromptsDir = join(newCcgDir, 'prompts')
-  const oldConfigFile = join(homedir(), '.claude', 'commands', 'ccg', '_config.md')
-  const newConfigFile = join(newCcgDir, 'shared-config.md')
 
   try {
     // Ensure new config directory exists
@@ -116,31 +113,6 @@ export async function migrateToV1_4_0(): Promise<MigrationResult> {
     }
     else {
       result.skipped.push('~/.claude/prompts/ccg/ (does not exist, nothing to migrate)')
-    }
-
-    // 3. Migrate _config.md → shared-config.md
-    if (await fs.pathExists(oldConfigFile)) {
-      try {
-        // Skip if destination already exists
-        if (await fs.pathExists(newConfigFile)) {
-          result.skipped.push('_config.md (already exists in new location)')
-        }
-        else {
-          await fs.copy(oldConfigFile, newConfigFile)
-          result.migratedFiles.push('~/.claude/commands/ccg/_config.md → ~/.claude/.ccg/shared-config.md')
-
-          // Remove old file
-          await fs.remove(oldConfigFile)
-          result.migratedFiles.push('Removed old _config.md from commands directory')
-        }
-      }
-      catch (error) {
-        result.errors.push(`Failed to migrate _config.md: ${error}`)
-        result.success = false
-      }
-    }
-    else {
-      result.skipped.push('_config.md (does not exist, nothing to migrate)')
     }
   }
   catch (error) {

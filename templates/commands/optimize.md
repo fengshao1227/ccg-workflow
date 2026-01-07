@@ -2,8 +2,6 @@
 description: 多模型性能优化（Codex 后端优化 + Gemini 前端优化）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/optimize <优化目标>`
 

@@ -48,14 +48,6 @@ export interface CcgConfig {
   mcp: {
     provider: string
     setup_url: string
-    tools: {
-      code_search_ace: string
-      code_search_auggie: string
-      prompt_enhance_ace: string
-      prompt_enhance_auggie: string
-      query_param_ace: string
-      query_param_auggie: string
-    }
   }
 }
 

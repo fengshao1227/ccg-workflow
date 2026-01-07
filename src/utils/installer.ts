@@ -234,12 +234,44 @@ export function getWorkflowById(id: string): WorkflowConfig | undefined {
 }
 
 /**
+ * Workflow presets for different use cases
+ */
+export const WORKFLOW_PRESETS = {
+  minimal: {
+    name: '最小化',
+    nameEn: 'Minimal',
+    description: '核心开发命令（3个）',
+    descriptionEn: 'Core development commands (3)',
+    workflows: ['dev', 'code', 'commit'] as string[],
+  },
+  standard: {
+    name: '标准',
+    nameEn: 'Standard',
+    description: '常用开发 + Git 命令（12个）',
+    descriptionEn: 'Common dev + Git commands (12)',
+    workflows: ['dev', 'code', 'frontend', 'backend', 'review', 'analyze', 'debug', 'test', 'commit', 'rollback', 'clean-branches', 'feat'] as string[],
+  },
+  full: {
+    name: '完整',
+    nameEn: 'Full',
+    description: '全部命令（17个）',
+    descriptionEn: 'All commands (17)',
+    workflows: WORKFLOW_CONFIGS.map(w => w.id),
+  },
+}
+
+export type WorkflowPreset = keyof typeof WORKFLOW_PRESETS
+
+export function getWorkflowPreset(preset: WorkflowPreset): string[] {
+  return [...WORKFLOW_PRESETS[preset].workflows]
+}
+
+/**
  * Replace template variables in content based on user configuration
  * This injects model routing configs at install time
  * Note: MCP tool names are now hardcoded to ace-tool in templates
  */
 function injectConfigVariables(content: string, config: {
-  mcpProvider: string
   routing?: {
     mode?: string
     frontend?: { models?: string[], primary?: string }
@@ -298,7 +330,6 @@ export async function installWorkflows(
   installDir: string,
   force = false,
   config?: {
-    mcpProvider?: string
     routing?: {
       mode?: string
       frontend?: { models?: string[], primary?: string }
@@ -309,7 +340,6 @@ export async function installWorkflows(
 ): Promise<InstallResult> {
   // Default config
   const installConfig = {
-    mcpProvider: config?.mcpProvider || 'auggie',
     routing: config?.routing || {
       mode: 'smart',
       frontend: { models: ['gemini'], primary: 'gemini' },
@@ -379,19 +409,6 @@ ${workflow.description}
         result.errors.push(`Failed to install ${cmd}: ${error}`)
         result.success = false
       }
-    }
-  }
-
-  // Install shared-config.md to config directory (v1.4.0)
-  const sharedConfigSrcFile = join(templateDir, 'config', 'shared-config.md')
-  const sharedConfigDestFile = join(ccgConfigDir, 'shared-config.md')
-  if (await fs.pathExists(sharedConfigSrcFile)) {
-    if (force || !(await fs.pathExists(sharedConfigDestFile))) {
-      // Read template content, inject config variables, replace ~ paths, then write
-      let templateContent = await fs.readFile(sharedConfigSrcFile, 'utf-8')
-      templateContent = injectConfigVariables(templateContent, installConfig)
-      const processedContent = replaceHomePathsInTemplate(templateContent, installDir)
-      await fs.writeFile(sharedConfigDestFile, processedContent, 'utf-8')
     }
   }
 

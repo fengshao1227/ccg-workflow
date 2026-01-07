@@ -2,6 +2,7 @@ import ansis from 'ansis'
 import inquirer from 'inquirer'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
+import { configMcp } from './config-mcp'
 import { i18n } from '../i18n'
 import { uninstallAceTool, uninstallWorkflows } from '../utils/installer'
 import { init } from './init'
@@ -20,6 +21,7 @@ export async function showMainMenu(): Promise<void> {
     choices: [
       { name: `${ansis.green('➜')} ${i18n.t('menu:options.init')}`, value: 'init' },
       { name: `${ansis.blue('➜')} ${i18n.t('menu:options.update')}`, value: 'update' },
+      { name: `${ansis.cyan('⚙')} 配置 MCP`, value: 'config-mcp' },
       { name: `${ansis.magenta('➜')} ${i18n.t('menu:options.uninstall')}`, value: 'uninstall' },
       { name: `${ansis.yellow('?')} ${i18n.t('menu:options.help')}`, value: 'help' },
       new inquirer.Separator(),
@@ -33,6 +35,9 @@ export async function showMainMenu(): Promise<void> {
       break
     case 'update':
       await update()
+      break
+    case 'config-mcp':
+      await configMcp()
       break
     case 'uninstall':
       await uninstall()

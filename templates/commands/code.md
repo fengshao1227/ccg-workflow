@@ -2,8 +2,6 @@
 description: 三模型代码生成（Codex + Gemini + Claude 并行原型，集各家所长）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/code <功能描述>`
 

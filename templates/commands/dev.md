@@ -2,8 +2,6 @@
 description: 完整6阶段多模型协作工作流（Prompt增强 → 上下文检索 → 多模型分析 → 原型生成 → 代码实施 → 审计交付）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/dev <功能描述>`
 
@@ -61,34 +59,36 @@ description: 完整6阶段多模型协作工作流（Prompt增强 → 上下文�
 
 ### 阶段 2: 多模型分析
 
-**并行调用所有配置的模型进行分析**（使用 `run_in_background: true`）：
+**并行调用 codex 和 gemini 进行分析**（使用 `run_in_background: true`）：
 
-1. **后端模型**：遍历 {{BACKEND_MODELS}} 中的每个模型进行后端分析
-   - 每个模型使用对应的 `~/.claude/.ccg/prompts/<模型名>/analyzer.md`
+1. **Codex 分析**：`~/.claude/.ccg/prompts/codex/analyzer.md`
    - 输出：`Structured analysis/diagnostic report`
 
-2. **前端模型**：遍历 {{FRONTEND_MODELS}} 中的每个模型进行前端分析
-   - 每个模型使用对应的 `~/.claude/.ccg/prompts/<模型名>/analyzer.md`
+2. **Gemini 分析**：`~/.claude/.ccg/prompts/gemini/analyzer.md`
    - 输出：`Structured analysis/diagnostic report`
-
-**总共并行调用次数**: {{BACKEND_MODELS}} 长度 + {{FRONTEND_MODELS}} 长度（例如：2个后端模型 + 2个前端模型 = 4次）
 
 调用示例：
 ```bash
-# 遍历后端模型列表（假设配置了 codex 和 gemini）
-for model in codex gemini; do
-  codeagent-wrapper --backend $model - $PROJECT_DIR <<'EOF' &
-ROLE_FILE: ~/.claude/.ccg/prompts/$model/analyzer.md
+codeagent-wrapper --backend codex - $PROJECT_DIR <<'EOF' &
+ROLE_FILE: ~/.claude/.ccg/prompts/codex/analyzer.md
 <TASK>
 分析需求: {{增强后的需求}}
 Context: {{从 MCP 获取的代码上下文}}
 </TASK>
 OUTPUT: Structured analysis/diagnostic report.
 EOF
-done
+
+codeagent-wrapper --backend gemini - $PROJECT_DIR <<'EOF' &
+ROLE_FILE: ~/.claude/.ccg/prompts/gemini/analyzer.md
+<TASK>
+分析需求: {{增强后的需求}}
+Context: {{从 MCP 获取的代码上下文}}
+</TASK>
+OUTPUT: Structured analysis/diagnostic report.
+EOF
 ```
 
-使用 `TaskOutput` 获取所有模型的分析结果，交叉验证后综合方案。
+使用 `TaskOutput` 获取 2 个模型的分析结果，交叉验证后综合方案。
 
 **强制停止**: 询问用户 **"是否继续执行此方案？(Y/N)"** 并等待确认
 
@@ -101,7 +101,8 @@ done
    - 输出：`Unified Diff Patch ONLY`
 
 2. **前端模型**：遍历 {{FRONTEND_MODELS}} 中的每个模型生成前端原型
-   - 每个模型使用对应的 `~/.claude/.ccg/prompts/<模型名>/frontend.md`（如无 frontend 角色，使用 architect）
+   - **优先使用 frontend.md**：如果模型有 `~/.claude/.ccg/prompts/<模型名>/frontend.md`，使用该文件
+   - **降级使用 architect.md**：如果没有 frontend.md，使用 `~/.claude/.ccg/prompts/<模型名>/architect.md`
    - 输出：`Unified Diff Patch ONLY`
 
 **总共并行调用次数**: {{BACKEND_MODELS}} 长度 + {{FRONTEND_MODELS}} 长度（例如：2个后端模型 + 2个前端模型 = 4次）

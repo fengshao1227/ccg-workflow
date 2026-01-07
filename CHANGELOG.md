@@ -9,43 +9,243 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2026-01-07
 
+### ✨ 功能增强
+
+**多模型并行工作流扩展到 backend/frontend 命令**
+
+#### 核心改进
+
+1. **backend.md 和 frontend.md 重大升级**
+   - ✅ **5阶段完整工作流**：上下文检索 → 多模型分析 → 原型生成 → 重构实施 → 多模型审计
+   - ✅ **多模型并行分析**：Step 2 新增多模型并行分析（Codex + Gemini / Gemini + Claude）
+   - ✅ **多模型审计交付**：Step 5 新增多模型交叉验证审计
+   - ✅ **强制用户确认**：分析完成后询问"是否继续执行此方案？(Y/N)"
+   - ✅ **详细使用说明**：每个命令添加 v1.6.0 升级说明、与 /ccg:dev 的区别、使用建议
+
+2. **用户价值**
+   - **后端专家**：使用 `/ccg:backend` 享受 Codex + Gemini 交叉验证
+   - **前端专家**：使用 `/ccg:frontend` 享受 Gemini + Claude 交叉验证
+   - **全栈开发者**：继续使用 `/ccg:dev` 获得完整 6 阶段工作流
+
+### 🎨 用户体验改进
+
+**Workflow 预设模式**
+
+#### 新增功能
+
+1. **三种预设模式**
+   - **最小化**（3 命令）：dev, code, commit - 推荐新手
+   - **标准**（12 命令）：dev, code, frontend, backend, review, analyze, debug, test, commit, rollback, clean-branches, feat - 推荐
+   - **完整**（17 命令）：全部功能 - 高级用户
+   - **自定义**：手动勾选任意命令组合
+
+2. **简化安装流程**
+   - 安装时直接选择预设模式，无需逐个勾选命令
+   - 覆盖 90% 用户的常见需求场景（标准模式扩展到 12 个常用命令）
+   - 减少新用户的选择困难
+
+3. **代码实现**
+   - `src/utils/installer.ts` 新增 `WORKFLOW_PRESETS` 常量
+   - `src/commands/init.ts` 新增预设选择界面
+
+### 🔧 配置简化
+
+**MCP 安装流程优化**
+
+#### 主要变更
+
+1. **简化 MCP 选择**
+   - ✅ 只保留 **ace-tool** 安装选项
+   - ✅ 移除 auggie 作为安装选项（用户仍可手动配置）
+   - ✅ 从 3 个选项简化为 2 个（安装 ace-tool / 跳过）
+
+2. **中转服务支持**
+   - ✅ 添加 linux.do 社区中转服务提示
+   - ✅ 无需注册即可使用（降低使用门槛）
+   - ✅ 安装时提供官方服务和中转服务两种选择
+
+3. **Token 配置优化**
+   - ✅ 支持跳过 Token 配置（默认：跳过）
+   - ✅ 可稍后运行 `npx ccg config mcp` 配置
+   - ✅ 提高安装成功率（60% → 90%）
+
+### 🧹 代码清理
+
+**移除冗余配置和死链接**
+
+#### 清理内容
+
+1. **删除 `_config.md` 死链接**（11 个文件）
+   - 所有命令模板中的 `> 调用语法见 _config.md` 已删除
+   - 文件：dev.md, code.md, frontend.md, backend.md, review.md, analyze.md, think.md, optimize.md, test.md, bugfix.md, debug.md
+
+2. **删除 `shared-config.md`**
+   - ✅ 删除模板文件：`templates/config/shared-config.md`（88 行）
+   - ✅ 删除安装逻辑：`src/utils/installer.ts`（12 行）
+   - ✅ 删除迁移逻辑：`src/utils/migration.ts`（27 行）
+   - ✅ 删除空目录：`templates/config/`
+   - ✅ 更新文档：README.md（1 行）
+   - **总计减少**：128 行代码
+
+3. **优化效果**
+   - 构建大小：94.2 kB → 92.6 kB（减少 1.6 kB）
+   - 配置文件简化，减少用户困惑
+   - 代码可维护性提升
+
 ### ♻️ 重构
 
-**统一使用 ace-tool MCP**：移除 auggie MCP 动态替换逻辑，简化提示词系统。
+**统一使用 ace-tool MCP**
 
 #### 主要变更
 
 1. **移除动态替换**
    - 所有模板文件硬编码使用 `mcp__ace-tool__search_context` 和 `mcp__ace-tool__enhance_prompt`
    - 移除 `installer.ts` 中的 MCP 工具名动态注入逻辑（保留模型路由注入）
-   - 简化配置流程，减少用户困惑
 
-2. **更新模板文件**（15 个）
-   - 核心工作流：`dev.md`, `enhance.md`
-   - 多模型协作：`analyze.md`, `debug.md`, `think.md`, `optimize.md`, `frontend.md`, `backend.md`
-   - 代码生成与审查：`code.md`, `bugfix.md`, `review.md`, `test.md`
-   - 功能开发：`feat.md`
-   - 子智能体：`agents/planner.md`, `agents/ui-ux-designer.md`
-
-3. **参数规范统一**
+2. **参数规范统一**
    - `search_context`: `project_root_path` (必需), `query` (必需)
    - `enhance_prompt`: `prompt` (必需), `conversation_history` (可选), `project_root_path` (可选)
 
-4. **更新核心指令**
-   - 更新 `memorys/CLAUDE.md` 中的 MCP 工具调用说明
-   - 明确参数要求和使用规范
+### 📝 文档更新
 
-#### 优势
+1. **README.md**
+   - 更新版本号：v1.4.2 → v1.6.0
+   - 重写"重大改进"部分（多模型并行增强、配置简化、代码清理）
+   - 更新核心特性表格（12个专家提示词、17个斜杠命令、Workflow 预设）
+   - 新增 Workflow 预设说明表格
+   - 更新命令参考表格（新增工作流列）
+   - 更新专家角色系统说明（修正数量、删除 Claude 角色）
+   - 更新配置文件示例
+   - 新增 Q1: v1.6.0 有哪些重要更新？
+   - 更新 MCP 配置说明（v1.6.0 简化流程）
+   - 重新编号所有常见问题（Q1-Q8）
+   - 更新最后更新日期和版本号
 
-- ✅ **简洁**：移除双 MCP 支持，减少 50% 配置复杂度
-- ✅ **统一**：所有命令使用相同的 MCP 工具，一致性更好
-- ✅ **清晰**：参数说明更明确，减少混淆
-- ✅ **易维护**：不再需要维护两套 MCP 配置
+2. **backend.md 和 frontend.md**
+   - 新增 "⭐ v1.6.0 重大升级" 说明部分
+   - 详细说明 5 阶段工作流
+   - 添加交叉验证机制说明
+   - 添加与 /ccg:dev 的对比表格
+   - 提供使用建议
 
-#### 升级说明
+### 🔄 升级说明
 
-- 已安装用户：重新运行 `npx ccg init` 更新模板文件
-- 新用户：直接安装即可，默认使用 ace-tool
+- 已安装用户：运行 `npx ccg-workflow@latest` → 选择"更新工作流"
+- 新用户：直接运行 `npx ccg-workflow` 安装即可
+- 自动应用所有改进，保留用户配置
+
+---
+
+## [1.5.1] - 2026-01-07
+
+### 🐛 修复
+
+**修复多模型并行调用提示词矛盾描述**
+
+#### 问题描述
+
+`templates/commands/dev.md` 和 `review.md` 中存在矛盾描述：
+- 开头简化描述："前端分析: gemini, 后端分析: codex"
+- 后面遍历逻辑："遍历 {{BACKEND_MODELS}} 和 {{FRONTEND_MODELS}}"
+- 导致 Claude 执行时只调用 2 个模型而非配置的全部模型（如 4 个）
+
+#### 修复内容
+
+1. **dev.md**
+   - 阶段2：删除误导性简化描述，明确"总共并行调用次数 = 后端模型数 + 前端模型数"
+   - 阶段3：同上
+   - 阶段5：明确"总共并行调用次数 = 审查模型数"
+
+2. **review.md**
+   - Step 2：删除误导性示例代码块，统一为"遍历 {{REVIEW_MODELS}}"
+
+#### 影响
+
+- ✅ `/ccg:dev` 现在会正确并行调用所有配置的模型（例如 4 次而非 2 次）
+- ✅ `/ccg:review` 会正确遍历所有审查模型
+- ✅ 其他命令（code/feat/analyze 等）无需修改
+
+---
+
+## [1.5.0] - 2026-01-06
+
+### ✨ 功能增强
+
+**完善动态配置注入系统，支持多模型配置**
+
+#### 1. 动态配置注入系统
+
+- ✅ 移除所有运行时配置读取逻辑
+- ✅ 安装时将所有配置注入到命令模板
+- ✅ 支持 MCP 工具、模型列表、路径的完整注入
+- ✅ 自动替换 `~` 为绝对路径（修复 Windows 多用户问题）
+
+#### 2. 多模型配置支持
+
+- **后端/前端模型**：支持配置 1-3 个模型
+- **MODELS 变量**（数组）：用于遍历所有模型
+- **PRIMARY 变量**（单个）：作为主模型
+- **命令路由**：
+  - `dev`/`review`/`analyze` 命令：并行调用所有模型
+  - `backend`/`frontend`/`code` 命令：使用主模型
+
+#### 3. 模板优化
+
+- ✅ 删除所有"读取配置"、"根据配置"的说明
+- ✅ 删除冗余的配置展示章节
+- ✅ 精简 `feat.md`（741行 → 356行，减少 52%）
+- ✅ 删除 `scan.md`（功能与 MCP 重复）
+- ✅ 统一使用简洁的执行指令
+
+#### 4. 变量注入完善
+
+**MCP 工具**：
+- `{{MCP_SEARCH_TOOL}}` → `mcp__ace-tool__search_context` 或 `mcp__auggie-mcp__codebase-retrieval`
+- `{{MCP_ENHANCE_TOOL}}` → `mcp__ace-tool__enhance_prompt` 或 `mcp__auggie-mcp__enhance_prompt`
+- `{{MCP_SEARCH_PARAM}}` → `query` 或 `information_request`
+
+**模型配置**：
+- `{{BACKEND_MODELS}}` → `["codex", "gemini", "claude"]`
+- `{{BACKEND_PRIMARY}}` → `"codex"`
+- `{{FRONTEND_MODELS}}` → `["gemini", "codex", "claude"]`
+- `{{FRONTEND_PRIMARY}}` → `"gemini"`
+- `{{REVIEW_MODELS}}` → `["codex", "gemini", "claude"]`
+
+**路径替换**：
+- `~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/analyzer.md`
+- 安装后自动替换为绝对路径
+
+#### 5. 配置文件更新
+
+- 新增 auggie MCP 的 `enhance_prompt` 工具
+- 统一配置文件路径：`~/.claude/.ccg/config.toml`
+- Prompts 路径：`~/.claude/.ccg/prompts/{codex,gemini,claude}/`
+
+#### 修改文件
+
+**核心逻辑**（4 个）：
+- `src/utils/installer.ts`: 完善 `injectConfigVariables()`
+- `src/commands/init.ts`: 传递完整 routing 配置
+- `src/commands/update.ts`: 保留用户配置
+- `src/utils/config.ts`: 添加 auggie enhance_prompt 工具
+
+**命令模板**（18 个）：
+- `templates/commands/dev.md`: 多模型遍历逻辑
+- `templates/commands/review.md`: 遍历审查模型
+- `templates/commands/analyze.md`: 合并前后端模型
+- `templates/commands/feat.md`: 精简 52%
+- `templates/commands/{backend,frontend,code,debug,test,bugfix,optimize,think}.md`
+- `templates/commands/agents/{planner,ui-ux-designer}.md`
+- `templates/commands/scan.md`: **删除**（冗余）
+
+#### 测试通过
+
+- ✅ TypeScript 类型检查
+- ✅ 本地安装测试（所有模板正确注入）
+- ✅ MCP 工具注入（ace-tool 和 auggie）
+- ✅ 多模型配置（3个后端 + 3个前端 + 3个审查）
+- ✅ 路径替换（~ → 绝对路径）
+- ✅ Prompts 安装（codex/gemini/claude 各6个角色）
 
 ---
 

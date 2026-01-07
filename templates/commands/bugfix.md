@@ -2,8 +2,6 @@
 description: 质量门控修复（双模型交叉验证，90%+ 通过）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/bugfix <bug描述>`
 

@@ -2,8 +2,6 @@
 description: UltraThink 深度分析（双模型并行分析 + 综合见解）
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/think <分析主题>`
 

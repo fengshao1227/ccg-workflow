@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { i18n } from '../i18n'
 import { createDefaultConfig, ensureCcgDir, getCcgDir, writeCcgConfig } from '../utils/config'
-import { getWorkflowConfigs, installAceTool, installWorkflows } from '../utils/installer'
+import { getWorkflowConfigs, getWorkflowPreset, installAceTool, installWorkflows, WORKFLOW_PRESETS, type WorkflowPreset } from '../utils/installer'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 
 export async function init(options: InitOptions = {}): Promise<void> {
@@ -107,17 +107,54 @@ export async function init(options: InitOptions = {}): Promise<void> {
     }
   }
   else if (!options.skipPrompt) {
-    const { selected } = await inquirer.prompt([{
-      type: 'checkbox',
-      name: 'selected',
-      message: i18n.t('init:selectWorkflows'),
-      choices: allWorkflows.map(w => ({
-        name: `${language === 'zh-CN' ? w.name : w.nameEn} ${ansis.gray(`— ${language === 'zh-CN' ? w.description : w.descriptionEn}`)}`,
-        value: w.id,
-        checked: w.defaultSelected,
-      })),
+    // First, ask for preset or custom
+    const { workflowMode } = await inquirer.prompt([{
+      type: 'list',
+      name: 'workflowMode',
+      message: '选择命令安装模式',
+      choices: [
+        {
+          name: `${WORKFLOW_PRESETS.minimal.name} ${ansis.gray(`— ${WORKFLOW_PRESETS.minimal.description}`)} ${ansis.green('(推荐新手)')}`,
+          value: 'minimal' as WorkflowPreset,
+        },
+        {
+          name: `${WORKFLOW_PRESETS.standard.name} ${ansis.gray(`— ${WORKFLOW_PRESETS.standard.description}`)} ${ansis.green('(推荐)')}`,
+          value: 'standard' as WorkflowPreset,
+        },
+        {
+          name: `${WORKFLOW_PRESETS.full.name} ${ansis.gray(`— ${WORKFLOW_PRESETS.full.description}`)}`,
+          value: 'full' as WorkflowPreset,
+        },
+        new inquirer.Separator(),
+        {
+          name: `自定义 ${ansis.gray('— 手动选择命令')}`,
+          value: 'custom',
+        },
+      ],
+      default: 'standard',
     }])
-    selectedWorkflows = selected
+
+    if (workflowMode === 'custom') {
+      // Show full checkbox list
+      const { selected } = await inquirer.prompt([{
+        type: 'checkbox',
+        name: 'selected',
+        message: i18n.t('init:selectWorkflows'),
+        choices: allWorkflows.map(w => ({
+          name: `${language === 'zh-CN' ? w.name : w.nameEn} ${ansis.gray(`— ${language === 'zh-CN' ? w.description : w.descriptionEn}`)}`,
+          value: w.id,
+          checked: w.defaultSelected,
+        })),
+      }])
+      selectedWorkflows = selected
+    }
+    else {
+      // Use preset
+      selectedWorkflows = getWorkflowPreset(workflowMode as WorkflowPreset)
+      const preset = WORKFLOW_PRESETS[workflowMode as WorkflowPreset]
+      console.log()
+      console.log(ansis.gray(`  已选择 ${ansis.cyan(preset.name)} 模式 (${selectedWorkflows.length} 个命令)`))
+    }
   }
 
   // MCP Tool Selection
@@ -127,24 +164,20 @@ export async function init(options: InitOptions = {}): Promise<void> {
 
   if (!options.skipPrompt) {
     console.log()
-    console.log(ansis.cyan.bold(`  🔧 MCP 工具选择`))
+    console.log(ansis.cyan.bold(`  🔧 MCP 工具配置`))
     console.log()
 
     const { selectedMcp } = await inquirer.prompt([{
       type: 'list',
       name: 'selectedMcp',
-      message: '选择 MCP 代码检索工具',
+      message: '是否安装 ace-tool MCP？',
       choices: [
         {
-          name: `ace-tool ${ansis.gray('(推荐) - 开箱即用，含 Prompt 增强 + 代码检索')}`,
+          name: `安装 ace-tool ${ansis.gray('(推荐) - 一键安装，含 Prompt 增强 + 代码检索')}`,
           value: 'ace-tool',
         },
         {
-          name: `auggie ${ansis.gray('(官方) - 代码检索 + 可选 Prompt 增强（需额外配置）')}`,
-          value: 'auggie',
-        },
-        {
-          name: `跳过 ${ansis.gray('- 稍后手动配置')}`,
+          name: `跳过 ${ansis.gray('- 稍后手动配置（可选 auggie 等其他 MCP）')}`,
           value: 'skip',
         },
       ],
@@ -158,36 +191,57 @@ export async function init(options: InitOptions = {}): Promise<void> {
       console.log()
       console.log(ansis.cyan.bold(`  🔧 ace-tool MCP 配置`))
       console.log(ansis.gray(`     ${i18n.t('init:aceTool.description')}`))
-      console.log(ansis.gray(`     ${i18n.t('init:aceTool.getToken')}: https://augmentcode.com/`))
       console.log()
 
-      const aceAnswers = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'baseUrl',
-          message: `${i18n.t('init:aceTool.baseUrl')} ${ansis.gray('(Enter to skip)')}`,
-          default: '',
-        },
-        {
-          type: 'password',
-          name: 'token',
-          message: `${i18n.t('init:aceTool.token')} ${ansis.gray('(Enter to skip)')}`,
-          mask: '*',
-        },
-      ])
-      aceToolBaseUrl = aceAnswers.baseUrl || ''
-      aceToolToken = aceAnswers.token || ''
-    }
-    else if (selectedMcp === 'auggie') {
-      console.log()
-      console.log(ansis.yellow(`  ℹ️  auggie 已选择`))
-      console.log(ansis.gray(`     代码检索功能开箱即用`))
-      console.log(ansis.gray(`     Prompt 增强需额外配置: https://linux.do/t/topic/1280612`))
-      console.log()
+      const { skipToken } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'skipToken',
+        message: '是否跳过 Token 配置？（可稍后运行 npx ccg config mcp 配置）',
+        default: false,
+      }])
+
+      if (!skipToken) {
+        console.log()
+        console.log(ansis.cyan(`     📖 获取 ace-tool 访问方式：`))
+        console.log()
+        console.log(`     ${ansis.gray('•')} ${ansis.cyan('官方服务')}: ${ansis.underline('https://augmentcode.com/')}`)
+        console.log(`       ${ansis.gray('注册账号后获取 Token')}`)
+        console.log()
+        console.log(`     ${ansis.gray('•')} ${ansis.cyan('中转服务')} ${ansis.yellow('(无需注册)')}: ${ansis.underline('https://linux.do/t/topic/1291730')}`)
+        console.log(`       ${ansis.gray('linux.do 社区提供的免费中转服务')}`)
+        console.log()
+
+        const aceAnswers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'baseUrl',
+            message: `Base URL ${ansis.gray('(使用中转服务时必填，官方服务留空)')}`,
+            default: '',
+          },
+          {
+            type: 'password',
+            name: 'token',
+            message: `Token ${ansis.gray('(必填)')}`,
+            mask: '*',
+            validate: (input: string) => input.trim() !== '' || '请输入 Token',
+          },
+        ])
+        aceToolBaseUrl = aceAnswers.baseUrl || ''
+        aceToolToken = aceAnswers.token || ''
+      }
+      else {
+        console.log()
+        console.log(ansis.yellow(`  ℹ️  已跳过 Token 配置`))
+        console.log(ansis.gray(`     • ace-tool MCP 将不会自动安装`))
+        console.log(ansis.gray(`     • 可稍后运行 ${ansis.cyan('npx ccg config mcp')} 配置 Token`))
+        console.log(ansis.gray(`     • 获取 Token: ${ansis.cyan('https://augmentcode.com/')}`))
+        console.log()
+      }
     }
     else {
       console.log()
-      console.log(ansis.yellow(`  ℹ️  已跳过 MCP 配置，可稍后手动配置`))
+      console.log(ansis.yellow(`  ℹ️  已跳过 MCP 配置`))
+      console.log(ansis.gray(`     • 可稍后手动配置任何 MCP 服务`))
       console.log()
     }
   }
@@ -290,12 +344,11 @@ export async function init(options: InitOptions = {}): Promise<void> {
     // Install workflows and commands
     const installDir = options.installDir || join(homedir(), '.claude')
     const result = await installWorkflows(selectedWorkflows, installDir, options.force, {
-      mcpProvider,
       routing,
     })
 
-    // Install ace-tool MCP if baseUrl or token was provided
-    if (aceToolBaseUrl || aceToolToken) {
+    // Install ace-tool MCP if token was provided
+    if (mcpProvider === 'ace-tool' && aceToolToken) {
       spinner.text = i18n.t('init:aceTool.installing')
       const aceResult = await installAceTool({
         baseUrl: aceToolBaseUrl,
@@ -310,6 +363,12 @@ export async function init(options: InitOptions = {}): Promise<void> {
         spinner.warn(ansis.yellow(i18n.t('init:aceTool.failed')))
         console.log(ansis.gray(`      ${aceResult.message}`))
       }
+    }
+    else if (mcpProvider === 'ace-tool' && !aceToolToken) {
+      spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
+      console.log()
+      console.log(`    ${ansis.yellow('⚠')} ace-tool MCP 未安装 ${ansis.gray('(Token 未提供)')}`)
+      console.log(`    ${ansis.gray('→')} 稍后运行 ${ansis.cyan('npx ccg config mcp')} 完成配置`)
     }
     else {
       spinner.succeed(ansis.green(i18n.t('init:installSuccess')))
@@ -437,6 +496,21 @@ export async function init(options: InitOptions = {}): Promise<void> {
           console.log(ansis.gray(`     source ${shellRc}`))
         }
       }
+    }
+
+    // Show MCP resources if user skipped installation
+    if (mcpProvider === 'skip' || (mcpProvider === 'ace-tool' && !aceToolToken)) {
+      console.log()
+      console.log(ansis.cyan.bold(`  📖 MCP 服务选项`))
+      console.log()
+      console.log(ansis.gray(`     如需使用代码检索和 Prompt 增强功能，可选择以下 MCP 服务：`))
+      console.log()
+      console.log(`     ${ansis.green('1.')} ${ansis.cyan('ace-tool')} ${ansis.gray('(推荐)')}: ${ansis.underline('https://augmentcode.com/')}`)
+      console.log(`        ${ansis.gray('一键安装，含 Prompt 增强 + 代码检索')}`)
+      console.log()
+      console.log(`     ${ansis.green('2.')} ${ansis.cyan('ace-tool 中转服务')} ${ansis.yellow('(无需注册)')}: ${ansis.underline('https://linux.do/t/topic/1291730')}`)
+      console.log(`        ${ansis.gray('linux.do 社区提供的免费中转服务')}`)
+      console.log()
     }
 
     console.log()

@@ -2,8 +2,6 @@
 description: 多模型技术分析（并行执行），交叉验证后综合见解
 ---
 
-> 调用语法见 `_config.md`
-
 ## 用法
 `/analyze <QUESTION_OR_TASK>`
 

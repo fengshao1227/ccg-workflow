@@ -3,6 +3,7 @@ import fs from 'fs-extra'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { parse, stringify } from 'smol-toml'
+import { version as packageVersion } from '../../package.json'
 
 // v1.4.0: 配置目录统一到 ~/.claude/.ccg/
 const CCG_DIR = join(homedir(), '.claude', '.ccg')
@@ -47,7 +48,7 @@ export function createDefaultConfig(options: {
 }): CcgConfig {
   return {
     general: {
-      version: '1.4.0',
+      version: packageVersion,
       language: options.language,
       createdAt: new Date().toISOString(),
     },
@@ -62,15 +63,7 @@ export function createDefaultConfig(options: {
     },
     mcp: {
       provider: options.mcpProvider || 'ace-tool',
-      setup_url: 'https://linux.do/t/topic/284963',
-      tools: {
-        code_search_ace: 'mcp__ace-tool__search_context',
-        code_search_auggie: 'mcp__auggie-mcp__codebase-retrieval',
-        prompt_enhance_ace: 'mcp__ace-tool__enhance_prompt',
-        prompt_enhance_auggie: 'mcp__auggie-mcp__enhance_prompt',
-        query_param_ace: 'query',
-        query_param_auggie: 'information_request',
-      },
+      setup_url: 'https://augmentcode.com/',
     },
   }
 }
