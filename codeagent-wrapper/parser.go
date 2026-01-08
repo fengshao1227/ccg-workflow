@@ -153,6 +153,11 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 			continue
 		}
 
+		// Extract session_id early (works for all backends)
+		if event.SessionID != "" && threadID == "" {
+			threadID = event.SessionID
+		}
+
 		// Detect backend type by field presence
 		isCodex := event.ThreadID != ""
 		if !isCodex && len(event.Item) > 0 {
@@ -167,7 +172,8 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 		if !isClaude && event.Type == "result" && event.SessionID != "" && event.Status == "" {
 			isClaude = true
 		}
-		isGemini := event.Role != "" || event.Delta != nil || event.Status != ""
+		isGemini := event.Role != "" || event.Delta != nil || event.Status != "" ||
+			(event.Type == "init" && event.SessionID != "")
 
 		// Handle Codex events
 		if isCodex {
