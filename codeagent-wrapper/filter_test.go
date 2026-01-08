@@ -14,31 +14,31 @@ func TestFilteringWriter(t *testing.T) {
 	}{
 		{
 			name:     "filter STARTUP lines",
-			patterns: geminiNoisePatterns,
+			patterns: noisePatterns,
 			input:    "[STARTUP] Recording metric\nHello World\n[STARTUP] Another line\n",
 			want:     "Hello World\n",
 		},
 		{
 			name:     "filter Warning lines",
-			patterns: geminiNoisePatterns,
+			patterns: noisePatterns,
 			input:    "Warning: something bad\nActual output\n",
 			want:     "Actual output\n",
 		},
 		{
 			name:     "filter multiple patterns",
-			patterns: geminiNoisePatterns,
+			patterns: noisePatterns,
 			input:    "YOLO mode is enabled\nSession cleanup disabled\nReal content\nLoading extension: foo\n",
 			want:     "Real content\n",
 		},
 		{
 			name:     "no filtering needed",
-			patterns: geminiNoisePatterns,
+			patterns: noisePatterns,
 			input:    "Line 1\nLine 2\nLine 3\n",
 			want:     "Line 1\nLine 2\nLine 3\n",
 		},
 		{
 			name:     "empty input",
-			patterns: geminiNoisePatterns,
+			patterns: noisePatterns,
 			input:    "",
 			want:     "",
 		},
@@ -60,7 +60,7 @@ func TestFilteringWriter(t *testing.T) {
 
 func TestFilteringWriterPartialLines(t *testing.T) {
 	var buf bytes.Buffer
-	fw := newFilteringWriter(&buf, geminiNoisePatterns)
+	fw := newFilteringWriter(&buf, noisePatterns)
 
 	// Write partial line
 	fw.Write([]byte("Hello "))

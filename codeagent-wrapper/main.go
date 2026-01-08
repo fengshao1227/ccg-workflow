@@ -56,6 +56,9 @@ var (
 
 var forceKillDelay atomic.Int32
 
+// globalWebServer is the SSE web server for live streaming output
+var globalWebServer *WebServer
+
 func init() {
 	forceKillDelay.Store(5) // seconds - default value
 }

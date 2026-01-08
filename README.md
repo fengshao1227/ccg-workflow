@@ -30,7 +30,8 @@
 - ✅ **多模型并行** - Codex ∥ Gemini 同时分析，交叉验证减少错误
 - ✅ **零写入权限** - 外部模型只返回 Patch，Claude 保持代码主权
 - ✅ **Token 优化** - ROLE_FILE 动态注入，专家提示词零消耗
-- ✅ **一键安装** - npx 运行，自动安装全部 14 个命令
+- ✅ **Web UI 实时输出** - 自动打开浏览器，流式显示思考过程、命令执行、生成结果
+- ✅ **一键安装** - npx 运行，自动安装全部 15 个命令
 
 ---
 
@@ -57,7 +58,7 @@ npx ccg-workflow
 **安装流程**：
 1. 选择是否配置 ace-tool MCP（可跳过）
 2. 确认安装
-3. 自动安装全部 14 个命令
+3. 自动安装全部 15 个命令
 4. 配置 PATH（如需要）
 
 就这么简单！无需选择语言、模型、命令预设。
@@ -69,7 +70,7 @@ npx ccg-workflow
 | 前端模型 | **Gemini** |
 | 后端模型 | **Codex** |
 | 协作模式 | **smart** |
-| 命令数量 | **14 个**（全部安装） |
+| 命令数量 | **15 个**（全部安装） |
 
 ### 第一个命令
 
@@ -99,7 +100,7 @@ npx ccg-workflow
 /ccg:backend    # 纯后端任务（Codex 主导，更快）
 ```
 
-### 完整命令列表（14 个）
+### 完整命令列表（15 个）
 
 #### 开发工作流
 
@@ -109,6 +110,7 @@ npx ccg-workflow
 | `/ccg:frontend` | 前端专项（快速模式） | Gemini |
 | `/ccg:backend` | 后端专项（快速模式） | Codex |
 | `/ccg:feat` | 智能功能开发 | 规划 → 实施 |
+| `/ccg:enhance` | Prompt 增强（ace-tool） | MCP |
 | `/ccg:analyze` | 技术分析（仅分析不改代码） | Codex ∥ Gemini |
 | `/ccg:debug` | 问题诊断 + 修复 | Codex ∥ Gemini |
 | `/ccg:optimize` | 性能优化 | Codex ∥ Gemini |
@@ -166,7 +168,7 @@ npx ccg-workflow
 
 ```
 ~/.claude/
-├── commands/ccg/          # 14 个斜杠命令
+├── commands/ccg/          # 15 个斜杠命令
 ├── agents/ccg/            # 4 个子智能体
 ├── skills/                # 暂无
 ├── bin/
@@ -350,7 +352,7 @@ Copyright (c) 2025 fengshao1227
 
 <div align="center">
 
-**版本**: v1.7.0 | **最后更新**: 2026-01-08
+**版本**: v1.7.3 | **最后更新**: 2026-01-09
 
 Made with ❤️ by the CCG Community
 

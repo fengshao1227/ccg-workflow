@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -832,6 +834,23 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		codexArgs = argsBuilder(cfg, targetArg)
 	}
 
+	// Start WebServer for this task (single-panel, random port, short-lived)
+	var webSessionID string
+	if globalWebServer == nil {
+		globalWebServer = NewWebServer(cfg.Backend)
+		if err := globalWebServer.Start(); err != nil {
+			logWarn(fmt.Sprintf("Failed to start web server: %v", err))
+		}
+	}
+
+	// Generate a unique session ID for WebServer tracking
+	if globalWebServer != nil {
+		randBytes := make([]byte, 4)
+		rand.Read(randBytes)
+		webSessionID = fmt.Sprintf("%s-%d-%s", cfg.Backend, time.Now().UnixMilli(), hex.EncodeToString(randBytes))
+		globalWebServer.StartSession(webSessionID, cfg.Backend, taskSpec.Task)
+	}
+
 	prefixMsg := func(msg string) string {
 		if taskSpec.ID == "" {
 			return msg
@@ -935,16 +954,12 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		stderrWriters = append(stderrWriters, stderrLogger)
 	}
 
-	// For gemini backend, filter noisy stderr output
+	// Filter noisy stderr output for all backends
 	var stderrFilter *filteringWriter
 	if !silent {
-		stderrOut := io.Writer(os.Stderr)
-		if cfg.Backend == "gemini" {
-			stderrFilter = newFilteringWriter(os.Stderr, geminiNoisePatterns)
-			stderrOut = stderrFilter
-			defer stderrFilter.Flush()
-		}
-		stderrWriters = append([]io.Writer{stderrOut}, stderrWriters...)
+		stderrFilter = newFilteringWriter(os.Stderr, noisePatterns)
+		defer stderrFilter.Flush()
+		stderrWriters = append([]io.Writer{stderrFilter}, stderrWriters...)
 	}
 	if len(stderrWriters) == 1 {
 		cmd.SetStderr(stderrWriters[0])
@@ -982,8 +997,19 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	messageSeen := make(chan struct{}, 1)
 	completeSeen := make(chan struct{}, 1)
 	parseCh := make(chan parseResult, 1)
+
+	// Create onContent callback for streaming to WebServer
+	var onContentCallback func(content, contentType string)
+	if globalWebServer != nil && webSessionID != "" {
+		sessionID := webSessionID
+		backendName := cfg.Backend
+		onContentCallback = func(content, contentType string) {
+			globalWebServer.SendContentWithType(sessionID, backendName, content, contentType)
+		}
+	}
+
 	go func() {
-		msg, tid := parseJSONStreamInternal(stdoutReader, logWarnFn, logInfoFn, func() {
+		msg, tid := parseJSONStreamInternalWithContent(stdoutReader, logWarnFn, logInfoFn, func() {
 			select {
 			case messageSeen <- struct{}{}:
 			default:
@@ -993,7 +1019,11 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 			case completeSeen <- struct{}{}:
 			default:
 			}
-		})
+			// Notify WebServer that session is complete
+			if globalWebServer != nil && webSessionID != "" {
+				globalWebServer.EndSession(webSessionID, cfg.Backend)
+			}
+		}, onContentCallback)
 		select {
 		case completeSeen <- struct{}{}:
 		default:

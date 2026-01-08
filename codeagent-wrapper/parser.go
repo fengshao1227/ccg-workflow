@@ -96,6 +96,10 @@ type ItemContent struct {
 }
 
 func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(string), onMessage func(), onComplete func()) (message, threadID string) {
+	return parseJSONStreamInternalWithContent(r, warnFn, infoFn, onMessage, onComplete, nil)
+}
+
+func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn func(string), onMessage func(), onComplete func(), onContent func(content, contentType string)) (message, threadID string) {
 	reader := bufio.NewReaderSize(r, jsonLineReaderSize)
 
 	if warnFn == nil {
@@ -159,7 +163,7 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 		}
 
 		// Detect backend type by field presence
-		isCodex := event.ThreadID != ""
+		isCodex := event.ThreadID != "" || event.Type == "turn.completed" || event.Type == "turn.started"
 		if !isCodex && len(event.Item) > 0 {
 			var itemHeader struct {
 				Type string `json:"type"`
@@ -193,11 +197,11 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 				threadID = event.ThreadID
 				infoFn(fmt.Sprintf("thread.started event thread_id=%s", threadID))
 
-			case "thread.completed":
+			case "thread.completed", "turn.completed":
 				if event.ThreadID != "" && threadID == "" {
 					threadID = event.ThreadID
 				}
-				infoFn(fmt.Sprintf("thread.completed event thread_id=%s", event.ThreadID))
+				infoFn(fmt.Sprintf("%s event thread_id=%s", event.Type, event.ThreadID))
 				notifyComplete()
 
 			case "item.completed":
@@ -211,20 +215,49 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 					}
 				}
 
-				if itemType == "agent_message" && len(event.Item) > 0 {
-					// Lazy parse: only parse item content when needed
+				switch itemType {
+				case "agent_message", "reasoning":
+					// Parse text content
 					var item ItemContent
 					if err := json.Unmarshal(event.Item, &item); err == nil {
 						normalized := normalizeText(item.Text)
 						infoFn(fmt.Sprintf("item.completed event item_type=%s message_len=%d", itemType, len(normalized)))
 						if normalized != "" {
-							codexMessage = normalized
-							notifyMessage()
+							if itemType == "agent_message" {
+								codexMessage = normalized
+								notifyMessage()
+							}
+							// Send content (Codex outputs complete blocks, not streaming deltas)
+							if onContent != nil {
+								onContent(normalized, itemType)
+							}
 						}
 					} else {
 						warnFn(fmt.Sprintf("Failed to parse item content: %s", err.Error()))
 					}
-				} else {
+
+				case "command_execution":
+					// Parse command execution
+					var cmdItem struct {
+						Command          string `json:"command"`
+						AggregatedOutput string `json:"aggregated_output"`
+						ExitCode         *int   `json:"exit_code"`
+						Status           string `json:"status"`
+					}
+					if err := json.Unmarshal(event.Item, &cmdItem); err == nil {
+						// Format command execution info
+						var content strings.Builder
+						content.WriteString(fmt.Sprintf("$ %s\n", cmdItem.Command))
+						if cmdItem.AggregatedOutput != "" {
+							content.WriteString(cmdItem.AggregatedOutput)
+						}
+						infoFn(fmt.Sprintf("item.completed event item_type=command_execution cmd=%s exit=%v", cmdItem.Command, cmdItem.ExitCode))
+						if onContent != nil && content.Len() > 0 {
+							onContent(content.String(), "command")
+						}
+					}
+
+				default:
 					infoFn(fmt.Sprintf("item.completed event item_type=%s", itemType))
 				}
 			}
@@ -242,6 +275,10 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 			if event.Result != "" {
 				claudeMessage = event.Result
 				notifyMessage()
+				// Stream content to callback
+				if onContent != nil {
+					onContent(event.Result, "message")
+				}
 			}
 
 			if event.Type == "result" {
@@ -258,6 +295,10 @@ func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(strin
 
 			if event.Content != "" {
 				geminiBuffer.WriteString(event.Content)
+				// Stream content to callback
+				if onContent != nil {
+					onContent(event.Content, "message")
+				}
 			}
 
 			if event.Status != "" {

@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-// geminiNoisePatterns contains stderr patterns to filter for gemini backend
-var geminiNoisePatterns = []string{
+// noisePatterns contains stderr patterns to filter for all backends
+var noisePatterns = []string{
+	// Gemini specific
 	"[STARTUP]",
 	"Session cleanup disabled",
 	"Warning:",
@@ -16,6 +17,9 @@ var geminiNoisePatterns = []string{
 	"Loaded cached credentials",
 	"Loading extension:",
 	"YOLO mode is enabled",
+	// Common noise
+	"[WARN] Skipping unreadable directory",
+	"supports tool updates. Listening for changes",
 }
 
 // filteringWriter wraps an io.Writer and filters out lines matching patterns
