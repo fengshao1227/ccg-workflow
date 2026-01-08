@@ -56,10 +56,12 @@ EOF
 **并行调用 Codex + Gemini**：
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-# Codex 后端诊断
-~/.claude/bin/codeagent-wrapper --backend codex - "$PWD" <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 诊断进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 角色：后端调试专家
 
 问题：$ARGUMENTS
@@ -68,10 +70,17 @@ EOF
 1. 分析逻辑错误、数据流、异常处理
 2. 检查 API、数据库、服务间通信
 3. 输出诊断假设（按可能性排序）
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 后端诊断"
+})
+```
 
-# Gemini 前端诊断
-~/.claude/bin/codeagent-wrapper --backend gemini - "$PWD" <<'EOF' &
+**Gemini 诊断进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 角色：前端调试专家
 
 问题：$ARGUMENTS
@@ -80,8 +89,13 @@ EOF
 1. 分析 UI 渲染、状态管理、事件绑定
 2. 检查组件生命周期、样式冲突
 3. 输出诊断假设（按可能性排序）
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 前端诊断"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个模型的诊断结果。
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -131,7 +145,7 @@ EOF
 ## 关键规则
 
 1. **heredoc 语法** – 外部模型调用必须使用 heredoc
-2. **使用后台进程 `&` + `TaskOutput` 获取结果**
+2. **使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
 3. **必须等待所有模型返回完整结果后才能进入下一阶段**，禁止跳过或提前继续
 4. **用户确认** – 修复前必须获得确认
 5. **信任规则** – 后端问题以 Codex 为准，前端问题以 Gemini 为准

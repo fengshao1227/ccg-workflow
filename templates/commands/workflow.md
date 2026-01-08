@@ -66,26 +66,42 @@ description: '多模型协作开发工作流（研究→构思→计划→执行
 2. **Gemini 分析**：`~/.claude/.ccg/prompts/gemini/analyzer.md`
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-codeagent-wrapper --backend codex - $PWD <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 ROLE_FILE: ~/.claude/.ccg/prompts/codex/analyzer.md
 <TASK>
 分析需求: <任务描述>
 Context: <项目上下文>
 </TASK>
 OUTPUT: 技术可行性、推荐方案、风险点
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 技术分析"
+})
+```
 
-codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 ROLE_FILE: ~/.claude/.ccg/prompts/gemini/analyzer.md
 <TASK>
 分析需求: <任务描述>
 Context: <项目上下文>
 </TASK>
 OUTPUT: UI可行性、推荐方案、用户体验
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini UI 分析"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个后台进程的输出结果
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -98,30 +114,45 @@ EOF
 
 `[模式：计划]` - 多模型协作规划：
 
-**并行调用 Codex 和 Gemini 进行架构规划**（使用后台进程 `&`）：
+**并行调用 Codex 和 Gemini 进行架构规划**：
 
 1. **Codex 规划**：`~/.claude/.ccg/prompts/codex/architect.md`
 2. **Gemini 规划**：`~/.claude/.ccg/prompts/gemini/architect.md`
 
-调用示例：
-```bash
-codeagent-wrapper --backend codex - $PWD <<'EOF' &
+调用示例（使用 `run_in_background: true`）：
+
+**Codex 规划进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 ROLE_FILE: ~/.claude/.ccg/prompts/codex/architect.md
 <TASK>
 规划需求: <任务描述>
 Context: <项目上下文>
 </TASK>
 OUTPUT: 后端架构规划
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 后端架构规划"
+})
+```
 
-codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 规划进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 ROLE_FILE: ~/.claude/.ccg/prompts/gemini/architect.md
 <TASK>
 规划需求: <任务描述>
 Context: <项目上下文>
 </TASK>
 OUTPUT: 前端架构规划
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 前端架构规划"
+})
 ```
 
 使用 `TaskOutput` 获取 2 个模型的规划结果。
@@ -146,30 +177,45 @@ EOF
 
 `[模式：优化]` - 多模型并行审查：
 
-**并行调用 Codex 和 Gemini 进行代码审查**（使用后台进程 `&`）：
+**并行调用 Codex 和 Gemini 进行代码审查**：
 
 1. **Codex 审查**：`~/.claude/.ccg/prompts/codex/reviewer.md`
 2. **Gemini 审查**：`~/.claude/.ccg/prompts/gemini/reviewer.md`
 
-调用示例：
-```bash
-codeagent-wrapper --backend codex - $PWD <<'EOF' &
+调用示例（使用 `run_in_background: true`）：
+
+**Codex 审查进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 ROLE_FILE: ~/.claude/.ccg/prompts/codex/reviewer.md
 <TASK>
 审查代码: <实施的代码变更>
 关注点: 安全性、性能、错误处理
 </TASK>
 OUTPUT: 审查意见
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 代码审查"
+})
+```
 
-codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 审查进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 ROLE_FILE: ~/.claude/.ccg/prompts/gemini/reviewer.md
 <TASK>
 审查代码: <实施的代码变更>
 关注点: 可访问性、设计一致性、用户体验
 </TASK>
 OUTPUT: 审查意见
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 代码审查"
+})
 ```
 
 使用 `TaskOutput` 获取 2 个模型的审查结果。
@@ -192,7 +238,7 @@ EOF
 ## 关键规则
 
 1. 阶段顺序不可跳过（除非用户明确指令）
-2. **多模型调用必须使用后台进程 `&` + `TaskOutput` 获取结果**
+2. **多模型调用必须使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
 3. **必须等待所有模型返回完整结果后才能进入下一阶段**，禁止跳过或提前继续
 4. 外部模型对文件系统**零写入权限**，所有修改由 Claude 执行
 5. 评分 <7 分或用户未批准时**强制停止**

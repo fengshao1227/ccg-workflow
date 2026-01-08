@@ -55,26 +55,42 @@ EOF
 **并行调用两个模型**：
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-codeagent-wrapper --backend codex - $PWD <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 ROLE_FILE: ~/.claude/.ccg/prompts/codex/analyzer.md
 <TASK>
 分析需求: $ARGUMENTS
 Context: <阶段1检索到的上下文>
 </TASK>
 OUTPUT: 技术可行性、架构影响、性能考量
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 技术分析"
+})
+```
 
-codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 ROLE_FILE: ~/.claude/.ccg/prompts/gemini/analyzer.md
 <TASK>
 分析需求: $ARGUMENTS
 Context: <阶段1检索到的上下文>
 </TASK>
 OUTPUT: UI/UX 影响、用户体验、视觉设计考量
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini UI 分析"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个模型的分析结果。
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -129,6 +145,6 @@ EOF
 ## 关键规则
 
 1. **仅分析不修改** – 本命令不执行任何代码变更
-2. **使用后台进程 `&` + `TaskOutput` 获取结果**
+2. **使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
 3. **必须等待所有模型返回完整结果后才能进入下一阶段**，禁止跳过或提前继续
 4. **信任规则** – 后端以 Codex 为准，前端以 Gemini 为准

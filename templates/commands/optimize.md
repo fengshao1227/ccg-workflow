@@ -60,10 +60,12 @@ EOF
 **并行调用两个模型**：
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-# Codex：后端性能分析
-~/.claude/bin/codeagent-wrapper --backend codex - $PWD <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 性能分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 [角色] 你是后端性能优化专家
 
 [任务] 分析以下代码的后端性能问题：
@@ -73,10 +75,17 @@ $ARGUMENTS
 1. 性能瓶颈列表（按严重程度排序）
 2. 每个问题的优化方案（含代码 Diff）
 3. 预期收益评估
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 后端性能分析"
+})
+```
 
-# Gemini：前端性能分析
-~/.claude/bin/codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 性能分析进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 [角色] 你是前端性能优化专家
 
 [任务] 分析以下代码的前端性能问题：
@@ -86,8 +95,13 @@ $ARGUMENTS
 1. Core Web Vitals 问题列表
 2. 每个问题的优化方案（含代码 Diff）
 3. 预期收益评估
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 前端性能分析"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个模型的分析结果。
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -138,4 +152,5 @@ EOF
 2. **性价比优先** – 高影响 + 低难度优先
 3. **不破坏功能** – 优化不能引入 bug
 4. **信任规则** – 后端以 Codex 为准，前端以 Gemini 为准
-5. **必须等待所有模型返回** – 禁止提前进入下一步
+5. **使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
+6. **必须等待所有模型返回** – 禁止提前进入下一步

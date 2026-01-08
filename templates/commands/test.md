@@ -63,10 +63,12 @@ EOF
 **全栈代码并行调用**：
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-# Codex 后端测试调用
-~/.claude/bin/codeagent-wrapper --backend codex - $PWD <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 测试生成进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 你是后端测试专家，角色提示词见 ~/.claude/.ccg/prompts/codex/tester.md
 
 任务：为以下代码生成单元测试
@@ -76,10 +78,17 @@ EOF
 1. 使用项目现有测试框架
 2. 覆盖正常路径、边界条件、异常处理
 3. 输出完整测试代码
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 后端测试生成"
+})
+```
 
-# Gemini 前端测试调用
-~/.claude/bin/codeagent-wrapper --backend gemini - $PWD <<'EOF' &
+**Gemini 测试生成进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 你是前端测试专家，角色提示词见 ~/.claude/.ccg/prompts/gemini/tester.md
 
 任务：为以下组件生成测试
@@ -89,8 +98,13 @@ EOF
 1. 使用项目现有测试框架
 2. 测试渲染、交互、状态变化
 3. 输出完整测试代码
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 前端测试生成"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个模型的测试代码。
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -145,4 +159,5 @@ EOF
 1. **测试行为，不测试实现** – 关注输入输出
 2. **智能路由** – 后端测试用 Codex，前端测试用 Gemini
 3. **复用现有模式** – 遵循项目已有的测试风格
-4. **必须等待所有模型返回** – 禁止提前进入下一步
+4. **使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
+5. **必须等待所有模型返回** – 禁止提前进入下一步

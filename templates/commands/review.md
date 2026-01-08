@@ -52,10 +52,12 @@ git status --short
 **并行调用两个模型**：
 
 **执行步骤**：
-1. 在**同一个 Bash 调用**中启动两个后台进程（不加 wait，立即返回）：
-```bash
-# Codex 后端审查
-~/.claude/bin/codeagent-wrapper --backend codex - "$PWD" <<'EOF' &
+1. 使用 **Bash 工具的 `run_in_background: true` 参数**启动两个后台进程：
+
+**Codex 审查进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend codex - \"$PWD\" <<'EOF_CODEX'
 [角色] 后端代码审查专家
 [任务] 审查以下代码变更
 
@@ -70,10 +72,17 @@ git status --short
 
 ## 输出格式
 按 Critical/Major/Minor/Suggestion 分类列出问题
-EOF
+EOF_CODEX",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Codex 后端代码审查"
+})
+```
 
-# Gemini 前端审查
-~/.claude/bin/codeagent-wrapper --backend gemini - "$PWD" <<'EOF' &
+**Gemini 审查进程**：
+```
+Bash({
+  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF_GEMINI'
 [角色] 前端代码审查专家
 [任务] 审查以下代码变更
 
@@ -88,8 +97,13 @@ EOF
 
 ## 输出格式
 按 Critical/Major/Minor/Suggestion 分类列出问题
-EOF
+EOF_GEMINI",
+  run_in_background: true,
+  timeout: 600000,
+  description: "Gemini 前端代码审查"
+})
 ```
+
 2. 使用 `TaskOutput` 监控并获取 2 个模型的审查结果。
 
 **⚠️ 强制规则：必须等待 TaskOutput 返回两个模型的完整结果后才能进入下一阶段，禁止跳过或提前继续！**
@@ -131,4 +145,5 @@ EOF
 1. **无参数 = 审查 git diff** – 自动获取当前变更
 2. **heredoc 语法** – 必须使用 `<<'EOF'` 传递多行任务
 3. **双模型交叉验证** – 后端问题以 Codex 为准，前端问题以 Gemini 为准
-4. **必须等待所有模型返回** – 禁止提前进入下一步
+4. **使用 Bash 工具的 `run_in_background: true` 参数 + `TaskOutput` 获取结果**
+5. **必须等待所有模型返回** – 禁止提前进入下一步
