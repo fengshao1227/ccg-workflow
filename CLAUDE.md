@@ -12,7 +12,14 @@
 - 🐛 **修复 Windows 兼容性问题**：修改所有命令模板中的后台进程调用语法
 - 📝 **语法改进**：使用 Claude Code 的 `run_in_background: true` 参数替代 shell 的 `&` 符号
 - ✅ **跨平台支持**：修复 Windows Git Bash 的 heredoc + 后台进程语法错误
-- 📋 **涉及文件**：workflow.md, analyze.md, debug.md, optimize.md, review.md, test.md
+- ⏱️ **超时时间优化**：所有命令模板的 timeout 从 10 分钟提升到 1 小时（3600000ms）
+- ✨ **MCP 功能增强**：为所有开发指令添加 Prompt 增强和代码检索
+- 📋 **涉及指令**：
+  - workflow, analyze, debug, optimize, review, test：修复 Windows 兼容性 + 超时优化
+  - backend/frontend：新增阶段 0（Prompt 增强）+ 阶段 1（代码检索）
+  - feat：新增阶段 2.0（Prompt 增强）
+  - debug/optimize/test：新增阶段 0（Prompt 增强）
+- 🎯 **统一体验**：所有开发工作流现在都支持 ace-tool MCP 的完整功能
 
 ### 2026-01-08 (v1.7.0)
 - 🎯 **大幅简化安装流程**：只需配置 MCP（可选），无需选择语言/模型/命令

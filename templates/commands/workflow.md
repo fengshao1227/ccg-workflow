@@ -80,7 +80,7 @@ Context: <项目上下文>
 OUTPUT: 技术可行性、推荐方案、风险点
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 技术分析"
 })
 ```
@@ -97,7 +97,7 @@ Context: <项目上下文>
 OUTPUT: UI可行性、推荐方案、用户体验
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini UI 分析"
 })
 ```
@@ -133,7 +133,7 @@ Context: <项目上下文>
 OUTPUT: 后端架构规划
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 后端架构规划"
 })
 ```
@@ -150,7 +150,7 @@ Context: <项目上下文>
 OUTPUT: 前端架构规划
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 前端架构规划"
 })
 ```
@@ -196,7 +196,7 @@ ROLE_FILE: ~/.claude/.ccg/prompts/codex/reviewer.md
 OUTPUT: 审查意见
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 代码审查"
 })
 ```
@@ -213,7 +213,7 @@ ROLE_FILE: ~/.claude/.ccg/prompts/gemini/reviewer.md
 OUTPUT: 审查意见
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 代码审查"
 })
 ```

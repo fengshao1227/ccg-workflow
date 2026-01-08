@@ -69,7 +69,7 @@ Context: <阶段1检索到的上下文>
 OUTPUT: 技术可行性、架构影响、性能考量
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 技术分析"
 })
 ```
@@ -86,7 +86,7 @@ Context: <阶段1检索到的上下文>
 OUTPUT: UI/UX 影响、用户体验、视觉设计考量
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini UI 分析"
 })
 ```

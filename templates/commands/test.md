@@ -41,6 +41,15 @@ EOF
 
 **测试目标**：$ARGUMENTS
 
+### 🔍 阶段 0：Prompt 增强（可选）
+
+`[模式：准备]` - 增强测试需求
+
+**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`：
+- 输入原始测试目标
+- 获取增强后的详细测试需求
+- 用增强后的需求替代原始 $ARGUMENTS
+
 ### 🔍 阶段 1：测试分析
 
 `[模式：研究]`
@@ -80,7 +89,7 @@ Bash({
 3. 输出完整测试代码
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 后端测试生成"
 })
 ```
@@ -100,7 +109,7 @@ Bash({
 3. 输出完整测试代码
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 前端测试生成"
 })
 ```

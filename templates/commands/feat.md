@@ -22,6 +22,13 @@ $ARGUMENTS
 
 ### 2. 需求规划流程
 
+#### 2.0 Prompt 增强
+
+**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`：
+- 输入原始任务描述
+- 获取增强后的详细需求
+- 用增强后的需求进行后续规划
+
 #### 2.1 上下文检索
 
 调用 `mcp__ace-tool__search_context` 检索相关代码、组件、技术栈。

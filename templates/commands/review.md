@@ -74,7 +74,7 @@ Bash({
 按 Critical/Major/Minor/Suggestion 分类列出问题
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 后端代码审查"
 })
 ```
@@ -99,7 +99,7 @@ Bash({
 按 Critical/Major/Minor/Suggestion 分类列出问题
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 前端代码审查"
 })
 ```

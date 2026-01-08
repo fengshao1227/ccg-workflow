@@ -45,6 +45,15 @@ EOF
 
 **优化目标**：$ARGUMENTS
 
+### 🔍 阶段 0：Prompt 增强（可选）
+
+`[模式：准备]` - 增强任务描述
+
+**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`：
+- 输入原始优化目标
+- 获取增强后的详细需求
+- 用增强后的需求替代原始 $ARGUMENTS
+
 ### 🔍 阶段 1：性能基线
 
 `[模式：研究]`
@@ -77,7 +86,7 @@ $ARGUMENTS
 3. 预期收益评估
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 后端性能分析"
 })
 ```
@@ -97,7 +106,7 @@ $ARGUMENTS
 3. 预期收益评估
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 前端性能分析"
 })
 ```

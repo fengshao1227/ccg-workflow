@@ -41,6 +41,15 @@ EOF
 
 **问题描述**：$ARGUMENTS
 
+### 🔍 阶段 0：Prompt 增强（可选）
+
+`[模式：准备]` - 增强问题描述
+
+**如果 ace-tool MCP 可用**，调用 `mcp__ace-tool__enhance_prompt`：
+- 输入原始问题描述
+- 获取增强后的详细问题分析
+- 用增强后的描述替代原始 $ARGUMENTS
+
 ### 🔍 阶段 1：上下文收集
 
 `[模式：研究]`
@@ -72,7 +81,7 @@ Bash({
 3. 输出诊断假设（按可能性排序）
 EOF_CODEX",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Codex 后端诊断"
 })
 ```
@@ -91,7 +100,7 @@ Bash({
 3. 输出诊断假设（按可能性排序）
 EOF_GEMINI",
   run_in_background: true,
-  timeout: 600000,
+  timeout: 3600000,
   description: "Gemini 前端诊断"
 })
 ```
