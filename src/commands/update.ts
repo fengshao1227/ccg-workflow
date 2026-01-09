@@ -6,7 +6,7 @@ import inquirer from 'inquirer'
 import ora from 'ora'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
-import { checkForUpdates } from '../utils/version'
+import { checkForUpdates, compareVersions } from '../utils/version'
 import { installWorkflows } from '../utils/installer'
 import { readCcgConfig, writeCcgConfig } from '../utils/config'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
@@ -27,6 +27,11 @@ export async function update(): Promise<void> {
   try {
     const { hasUpdate, currentVersion, latestVersion } = await checkForUpdates()
 
+    // Check if local workflow version differs from running version
+    const config = await readCcgConfig()
+    const localVersion = config?.general?.version || '0.0.0'
+    const needsWorkflowUpdate = compareVersions(currentVersion, localVersion) > 0
+
     spinner.stop()
 
     if (!latestVersion) {
@@ -36,18 +41,32 @@ export async function update(): Promise<void> {
 
     console.log(`当前版本: ${ansis.yellow(`v${currentVersion}`)}`)
     console.log(`最新版本: ${ansis.green(`v${latestVersion}`)}`)
+    if (localVersion !== '0.0.0') {
+      console.log(`本地工作流: ${ansis.gray(`v${localVersion}`)}`)
+    }
     console.log()
 
-    // Always ask if user wants to update (even if same version)
-    const message = hasUpdate
-      ? `确认要更新到 v${latestVersion} 吗？（先下载最新包 → 删除旧工作流 → 安装新工作流）`
-      : '当前已是最新版本。要重新安装吗？（先下载最新包 → 删除旧工作流 → 安装新工作流）'
+    // Determine effective update status
+    // hasUpdate: npm registry has newer version
+    // needsWorkflowUpdate: local workflows are older than running version
+    const effectiveNeedsUpdate = hasUpdate || needsWorkflowUpdate
+
+    let message: string
+    if (hasUpdate) {
+      message = `确认要更新到 v${latestVersion} 吗？（先下载最新包 → 删除旧工作流 → 安装新工作流）`
+    }
+    else if (needsWorkflowUpdate) {
+      message = `检测到本地工作流版本 (v${localVersion}) 低于当前版本 (v${currentVersion})，是否更新？`
+    }
+    else {
+      message = '当前已是最新版本。要重新安装吗？（先下载最新包 → 删除旧工作流 → 安装新工作流）'
+    }
 
     const { confirmUpdate } = await inquirer.prompt([{
       type: 'confirm',
       name: 'confirmUpdate',
       message,
-      default: hasUpdate,
+      default: effectiveNeedsUpdate, // Default to true if needs update
     }])
 
     if (!confirmUpdate) {
@@ -55,7 +74,7 @@ export async function update(): Promise<void> {
       return
     }
 
-    await performUpdate(currentVersion, latestVersion || currentVersion, hasUpdate)
+    await performUpdate(currentVersion, latestVersion || currentVersion, hasUpdate || needsWorkflowUpdate)
   }
   catch (error) {
     spinner.stop()

@@ -2,70 +2,18 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-09 (v1.7.11)
+**Last Updated**: 2026-01-09 (v1.7.13)
 
 ---
 
 ## 变更记录 (Changelog)
 
-### 2026-01-09 (v1.7.11)
-- 🐛 **修复 npm 全局安装用户的更新和卸载问题**：
-  - 新增 `checkIfGlobalInstall()` 函数检测 npm 全局安装
-  - 更新功能：检测到全局安装时引导用户使用 `npm install -g ccg-workflow@latest`
-  - 卸载功能：提示两步卸载流程，避免"显示成功但命令仍可用"的困惑
-- 📝 **完善文档**：README 中新增全局安装用户的卸载说明
-- 🔧 **涉及文件**：
-  - `src/commands/update.ts` - 添加全局安装检测和引导
-  - `src/commands/menu.ts` - 添加卸载引导逻辑
-  - `README.md` - 完善卸载说明
-- 💡 **用户价值**：解决"全局安装 + npx 混用"导致的更新/卸载混乱问题
+> 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
 
-### 2026-01-09 (v1.7.10)
-- 🐛 **修复 Windows 路径兼容性问题**：新增 `convertToGitBashPath` 函数，支持 Windows 路径转换（`C:\Users\...` → `/c/Users/...`）
-- 🐛 **修复配置迁移问题**：update 命令现在会自动检测并执行从 `~/.ccg` 到 `~/.claude/.ccg` 的迁移
-- 🐛 **修复 Windows npx 缓存问题**：update 命令在 Windows 上自动清理 npx 缓存，确保拉取最新版本
-- 📝 **完善卸载与更新文档**：README 中新增 npx 缓存清理说明
-- 🔧 **涉及文件**：
-  - `src/utils/installer.ts` - 添加路径转换函数
-  - `src/commands/update.ts` - 添加迁移逻辑 + Windows npx 缓存清理
-  - `README.md` - 完善卸载说明 + npx 缓存清理指引
-- 🧪 **测试验证**：所有平台二进制文件已重新编译
-
-### 2026-01-08 (v1.7.2)
-- 🐛 **修复单独调用语法**：backend/frontend 的单独调用示例现在使用正确的参数
-- 📝 **使用 ROLE_FILE**：改用 ROLE_FILE 引用角色提示词，而不是硬编码
-- ⚙️ **添加必要参数**：为单独调用添加 `run_in_background: false` 和 `timeout: 3600000`
-- 📋 **涉及文件**：backend.md, frontend.md
-
-### 2026-01-08 (v1.7.1)
-- 🐛 **修复 Windows 兼容性问题**：修改所有命令模板中的后台进程调用语法
-- 📝 **语法改进**：使用 Claude Code 的 `run_in_background: true` 参数替代 shell 的 `&` 符号
-- ✅ **跨平台支持**：修复 Windows Git Bash 的 heredoc + 后台进程语法错误
-- ⏱️ **超时时间优化**：所有命令模板的 timeout 从 10 分钟提升到 1 小时（3600000ms）
-- ✨ **MCP 功能增强**：为所有开发指令添加 Prompt 增强和代码检索
-- 📋 **涉及指令**：
-  - workflow, analyze, debug, optimize, review, test：修复 Windows 兼容性 + 超时优化
-  - backend/frontend：新增阶段 0（Prompt 增强）+ 阶段 1（代码检索）
-  - feat：新增阶段 2.0（Prompt 增强）
-  - debug/optimize/test：新增阶段 0（Prompt 增强）
-- 🎯 **统一体验**：所有开发工作流现在都支持 ace-tool MCP 的完整功能
-
-### 2026-01-08 (v1.7.0)
-- 🎯 **大幅简化安装流程**：只需配置 MCP（可选），无需选择语言/模型/命令
-- 🔧 **固定模型路由**：Gemini (前端) + Codex (后端)，不再支持自定义
-- ✂️ **精简命令**：从 17 个减少到 14 个
-  - 删除 `think`（与 analyze 重叠）
-  - 删除 `bugfix`（与 debug 重叠）
-  - 删除 `code`（被 workflow 覆盖）
-  - 删除 `enhance`（集成到 workflow）
-- 📝 **重写所有命令模板**：统一 `[模式：X]` 标签系统，精简到 100-140 行
-
-### 2026-01-07 22:25:00 (v1.6.1)
-- ✨ **新增平台支持**：Linux ARM64 + Windows ARM64
-- 🔧 编译 `codeagent-wrapper-linux-arm64` (2.7MB)
-- 🔧 编译 `codeagent-wrapper-windows-arm64.exe` (2.7MB)
-- 📝 修改 `installer.ts` 支持全平台架构检测 (darwin/linux/windows × amd64/arm64)
-- 🎯 **覆盖率**: 100% 主流平台（6 个二进制文件）
+### 2026-01-09 (v1.7.13)
+- 🐛 **修复更新版本判断问题**：新增本地配置版本检测，比较 `config.general.version` 与当前包版本
+- 📝 **优化更新提示**：显示"本地工作流版本"，当本地版本低于当前包版本时默认选项改为"是"
+- 💡 **用户价值**：解决"每次都要手动选择重新安装"的问题
 
 ---
 
