@@ -1256,12 +1256,17 @@ func forwardSignals(ctx context.Context, cmd commandRunner, logErrorFn func(stri
 		case sig := <-sigCh:
 			logErrorFn(fmt.Sprintf("Received signal: %v", sig))
 			if proc := cmd.Process(); proc != nil {
-				_ = proc.Signal(syscall.SIGTERM)
-				time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
-					if p := cmd.Process(); p != nil {
-						_ = p.Kill()
-					}
-				})
+				// Windows does not support SIGTERM - use Kill() directly
+				if isWindows() {
+					_ = proc.Kill()
+				} else {
+					_ = proc.Signal(syscall.SIGTERM)
+					time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
+						if p := cmd.Process(); p != nil {
+							_ = p.Kill()
+						}
+					})
+				}
 			}
 		case <-ctx.Done():
 		}
@@ -1326,7 +1331,14 @@ func terminateCommand(cmd commandRunner) *forceKillTimer {
 		return nil
 	}
 
-	_ = proc.Signal(syscall.SIGTERM)
+	// Windows does not support SIGTERM - it silently fails without terminating the process.
+	// This causes codeagent-wrapper to hang waiting for the process to exit.
+	// On Windows, we directly use Kill() which calls TerminateProcess().
+	if isWindows() {
+		_ = proc.Kill()
+	} else {
+		_ = proc.Signal(syscall.SIGTERM)
+	}
 
 	done := make(chan struct{}, 1)
 	timer := time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
@@ -1348,7 +1360,12 @@ func terminateProcess(cmd commandRunner) *time.Timer {
 		return nil
 	}
 
-	_ = proc.Signal(syscall.SIGTERM)
+	// Windows does not support SIGTERM - use Kill() directly
+	if isWindows() {
+		_ = proc.Kill()
+	} else {
+		_ = proc.Signal(syscall.SIGTERM)
+	}
 
 	return time.AfterFunc(time.Duration(forceKillDelay.Load())*time.Second, func() {
 		if p := cmd.Process(); p != nil {

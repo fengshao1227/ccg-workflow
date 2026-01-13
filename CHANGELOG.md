@@ -7,6 +7,89 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.19] - 2026-01-13
+
+### 📝 文档优化
+
+**精简命令模板，去除冗余代码块**
+
+所有调用外部模型的命令模板已统一格式：
+- 顶部保留完整的「多模型调用规范」代码示例（只出现一次）
+- 各阶段改为 `⚠️ 必须调用 xxx（参照上方调用规范）` + 参数表格
+- 避免重复教学，减少模板体积
+
+**修改文件**：
+- `templates/commands/backend.md` - 阶段 2、3、5 精简
+- `templates/commands/frontend.md` - 阶段 2、3、5 精简
+- `templates/commands/debug.md` - 阶段 2 精简
+- `templates/commands/optimize.md` - 阶段 2 精简
+- `templates/commands/review.md` - 阶段 2 精简
+- `templates/commands/test.md` - 阶段 2 精简
+- `templates/commands/analyze.md` - 阶段 2 添加 ⚠️ 强调标记
+
+---
+
+## [1.7.18] - 2026-01-13
+
+### 🐛 Bug 修复
+
+**修复 Windows 系统 Codex 进程无法自动终止问题**
+
+#### 问题背景
+
+用户在 Windows 系统上使用 Codex 时遇到问题：
+- Codex 任务实际已完成（Web 界面显示完成，输出了 `agent_message` 和 `turn.completed`）
+- 但 codeagent-wrapper 进程一直不退出
+- 导致 Claude Code Task 工具无法获取日志，一直等待
+- 只有手动关闭进程才能继续
+
+**根本原因**：
+- `terminateCommand` 函数使用 `syscall.SIGTERM` 信号终止进程
+- **Windows 不支持 SIGTERM 信号**，该调用静默失败（不报错但不执行任何操作）
+- 虽然有 `forceKillDelay` 后的 `Kill()` 备用逻辑，但代码在 `waitCh` 上阻塞等待进程退出
+- 导致 Kill() 的定时器无法正确触发或进程无法正常退出
+
+#### 核心修复
+
+1. **Windows 平台直接使用 Kill()**：
+   - `terminateCommand()` 函数：Windows 上直接调用 `proc.Kill()` 而非 `SIGTERM`
+   - `terminateProcess()` 函数：同样的修复
+   - `forwardSignals()` 函数：同样的修复
+
+2. **保持 Unix 兼容性**：
+   - Unix/Linux/macOS 仍使用 `SIGTERM` 实现优雅退出
+   - 保留 `forceKillDelay` 后的强制 Kill 逻辑
+
+#### 技术细节
+
+修改文件：`codeagent-wrapper/executor.go`
+
+```go
+// 修复前
+_ = proc.Signal(syscall.SIGTERM)
+
+// 修复后
+if isWindows() {
+    _ = proc.Kill()  // Windows: 直接终止
+} else {
+    _ = proc.Signal(syscall.SIGTERM)  // Unix: 优雅退出
+}
+```
+
+#### 影响范围
+
+- ✅ **修复前**：Windows 用户 Codex 完成后进程卡住，需要手动终止
+- ✅ **修复后**：所有平台进程正确终止，Task 工具可以正常获取结果
+- ✅ **向后兼容**：Unix 平台行为不变
+
+#### 相关文件
+
+- `codeagent-wrapper/executor.go` - 修改 3 个函数的信号处理逻辑
+- `codeagent-wrapper/main.go` - 版本号升级至 v5.5.0
+- 重新编译所有平台二进制文件
+
+---
+
 ## [1.7.17] - 2026-01-12
 
 ### 🐛 Bug 修复

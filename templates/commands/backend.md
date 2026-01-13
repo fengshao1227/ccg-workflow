@@ -99,9 +99,13 @@ EOF",
 
 `[模式：构思]` - Codex 主导分析
 
-调用 Codex，使用分析提示词，输出技术可行性、推荐方案、风险点。
+**⚠️ 必须调用 Codex**（参照上方调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/analyzer.md`
+- 需求：增强后的需求（如未增强则用 $ARGUMENTS）
+- 上下文：阶段 1 收集的项目上下文
+- OUTPUT: 技术可行性分析、推荐方案（至少 2 个）、风险点评估
 
-**📌 保存 SESSION_ID**（`CODEX_SESSION`）。
+**📌 保存 SESSION_ID**（`CODEX_SESSION`）用于后续阶段复用。
 
 输出方案（至少 2 个），等待用户选择。
 
@@ -109,7 +113,11 @@ EOF",
 
 `[模式：计划]` - Codex 主导规划
 
-调用 Codex（`resume $CODEX_SESSION`），使用规划提示词，输出文件结构、函数/类设计、依赖。
+**⚠️ 必须调用 Codex**（使用 `resume <CODEX_SESSION>` 复用会话）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/architect.md`
+- 需求：用户选择的方案
+- 上下文：阶段 2 的分析结果
+- OUTPUT: 文件结构、函数/类设计、依赖关系
 
 Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
 
@@ -125,7 +133,11 @@ Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
 
 `[模式：优化]` - Codex 主导审查
 
-调用 Codex，使用审查提示词，关注安全性、性能、错误处理、API规范。
+**⚠️ 必须调用 Codex**（参照上方调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/codex/reviewer.md`
+- 需求：审查以下后端代码变更
+- 上下文：git diff 或代码内容
+- OUTPUT: 安全性、性能、错误处理、API 规范问题列表
 
 整合审查意见，用户确认后执行优化。
 
