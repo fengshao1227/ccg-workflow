@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "5.4.1"
+	version               = "5.5.0"
 	defaultWorkdir        = "."
 	defaultTimeout        = 7200 // seconds (2 hours)
 	defaultCoverageTarget = 90.0

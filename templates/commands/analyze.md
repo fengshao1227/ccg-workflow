@@ -73,11 +73,14 @@ EOF",
 
 `[模式：分析]`
 
-**并行调用**（`run_in_background: true`）：
-- Codex：使用分析提示词，输出技术可行性、架构影响、性能考量
-- Gemini：使用分析提示词，输出 UI/UX 影响、用户体验、视觉设计考量
+**⚠️ 必须并行调用 Codex 和 Gemini**（参照上方调用规范，使用 `run_in_background: true`）：
 
-用 `TaskOutput` 等待两个模型的完整结果。
+| 模型 | ROLE_FILE | OUTPUT |
+|------|-----------|--------|
+| **Codex** | `~/.claude/.ccg/prompts/codex/analyzer.md` | 技术可行性、架构影响、性能考量 |
+| **Gemini** | `~/.claude/.ccg/prompts/gemini/analyzer.md` | UI/UX 影响、用户体验、视觉设计考量 |
+
+用 `TaskOutput` 等待两个模型的完整结果。**必须等所有模型返回后才能进入下一阶段**。
 
 ### 🔀 阶段 3：交叉验证
 

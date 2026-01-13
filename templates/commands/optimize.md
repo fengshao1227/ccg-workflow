@@ -70,11 +70,14 @@ EOF",
 
 `[模式：分析]`
 
-**并行调用**（`run_in_background: true`）：
-- Codex：分析后端性能问题，输出瓶颈列表、优化方案、预期收益
-- Gemini：分析前端性能问题（Core Web Vitals），输出瓶颈列表、优化方案、预期收益
+**⚠️ 必须并行调用 Codex 和 Gemini**（参照上方调用规范，使用 `run_in_background: true`）：
 
-用 `TaskOutput` 等待两个模型的完整结果。
+| 模型 | 需求 | OUTPUT |
+|------|------|--------|
+| **Codex** | 分析后端性能问题（$ARGUMENTS） | 性能瓶颈列表、优化方案、预期收益 |
+| **Gemini** | 分析前端性能问题（Core Web Vitals）（$ARGUMENTS） | 性能瓶颈列表、优化方案、预期收益 |
+
+用 `TaskOutput` 等待两个模型的完整结果。**必须等所有模型返回后才能进入下一阶段**。
 
 ### 🔀 阶段 3：优化整合
 

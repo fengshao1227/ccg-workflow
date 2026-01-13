@@ -99,9 +99,13 @@ EOF",
 
 `[模式：构思]` - Gemini 主导分析
 
-调用 Gemini，使用分析提示词，输出 UI 可行性、推荐方案、用户体验。
+**⚠️ 必须调用 Gemini**（参照上方调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/gemini/analyzer.md`
+- 需求：增强后的需求（如未增强则用 $ARGUMENTS）
+- 上下文：阶段 1 收集的项目上下文
+- OUTPUT: UI 可行性分析、推荐方案（至少 2 个）、用户体验评估
 
-**📌 保存 SESSION_ID**（`GEMINI_SESSION`）。
+**📌 保存 SESSION_ID**（`GEMINI_SESSION`）用于后续阶段复用。
 
 输出方案（至少 2 个），等待用户选择。
 
@@ -109,7 +113,11 @@ EOF",
 
 `[模式：计划]` - Gemini 主导规划
 
-调用 Gemini（`resume $GEMINI_SESSION`），使用规划提示词，输出组件结构、UI流程、样式方案。
+**⚠️ 必须调用 Gemini**（使用 `resume <GEMINI_SESSION>` 复用会话）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/gemini/architect.md`
+- 需求：用户选择的方案
+- 上下文：阶段 2 的分析结果
+- OUTPUT: 组件结构、UI 流程、样式方案
 
 Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
 
@@ -125,7 +133,11 @@ Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
 
 `[模式：优化]` - Gemini 主导审查
 
-调用 Gemini，使用审查提示词，关注可访问性、响应式、性能、设计一致性。
+**⚠️ 必须调用 Gemini**（参照上方调用规范）：
+- ROLE_FILE: `~/.claude/.ccg/prompts/gemini/reviewer.md`
+- 需求：审查以下前端代码变更
+- 上下文：git diff 或代码内容
+- OUTPUT: 可访问性、响应式、性能、设计一致性问题列表
 
 整合审查意见，用户确认后执行优化。
 
