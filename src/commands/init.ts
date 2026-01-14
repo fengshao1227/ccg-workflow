@@ -135,6 +135,13 @@ export async function init(options: InitOptions = {}): Promise<void> {
 
     liteMode = !enableWebUI
   }
+  else {
+    // In non-interactive mode (update), preserve existing liteMode setting
+    const existingConfig = await readCcgConfig()
+    if (existingConfig?.performance?.liteMode !== undefined) {
+      liteMode = existingConfig.performance.liteMode
+    }
+  }
 
   // Build routing config (fixed: Gemini frontend, Codex backend)
   const routing: ModelRouting = {

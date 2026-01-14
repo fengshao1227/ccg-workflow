@@ -323,8 +323,8 @@ async function performUpdate(fromVersion: string, toVersion: string, isNewVersio
   try {
     // Use npx to run the latest version's init command with --force flag
     // This ensures the new version's PACKAGE_ROOT is used for binary installation
-    // Note: --skip-mcp skips MCP config, but still asks for Web UI preference
-    await execAsync(`npx --yes ccg-workflow@latest init --force --skip-mcp`, {
+    // Note: --skip-prompt preserves existing liteMode setting without asking
+    await execAsync(`npx --yes ccg-workflow@latest init --force --skip-mcp --skip-prompt`, {
       timeout: 120000,
       env: {
         ...process.env,
