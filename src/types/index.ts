@@ -49,6 +49,9 @@ export interface CcgConfig {
     provider: string
     setup_url: string
   }
+  performance?: {
+    liteMode?: boolean // 轻量模式：禁用 Web UI，更快响应
+  }
 }
 
 // 工作流定义

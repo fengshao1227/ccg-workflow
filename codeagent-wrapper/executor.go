@@ -23,8 +23,14 @@ import (
 // before terminating the backend process. This delay allows the backend to send
 // completion events (turn.completed/thread.completed) which may arrive after the message.
 // Default: 5 seconds (increased from 1s to fix Windows Codex completion detection)
+// Lite mode: 1 second (faster response)
 // Override via CODEAGENT_POST_MESSAGE_DELAY environment variable (in seconds)
 func resolvePostMessageDelay() time.Duration {
+	// Lite mode uses faster delay
+	if liteMode {
+		return 1 * time.Second
+	}
+
 	raw := strings.TrimSpace(os.Getenv("CODEAGENT_POST_MESSAGE_DELAY"))
 	if raw == "" {
 		return 5 * time.Second // Default: 5 seconds
@@ -859,8 +865,9 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	}
 
 	// Start WebServer for this task (single-panel, random port, short-lived)
+	// Skip in lite mode for better performance
 	var webSessionID string
-	if globalWebServer == nil {
+	if !liteMode && globalWebServer == nil {
 		globalWebServer = NewWebServer(cfg.Backend)
 		if err := globalWebServer.Start(); err != nil {
 			logWarn(fmt.Sprintf("Failed to start web server: %v", err))
@@ -868,7 +875,7 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	}
 
 	// Generate a unique session ID for WebServer tracking
-	if globalWebServer != nil {
+	if !liteMode && globalWebServer != nil {
 		randBytes := make([]byte, 4)
 		rand.Read(randBytes)
 		webSessionID = fmt.Sprintf("%s-%d-%s", cfg.Backend, time.Now().UnixMilli(), hex.EncodeToString(randBytes))

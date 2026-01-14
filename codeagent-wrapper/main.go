@@ -33,6 +33,10 @@ const (
 
 var useASCIIMode = os.Getenv("CODEAGENT_ASCII_MODE") == "true"
 
+// Lite mode: disable WebServer, reduce logging, faster post-message delay
+// Can be enabled via --lite flag or CODEAGENT_LITE_MODE=true environment variable
+var liteMode = os.Getenv("CODEAGENT_LITE_MODE") == "true"
+
 // Test hooks for dependency injection
 var (
 	stdinReader  io.Reader = os.Stdin
@@ -510,6 +514,7 @@ func printHelp() {
 Usage:
     %[1]s "task" [workdir]
     %[1]s --backend claude "task" [workdir]
+    %[1]s --lite "task" [workdir]     Lite mode (faster, no Web UI)
     %[1]s - [workdir]              Read task from stdin
     %[1]s resume <session_id> "task" [workdir]
     %[1]s resume <session_id> - [workdir]
@@ -524,9 +529,14 @@ Parallel mode examples:
     %[1]s --parallel --full-output < tasks.txt
     %[1]s --parallel <<'EOF'
 
+Options:
+    --lite, -L            Lite mode: disable Web UI, faster response
+    --backend <name>      Select backend (codex, gemini, claude)
+
 Environment Variables:
     CODEX_TIMEOUT         Timeout in milliseconds (default: 7200000)
     CODEAGENT_ASCII_MODE  Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
+    CODEAGENT_LITE_MODE   Enable lite mode (true/false)
 
 Exit Codes:
     0    Success

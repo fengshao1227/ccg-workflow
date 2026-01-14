@@ -1,6 +1,6 @@
 {
   "name": "ccg-workflow",
-  "version": "1.7.26",
+  "version": "1.7.27",
   "description": "Claude-Codex-Gemini 多模型协作系统 - 智能路由多模型开发工作流",
   "type": "module",
   "packageManager": "pnpm@10.17.1",

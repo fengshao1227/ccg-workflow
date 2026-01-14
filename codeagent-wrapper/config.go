@@ -203,6 +203,9 @@ func parseArgs() (*Config, error) {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch {
+		case arg == "--lite", arg == "-L":
+			liteMode = true
+			continue
 		case arg == "--backend":
 			if i+1 >= len(args) {
 				return nil, fmt.Errorf("--backend flag requires a value")

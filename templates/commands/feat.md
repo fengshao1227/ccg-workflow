@@ -15,7 +15,7 @@ $ARGUMENTS
 ```
 # 新会话调用
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> - \"$PWD\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>
@@ -30,7 +30,7 @@ EOF",
 
 # 复用会话调用
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> resume <SESSION_ID> - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> resume <SESSION_ID> - \"$PWD\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>

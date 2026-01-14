@@ -27,7 +27,7 @@ description: '多模型调试：Codex 后端诊断 + Gemini 前端诊断，交�
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> - \"$PWD\" <<'EOF'
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>
 上下文：<错误日志、堆栈信息、复现步骤等>

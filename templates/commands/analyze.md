@@ -28,7 +28,7 @@ description: '多模型技术分析（并行执行）：Codex 后端视角 + Gem
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend <codex|gemini> - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend <codex|gemini> - \"$PWD\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>

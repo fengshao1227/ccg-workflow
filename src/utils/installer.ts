@@ -258,6 +258,7 @@ function injectConfigVariables(content: string, config: {
     backend?: { models?: string[], primary?: string }
     review?: { models?: string[] }
   }
+  liteMode?: boolean
 }): string {
   let processed = content
 
@@ -283,6 +284,11 @@ function injectConfigVariables(content: string, config: {
   // Routing mode
   const routingMode = routing.mode || 'smart'
   processed = processed.replace(/\{\{ROUTING_MODE\}\}/g, routingMode)
+
+  // Lite mode flag for codeagent-wrapper
+  // If liteMode is true, inject "--lite" flag
+  const liteModeFlag = config.liteMode ? '--lite ' : ''
+  processed = processed.replace(/\{\{LITE_MODE_FLAG\}\}/g, liteModeFlag)
 
   return processed
 }
@@ -376,6 +382,7 @@ export async function installWorkflows(
       backend?: { models?: string[], primary?: string }
       review?: { models?: string[] }
     }
+    liteMode?: boolean
   },
 ): Promise<InstallResult> {
   // Default config
@@ -386,6 +393,7 @@ export async function installWorkflows(
       backend: { models: ['codex'], primary: 'codex' },
       review: { models: ['codex', 'gemini'] },
     },
+    liteMode: config?.liteMode || false,
   }
   const result: InstallResult = {
     success: true,

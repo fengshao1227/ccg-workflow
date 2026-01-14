@@ -23,6 +23,9 @@ export async function init(options: InitOptions = {}): Promise<void> {
   const mode: CollaborationMode = 'smart'
   const selectedWorkflows = getAllCommandIds()
 
+  // Performance mode selection
+  let liteMode = false
+
   // MCP Tool Selection
   let mcpProvider = 'ace-tool'
   let aceToolBaseUrl = ''
@@ -114,6 +117,17 @@ export async function init(options: InitOptions = {}): Promise<void> {
       console.log(ansis.gray(`     • 可稍后手动配置任何 MCP 服务`))
       console.log()
     }
+
+    // Performance mode selection
+    console.log()
+    const { enableWebUI } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'enableWebUI',
+      message: `启用 Web UI 实时输出？${ansis.gray('(禁用可加速响应)')}`,
+      default: true,
+    }])
+
+    liteMode = !enableWebUI
   }
 
   // Build routing config (fixed: Gemini frontend, Codex backend)
@@ -143,6 +157,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
   console.log(`  ${ansis.cyan('模型路由')}  ${ansis.green('Gemini')} (前端) + ${ansis.blue('Codex')} (后端)`)
   console.log(`  ${ansis.cyan('命令数量')}  ${ansis.yellow(selectedWorkflows.length.toString())} 个`)
   console.log(`  ${ansis.cyan('MCP 工具')}  ${mcpProvider === 'ace-tool' ? (aceToolToken ? ansis.green('ace-tool') : ansis.yellow('ace-tool (待配置)')) : ansis.gray('跳过')}`)
+  console.log(`  ${ansis.cyan('Web UI')}    ${liteMode ? ansis.gray('禁用') : ansis.green('启用')}`)
   console.log(ansis.yellow('━'.repeat(50)))
   console.log()
 
@@ -205,6 +220,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
       routing,
       installedWorkflows: selectedWorkflows,
       mcpProvider,
+      liteMode,
     })
 
     // Save config FIRST - ensure it's created even if installation fails
@@ -214,6 +230,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
     const installDir = options.installDir || join(homedir(), '.claude')
     const result = await installWorkflows(selectedWorkflows, installDir, options.force, {
       routing,
+      liteMode,
     })
 
     // Install ace-tool MCP if token was provided

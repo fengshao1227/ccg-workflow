@@ -34,7 +34,7 @@ description: '前端专项工作流（研究→构思→计划→执行→优化
 ```
 # 新会话调用
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend gemini - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend gemini - \"$PWD\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>
@@ -49,7 +49,7 @@ EOF",
 
 # 复用会话调用
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper --backend gemini resume <SESSION_ID> - \"$PWD\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--backend gemini resume <SESSION_ID> - \"$PWD\" <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：<增强后的需求（如未增强则用 $ARGUMENTS）>

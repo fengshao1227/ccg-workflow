@@ -45,6 +45,7 @@ export function createDefaultConfig(options: {
   routing: ModelRouting
   installedWorkflows: string[]
   mcpProvider?: string
+  liteMode?: boolean
 }): CcgConfig {
   return {
     general: {
@@ -64,6 +65,9 @@ export function createDefaultConfig(options: {
     mcp: {
       provider: options.mcpProvider || 'ace-tool',
       setup_url: 'https://augmentcode.com/',
+    },
+    performance: {
+      liteMode: options.liteMode || false,
     },
   }
 }
