@@ -315,16 +315,21 @@ export async function init(options: InitOptions = {}): Promise<void> {
       const platform = process.platform
 
       if (platform === 'win32') {
-        // Windows: Auto-configure PATH using PowerShell
-        const windowsPath = result.binPath.replace(/\//g, '\\')
+        const windowsPath = result.binPath.replace(/\//g, '\\').replace(/\\$/, '')
         try {
           const { execSync } = await import('node:child_process')
-          // Check if already in PATH
-          const currentPath = execSync('powershell -Command "[System.Environment]::GetEnvironmentVariable(\'PATH\', \'User\')"', { encoding: 'utf-8' }).trim()
+          const psFlags = '-NoProfile -NonInteractive -ExecutionPolicy Bypass'
+          const currentPath = execSync(`powershell ${psFlags} -Command "[System.Environment]::GetEnvironmentVariable('PATH', 'User')"`, { encoding: 'utf-8' }).trim()
+          const currentPathNorm = currentPath.toLowerCase().replace(/\\$/g, '')
+          const windowsPathNorm = windowsPath.toLowerCase()
 
-          if (!currentPath.includes(windowsPath) && !currentPath.includes('.claude\\bin')) {
-            // Add to user PATH (must read current user PATH first, not $env:PATH which is process-level)
-            execSync(`powershell -Command "$currentPath = [System.Environment]::GetEnvironmentVariable('PATH', 'User'); [System.Environment]::SetEnvironmentVariable('PATH', \\"$currentPath;${windowsPath}\\", 'User')"`, { stdio: 'pipe' })
+          if (!currentPathNorm.includes(windowsPathNorm) && !currentPathNorm.includes('.claude\\bin')) {
+            // Use single quotes in PowerShell to avoid escaping issues; empty PATH means set directly
+            const escapedPath = windowsPath.replace(/'/g, "''")
+            const psScript = currentPath
+              ? `$p=[System.Environment]::GetEnvironmentVariable('PATH','User');[System.Environment]::SetEnvironmentVariable('PATH',($p+';'+'${escapedPath}'),'User')`
+              : `[System.Environment]::SetEnvironmentVariable('PATH','${escapedPath}','User')`
+            execSync(`powershell ${psFlags} -Command "${psScript}"`, { stdio: 'pipe' })
             console.log(`    ${ansis.green('✓')} PATH ${ansis.gray('→ 用户环境变量')}`)
           }
         }
@@ -333,30 +338,38 @@ export async function init(options: InitOptions = {}): Promise<void> {
         }
       }
       else if (!options.skipPrompt) {
-        // macOS/Linux: Auto-configure PATH silently
         const exportCommand = `export PATH="${result.binPath}:$PATH"`
-        const shellRc = process.env.SHELL?.includes('zsh') ? join(homedir(), '.zshrc') : join(homedir(), '.bashrc')
-        const shellRcDisplay = process.env.SHELL?.includes('zsh') ? '~/.zshrc' : '~/.bashrc'
+        const shell = process.env.SHELL || ''
+        const isZsh = shell.includes('zsh')
+        const isBash = shell.includes('bash')
+        const isMacDefaultZsh = process.platform === 'darwin' && !shell
 
-        try {
-          // Check if already configured
-          let rcContent = ''
-          if (await fs.pathExists(shellRc)) {
-            rcContent = await fs.readFile(shellRc, 'utf-8')
-          }
+        if (isZsh || isBash || isMacDefaultZsh) {
+          const shellRc = (isZsh || isMacDefaultZsh) ? join(homedir(), '.zshrc') : join(homedir(), '.bashrc')
+          const shellRcDisplay = (isZsh || isMacDefaultZsh) ? '~/.zshrc' : '~/.bashrc'
 
-          if (rcContent.includes(result.binPath) || rcContent.includes('/.claude/bin')) {
-            // Already configured, no action needed
+          try {
+            let rcContent = ''
+            if (await fs.pathExists(shellRc)) {
+              rcContent = await fs.readFile(shellRc, 'utf-8')
+            }
+
+            if (rcContent.includes(result.binPath) || rcContent.includes('/.claude/bin')) {
+              console.log(`    ${ansis.green('✓')} PATH ${ansis.gray(`→ ${shellRcDisplay} (已配置)`)}`)
+            }
+            else {
+              const configLine = `\n# CCG multi-model collaboration system\n${exportCommand}\n`
+              await fs.appendFile(shellRc, configLine, 'utf-8')
+              console.log(`    ${ansis.green('✓')} PATH ${ansis.gray(`→ ${shellRcDisplay}`)}`)
+            }
           }
-          else {
-            // Append to shell config
-            const configLine = `\n# CCG multi-model collaboration system\n${exportCommand}\n`
-            await fs.appendFile(shellRc, configLine, 'utf-8')
-            console.log(`    ${ansis.green('✓')} PATH ${ansis.gray(`→ ${shellRcDisplay}`)}`)
+          catch {
+            // Silently ignore PATH config errors
           }
         }
-        catch {
-          // Silently ignore PATH config errors
+        else {
+          console.log(`    ${ansis.yellow('⚠')} PATH ${ansis.gray('→ 请手动添加到 shell 配置:')}`)
+          console.log(`      ${ansis.cyan(exportCommand)}`)
         }
       }
     }
