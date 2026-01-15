@@ -126,6 +126,10 @@ Codex   Gemini
 - [GudaStudio/skills](https://github.com/GuDaStudio/skills) - 路由设计
 - [ace-tool](https://linux.do/t/topic/1344562) - MCP 工具
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=fengshao1227/ccg-workflow&type=timeline&legend=top-left)](https://www.star-history.com/#fengshao1227/ccg-workflow&type=timeline&legend=top-left)
+
 ## License
 
 MIT
