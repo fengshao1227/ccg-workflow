@@ -48,14 +48,16 @@ EOF",
 
 **并行调用**：使用 `run_in_background: true` 启动，用 `TaskOutput` 等待结果。**必须等所有模型返回后才能进入下一阶段**。
 
-**等待后台任务**（使用最大超时 600000ms = 10分钟）：
+**等待后台任务**（使用最大超时 600000ms = 10 分钟）：
 
 ```
 TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 ```
 
-**重要**：必须指定 `timeout: 600000`，否则默认只有 30 秒会导致提前超时。
+**重要**：
+- 必须指定 `timeout: 600000`，否则默认只有 30 秒会导致提前超时。
 如果 10 分钟后仍未完成，继续用 `TaskOutput` 轮询，**绝对不要 Kill 进程**。
+- 若因等待时间过长跳过了等待 TaskOutput 结果，则**必须调用 `AskUserQuestion` 工具询问用户选择继续等待还是 Kill Task。禁止直接 Kill Task。**
 
 ---
 
@@ -90,6 +92,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
    - OUTPUT：性能瓶颈列表、优化方案、预期收益
 
 用 `TaskOutput` 等待两个模型的完整结果。**必须等所有模型返回后才能进入下一阶段**。
+
+**务必遵循上方 `多模型调用规范` 的 `重要` 指示**
 
 ### 🔀 阶段 3：优化整合
 

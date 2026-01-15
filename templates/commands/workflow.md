@@ -79,14 +79,16 @@ EOF",
 
 **并行调用**：使用 `run_in_background: true` 启动，用 `TaskOutput` 等待结果。**必须等所有模型返回后才能进入下一阶段**。
 
-**等待后台任务**（使用最大超时 600000ms = 10分钟）：
+**等待后台任务**（使用最大超时 600000ms = 10 分钟）：
 
 ```
 TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 ```
 
-**重要**：必须指定 `timeout: 600000`，否则默认只有 30 秒会导致提前超时。
+**重要**：
+- 必须指定 `timeout: 600000`，否则默认只有 30 秒会导致提前超时。
 如果 10 分钟后仍未完成，继续用 `TaskOutput` 轮询，**绝对不要 Kill 进程**。
+- 若因等待时间过长跳过了等待 TaskOutput 结果，则**必须调用 `AskUserQuestion` 工具询问用户选择继续等待还是 Kill Task。禁止直接 Kill Task。**
 
 ---
 
@@ -122,6 +124,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 - Gemini：使用分析提示词，输出 UI 可行性、方案、体验
 
 用 `TaskOutput` 等待结果。**📌 保存 SESSION_ID**（`CODEX_SESSION` 和 `GEMINI_SESSION`）。
+
+**务必遵循上方 `多模型调用规范` 的 `重要` 指示**
 
 综合两方分析，输出方案对比（至少 2 个方案），等待用户选择。
 
