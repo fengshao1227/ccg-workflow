@@ -70,6 +70,12 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 ---
 
+## 沟通守则
+
+1. 在需要询问用户时，尽量使用 `AskUserQuestion` 工具进行交互，举例场景：请求用户确认/选择/批准
+
+---
+
 ## 核心工作流程
 
 ### 1. 输入类型判断

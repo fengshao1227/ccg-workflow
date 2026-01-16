@@ -98,6 +98,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 2. 核心工作流严格按 `研究 → 构思 → 计划 → 执行 → 优化 → 评审` 顺序流转。
 3. 每个阶段完成后必须请求用户确认。
 4. 评分低于 7 分或用户未批准时强制停止。
+5. 在需要询问用户时，尽量使用 `AskUserQuestion` 工具进行交互，举例场景：请求用户确认/选择/批准
 
 ---
 
@@ -139,6 +140,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 用 `TaskOutput` 等待结果。
 
+**务必遵循上方 `多模型调用规范` 的 `重要` 指示**
+
 **Claude 综合规划**：采纳 Codex 后端规划 + Gemini 前端规划，用户批准后存入 `.claude/plan/任务名.md`
 
 ### ⚡ 阶段 4：实施
@@ -158,6 +161,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 - Gemini：使用审查提示词，关注可访问性、设计一致性
 
 用 `TaskOutput` 等待结果。整合审查意见，用户确认后执行优化。
+
+**务必遵循上方 `多模型调用规范` 的 `重要` 指示**
 
 ### ✅ 阶段 6：质量审查
 

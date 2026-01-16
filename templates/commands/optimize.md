@@ -61,6 +61,12 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 ---
 
+## 沟通守则
+
+1. 在需要询问用户时，尽量使用 `AskUserQuestion` 工具进行交互，举例场景：请求用户确认/选择/批准
+
+---
+
 ## 执行工作流
 
 **优化目标**：$ARGUMENTS
@@ -131,7 +137,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 **后端**：N+1→批量加载、缺索引→复合索引、重复计算→缓存、同步→异步
 
-**前端**：大Bundle→代码分割、频繁重渲染→memo、大列表→虚拟滚动、未优化图片→WebP
+**前端**：大 Bundle→代码分割、频繁重渲染→memo、大列表→虚拟滚动、未优化图片→WebP
 
 ---
 
