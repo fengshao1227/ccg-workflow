@@ -372,6 +372,8 @@ func (ws *WebServer) generateIndexHTML() string {
                     taskEl.style.cssText = 'color: #58a6ff; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #30363d;';
                     taskEl.innerHTML = '<strong>📋 Task:</strong><br>' + session.task.replace(/\n/g, '<br>');
                     output.appendChild(taskEl);
+                    // Scroll to bottom after displaying task
+                    setTimeout(scrollToBottom, 0);
                 }
 
                 const es = new EventSource('/api/stream/' + session.id);
@@ -416,7 +418,7 @@ func (ws *WebServer) generateIndexHTML() string {
                         liveIndicator.style.display = 'none';
                         const doneEl = document.createElement('div');
                         doneEl.className = 'done-indicator';
-                        doneEl.textContent = '✓ 完成';
+                        doneEl.textContent = '✓ 完成 (3秒后自动关闭)';
                         output.appendChild(doneEl);
 
                         // Force scroll to bottom on completion
@@ -429,6 +431,15 @@ func (ws *WebServer) generateIndexHTML() string {
                         if (Notification.permission === 'granted') {
                             new Notification('任务完成', { body: '代码生成已完成' });
                         }
+
+                        // Auto-close window after 3 seconds
+                        setTimeout(() => {
+                            window.close();
+                            // If window.close() fails (user-opened window), show message
+                            setTimeout(() => {
+                                doneEl.textContent = '✓ 完成 (可以关闭此页面)';
+                            }, 100);
+                        }, 3000);
                     }
                 };
                 es.onerror = () => {

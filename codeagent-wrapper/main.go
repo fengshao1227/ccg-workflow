@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "5.6.0"
+	version               = "5.7.0"
 	defaultWorkdir        = "."
 	defaultTimeout        = 7200 // seconds (2 hours)
 	defaultCoverageTarget = 90.0
@@ -534,9 +534,11 @@ Options:
     --backend <name>      Select backend (codex, gemini, claude)
 
 Environment Variables:
-    CODEX_TIMEOUT         Timeout in milliseconds (default: 7200000)
-    CODEAGENT_ASCII_MODE  Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
-    CODEAGENT_LITE_MODE   Enable lite mode (true/false)
+    CODEX_TIMEOUT              Timeout in milliseconds (default: 7200000)
+    CODEX_REQUIRE_APPROVAL     Require manual approval for file operations (default: false)
+    CODEX_DISABLE_SKIP_GIT_CHECK  Disable skip-git-repo-check flag (default: false)
+    CODEAGENT_ASCII_MODE       Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
+    CODEAGENT_LITE_MODE        Enable lite mode (true/false)
 
 Exit Codes:
     0    Success

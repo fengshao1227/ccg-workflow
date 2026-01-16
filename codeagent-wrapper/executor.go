@@ -771,8 +771,9 @@ func buildCodexArgs(cfg *Config, targetArg string) []string {
 
 	args := []string{"e"}
 
-	if envFlagEnabled("CODEX_BYPASS_SANDBOX") {
-		logWarn("CODEX_BYPASS_SANDBOX=true: running without approval/sandbox protection")
+	// Default: auto-approve all operations (consistent with Gemini's -y behavior)
+	// Users can disable this by setting CODEX_REQUIRE_APPROVAL=true
+	if !envFlagEnabled("CODEX_REQUIRE_APPROVAL") {
 		args = append(args, "--dangerously-bypass-approvals-and-sandbox")
 	}
 

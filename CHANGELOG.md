@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.36] - 2026-01-16
+
+### 🐛 Bug 修复
+
+**修复 Codex 默认需要手动同意文件操作的问题**
+
+#### 问题背景
+
+- Codex 后端默认需要用户手动同意读取文件和执行操作
+- Gemini 后端使用 `-y` 参数自动同意所有操作
+- 两个后端行为不一致，影响用户体验
+
+#### 修复方案
+
+**1. 修改 `executor.go:772-783`**
+
+```go
+// 原逻辑：只有设置 CODEX_BYPASS_SANDBOX=true 时才自动同意
+if envFlagEnabled("CODEX_BYPASS_SANDBOX") {
+    args = append(args, "--dangerously-bypass-approvals-and-sandbox")
+}
+
+// 新逻辑：默认自动同意（与 Gemini 一致）
+if !envFlagEnabled("CODEX_REQUIRE_APPROVAL") {
+    args = append(args, "--dangerously-bypass-approvals-and-sandbox")
+}
+```
+
+**2. 添加环境变量控制**
+
+- `CODEX_REQUIRE_APPROVAL=true` - 需要手动同意（可选退出）
+- 默认行为：自动同意所有操作
+
+**3. 更新帮助信息**
+
+添加 `CODEX_REQUIRE_APPROVAL` 和 `CODEX_DISABLE_SKIP_GIT_CHECK` 环境变量说明。
+
+### ✨ 新功能
+
+**Web UI 增强**
+
+1. **自动滚动修复**
+   - 修复显示任务内容后不滚动到底部的问题
+   - 每次新内容到达时自动滚动
+   - 尊重用户手动滚动（向上滚动后停止自动滚动）
+
+2. **任务完成后自动关闭页面**
+   - 显示 "✓ 完成 (3秒后自动关闭)"
+   - 3 秒后自动调用 `window.close()`
+   - 如果无法关闭（用户手动打开的窗口），显示 "✓ 完成 (可以关闭此页面)"
+
+### 📦 版本更新
+
+- **ccg-workflow**: 1.7.35 → 1.7.36
+- **codeagent-wrapper**: 5.6.0 → 5.7.0
+
+---
+
 ## [1.7.22] - 2026-01-13
 
 ### 🐛 Bug 修复
