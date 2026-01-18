@@ -1,0 +1,54 @@
+# 排除未测试的文件和目录
+
+# 未测试的提示词
+templates/prompts/gemini/architect.md
+
+# 未测试的示例
+templates/examples/
+
+# 未测试的 Schema
+templates/schemas/
+
+# 未测试的命令模板修改
+templates/commands/execute.md
+templates/commands/plan.md
+
+# 开发文件
+*.log
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode
+.idea
+node_modules
+src/
+test/
+tests/
+*.test.ts
+*.spec.ts
+
+# 文档（可选，保留或排除）
+WORKFLOW.md
+PATH_ISSUE_DIAGNOSIS.md
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# 构建工具配置
+tsconfig.json
+unbuild.config.ts
+build.config.ts
+pnpm-lock.yaml
+
+# Go 源码（二进制文件已在 bin/ 中）
+codeagent-wrapper/*.go
+codeagent-wrapper/*.sh
+codeagent-wrapper/go.mod
+codeagent-wrapper/go.sum
