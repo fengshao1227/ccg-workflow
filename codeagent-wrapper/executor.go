@@ -969,11 +969,13 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 
 	cmd := newCommandRunner(ctx, commandName, codexArgs...)
 
-	if cfg.Backend == "claude" {
-		if env := loadMinimalEnvSettings(); len(env) > 0 {
-			cmd.SetEnv(env)
-		}
+	// 统一处理所有后端的环境变量
+	// 修复 Windows Git Bash 后台进程 PATH 继承问题
+	env := loadMinimalEnvSettings()
+	if env == nil {
+		env = make(map[string]string)
 	}
+	cmd.SetEnv(env) // SetEnv 会自动合并 os.Environ() (executor.go:122-161)
 
 	// For backends that don't support -C flag (claude, gemini), set working directory via cmd.Dir
 	// Codex passes workdir via -C flag, so we skip setting Dir for it to avoid conflicts

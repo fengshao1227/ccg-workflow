@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.41] - 2026-01-18
+
+### 🐛 Bug 修复
+
+**修复 Windows Git Bash 环境下 PATH 继承问题 (codeagent-wrapper v5.7.1)**
+
+- **问题**: codeagent-wrapper 仅对 `claude` 后端设置环境变量，导致 `codex`/`gemini` 在 Windows Git Bash 后台进程中找不到命令
+- **修复**: 统一所有后端的环境变量处理逻辑
+  - 所有后端均调用 `cmd.SetEnv()` 显式合并父进程环境变量
+  - 确保 PATH 等关键环境变量正确继承
+  - 修复文件: `codeagent-wrapper/executor.go:972-978`
+- **影响**:
+  - ✅ Windows 用户不再需要手动配置 `settings.json` 注入 PATH
+  - ✅ 所有平台的环境变量继承行为统一
+  - ✅ 减少 "command not found" 错误
+
+**详细诊断**: 参见 `PATH_ISSUE_DIAGNOSIS.md`
+
+---
+
 ## [1.7.39] - 2026-01-16
 
 ### ✨ 新功能
