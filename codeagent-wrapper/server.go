@@ -128,7 +128,18 @@ func openBrowser(url string) {
 	default:
 		return
 	}
-	_ = cmd.Start()
+
+	// FIX: Properly clean up browser process to prevent zombie processes
+	// Start the command and wait for it to complete in a goroutine
+	if err := cmd.Start(); err != nil {
+		// Silently fail if browser can't be opened
+		return
+	}
+
+	// Clean up process in background to prevent zombie processes
+	go func() {
+		_ = cmd.Wait()
+	}()
 }
 
 // StartSession starts tracking a new session
