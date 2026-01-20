@@ -96,6 +96,12 @@ func injectRoleFile(taskText string) (string, error) {
 			filePath = filepath.Join(home, filePath[2:])
 		}
 
+		// Windows-specific: Convert Git Bash paths to native Windows paths
+		// Only applies when running on Windows (isWindows() check)
+		if isWindows() {
+			filePath = normalizeWindowsPath(filePath)
+		}
+
 		// Read file content
 		content, err := os.ReadFile(filePath)
 		if err != nil {
@@ -108,6 +114,31 @@ func injectRoleFile(taskText string) (string, error) {
 	})
 
 	return result, nil
+}
+
+// normalizeWindowsPath converts Git Bash-style paths to native Windows paths
+// Only called when isWindows() returns true, ensuring macOS/Linux are unaffected
+// Examples:
+//   - /c/Users/foo -> C:/Users/foo
+//   - C:\Users\foo -> C:/Users/foo (unchanged, already native)
+//   - relative/path -> relative/path (unchanged)
+func normalizeWindowsPath(path string) string {
+	// First, convert all backslashes to forward slashes
+	path = strings.ReplaceAll(path, "\\", "/")
+
+	// Convert Git Bash-style paths (/c/Users/...) to Windows paths (C:/Users/...)
+	// Pattern: /[a-z]/ at the beginning
+	gitBashPattern := regexp.MustCompile(`^/([a-zA-Z])/`)
+	if gitBashPattern.MatchString(path) {
+		// Extract drive letter and convert to Windows format
+		matches := gitBashPattern.FindStringSubmatch(path)
+		if len(matches) >= 2 {
+			driveLetter := strings.ToUpper(matches[1])
+			path = driveLetter + ":" + path[2:] // /c/Users -> C:/Users
+		}
+	}
+
+	return path
 }
 
 func getEnv(key, defaultValue string) string {
