@@ -2,13 +2,18 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-16 (v1.7.39)
+**Last Updated**: 2026-01-21 (v1.7.47)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-01-21 (v1.7.47)
+- 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词，修复会话复用失败问题 (exit code 42)
+- 📝 **环境变量配置说明**：VSCode 插件用户需在 `~/.claude/settings.json` 配置 API 密钥
+- ✅ **专家提示词数量**：12 → 13 个（Codex 6 + Gemini 7）
 
 ### 2026-01-16 (v1.7.39)
 - ✨ **新增 `/ccg:plan` 命令**：多模型协作规划（Phase 1-2），生成 Step-by-step 实施计划
@@ -24,7 +29,7 @@
 
 1. **多模型协作编排**：固定路由 Gemini（前端）+ Codex（后端）+ Claude（编排）
 2. **16 个斜杠命令**：开发工作流 + Git 工具 + 项目管理
-3. **12 个专家提示词**：Codex 6 个 + Gemini 6 个
+3. **13 个专家提示词**：Codex 6 个 + Gemini 7 个
 4. **跨平台 CLI 工具**：一键安装（支持 macOS、Linux、Windows）
 5. **MCP 集成**：ace-tool 可选配置（代码检索 + Prompt 增强）
 
@@ -198,7 +203,7 @@ templates/
 │       ├── ui-ux-designer.md
 │       ├── init-architect.md
 │       └── get-current-datetime.md
-├── prompts/                  # 12 个专家提示词
+├── prompts/                  # 13 个专家提示词
 │   ├── codex/
 │   └── gemini/
 └── skills/                   # 1 个 skill
@@ -230,7 +235,7 @@ graph TD
     Init --> Commands["~/.claude/commands/ccg/<br/>16 个命令"]
     Init --> Agents["~/.claude/agents/ccg/<br/>4 个子智能体"]
     Init --> Skills["~/.claude/skills/<br/>1 个 skill"]
-    Init --> Prompts["~/.claude/.ccg/prompts/<br/>12 个专家提示词"]
+    Init --> Prompts["~/.claude/.ccg/prompts/<br/>13 个专家提示词"]
     Init --> Binary["~/.claude/bin/<br/>codeagent-wrapper"]
     Init --> MCP["~/.claude.json<br/>MCP 配置（可选）"]
 
@@ -266,4 +271,4 @@ git push origin main
 ---
 
 **扫描覆盖率**: 95%+
-**最后更新**: 2026-01-16
+**最后更新**: 2026-01-21

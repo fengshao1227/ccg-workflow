@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.47] - 2026-01-21
+
+### 🐛 Bug 修复
+
+**修复 `gemini/architect.md` 文件缺失导致会话复用失败 (exit code 42)**
+
+- **问题**: Windows 用户使用会话复用时报错：
+  ```
+  Failed to read ROLE_FILE 'C:/Users/XXX/.claude/.ccg/prompts/gemini/architect.md':
+  The system cannot find the file specified.
+  ```
+- **根本原因**: `templates/prompts/gemini/` 目录下缺失 `architect.md` 文件，但命令模板 (`plan.md`, `execute.md` 等) 引用了该文件
+- **修复**: 新增 `templates/prompts/gemini/architect.md` 文件，定义前端架构师角色
+- **影响**:
+  - ✅ `/ccg:plan` 和 `/ccg:execute` 可正常使用 Gemini 后端
+  - ✅ 会话复用 (`resume`) 功能恢复正常
+  - ✅ 更新 `package.json` 将新文件加入发布列表
+
+### 📝 环境变量配置说明
+
+**VSCode 插件用户注意**: 如果 Gemini 出现退出码 41（授权失败），需在 `~/.claude/settings.json` 配置 API 密钥：
+
+```json
+{
+  "env": {
+    "GEMINI_API_KEY": "your-api-key",
+    "GOOGLE_API_KEY": "your-api-key"
+  }
+}
+```
+
+VSCode 插件启动的子进程不会继承终端环境变量，必须通过 `settings.json` 显式配置。
+
+---
+
 ## [1.7.44] - 2026-01-18
 
 ### 🐛 Bug 修复
