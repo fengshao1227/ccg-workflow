@@ -16,7 +16,9 @@ Claude Code 编排 Codex + Gemini 的多模型协作开发系统。前端任务�
 npx ccg-workflow
 ```
 
-**要求**：Claude Code CLI、Node.js 18+
+**要求**：Claude Code CLI、Node.js 20+
+
+> **重要**：本项目依赖 `ora@9.x` 和 `string-width@8.x`，这些包要求 Node.js >= 20。使用 Node.js 18 会导致 `SyntaxError: Invalid regular expression flags` 错误。请确保升级到 Node.js 20 或更高版本。
 
 **可选**：Codex CLI（后端）、Gemini CLI（前端）
 
