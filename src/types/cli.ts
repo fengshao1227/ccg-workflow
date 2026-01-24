@@ -1,4 +1,4 @@
-import type { CcgConfig, CollaborationMode, SupportedLang } from '../types'
+import type { CcgConfig, CollaborationMode, PromptEnhancerType, SupportedLang } from '../types'
 
 export interface CliOptions {
   lang?: SupportedLang
@@ -10,6 +10,7 @@ export interface CliOptions {
   mode?: CollaborationMode
   workflows?: string
   installDir?: string
+  promptEnhancer?: PromptEnhancerType
 }
 
 export type { CcgConfig, CollaborationMode, SupportedLang }

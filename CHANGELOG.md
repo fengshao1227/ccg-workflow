@@ -7,6 +7,72 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.51] - 2026-01-24
+
+### ✨ 新功能
+
+**Prompt 增强器支持多种增强方式**
+
+新增 `prompt_enhancer` 配置项，让用户选择 Prompt 增强方式：
+
+| 模式 | 说明 | 前置要求 |
+|------|------|----------|
+| `ace-tool`（默认） | 使用 ace-tool MCP | 需配置 ace-tool Token |
+| `claude-context` | 使用向量搜索增强 | 需配置 claude-context MCP |
+
+**核心改进**：
+- `/ccg:enhance` 命令根据配置自动选择增强方式
+- 默认保持原有 `ace-tool` 行为，通过 `--prompt-enhancer` 参数可选启用 `claude-context`
+- `claude-context` 模式直接调用 `mcp__claude-context__*` 工具进行语义搜索
+
+**claude-context 模式配置**：
+
+使用 `claude-context` 模式前，需先配置 MCP 服务：
+
+```bash
+# 添加 claude-context MCP
+claude mcp add claude-context \
+  -e OPENAI_API_KEY=your-openai-api-key \
+  -e MILVUS_ADDRESS=your-milvus-address:19530 \
+  -- npx @zilliz/claude-context-mcp@latest
+```
+
+或在 `~/.claude.json` 中手动配置：
+
+```json
+{
+  "mcpServers": {
+    "claude-context": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@zilliz/claude-context-mcp@latest"],
+      "env": {
+        "EMBEDDING_PROVIDER": "OpenAI",
+        "OPENAI_API_KEY": "your-openai-api-key",
+        "MILVUS_ADDRESS": "localhost:19530"
+      }
+    }
+  }
+}
+```
+
+> 详细配置参考：https://github.com/zilliztech/claude-context
+
+**CCG 配置文件**：
+```toml
+# ~/.claude/.ccg/config.toml
+[mcp]
+prompt_enhancer = "ace-tool"  # 或 "claude-context"
+```
+
+### 🔧 改进
+
+- 类型定义新增 `PromptEnhancerType` 类型
+- 模板支持条件块：`{{#if PROMPT_ENHANCER_ACE_TOOL}}...{{/if}}`
+- CLI 新增 `--prompt-enhancer` 参数
+
+---
+
 ## [1.7.48] - 2026-01-23
 
 ### ✨ 新功能

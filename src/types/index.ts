@@ -4,6 +4,9 @@ export type SupportedLang = 'zh-CN' | 'en'
 // 模型类型
 export type ModelType = 'codex' | 'gemini' | 'claude'
 
+// Prompt 增强器类型
+export type PromptEnhancerType = 'ace-tool' | 'claude-context'
+
 // 协作模式
 export type CollaborationMode = 'parallel' | 'smart' | 'sequential'
 
@@ -48,6 +51,7 @@ export interface CcgConfig {
   mcp: {
     provider: string
     setup_url: string
+    prompt_enhancer?: PromptEnhancerType
   }
   performance?: {
     liteMode?: boolean // 轻量模式：禁用 Web UI，更快响应
@@ -79,6 +83,7 @@ export interface InitOptions {
   mode?: CollaborationMode
   workflows?: string
   installDir?: string
+  promptEnhancer?: PromptEnhancerType // Prompt 增强方式
 }
 
 // 安装结果

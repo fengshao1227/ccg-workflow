@@ -1,4 +1,4 @@
-import type { CcgConfig, ModelRouting, SupportedLang } from '../types'
+import type { CcgConfig, ModelRouting, PromptEnhancerType, SupportedLang } from '../types'
 import fs from 'fs-extra'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
@@ -46,7 +46,11 @@ export function createDefaultConfig(options: {
   installedWorkflows: string[]
   mcpProvider?: string
   liteMode?: boolean
+  promptEnhancer?: PromptEnhancerType
 }): CcgConfig {
+  // 默认值逻辑：跳过 ace-tool 时默认 claude-context，否则 ace-tool
+  const defaultEnhancer: PromptEnhancerType = options.mcpProvider === 'skip' ? 'claude-context' : 'ace-tool'
+
   return {
     general: {
       version: packageVersion,
@@ -65,6 +69,7 @@ export function createDefaultConfig(options: {
     mcp: {
       provider: options.mcpProvider || 'ace-tool',
       setup_url: 'https://augmentcode.com/',
+      prompt_enhancer: options.promptEnhancer || defaultEnhancer,
     },
     performance: {
       liteMode: options.liteMode || false,

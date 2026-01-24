@@ -21,13 +21,18 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-21 (v1.7.47)
+**Last Updated**: 2026-01-24 (v1.7.51)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-01-24 (v1.7.51)
+- ✨ **Prompt 增强器支持多种增强方式**：新增 `prompt_enhancer` 配置项
+  - `ace-tool`（默认）：使用 ace-tool MCP（需配置 Token）
+  - `claude-context`：内置向量搜索，无需外部服务
 
 ### 2026-01-21 (v1.7.47)
 - 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词，修复会话复用失败问题 (exit code 42)
