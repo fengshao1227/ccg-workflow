@@ -21,13 +21,19 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-01-21 (v1.7.47)
+**Last Updated**: 2026-01-25 (v1.7.51)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-01-25 (v1.7.51)
+- 🌏 **修复默认语言为英文的问题**：将 CLI 所有命令描述从硬编码英文改为中文
+- 🐛 **修复 `cli-setup.ts`**：所有命令注册时的描述文本改为中文
+- 🐛 **修复 `menu.ts`**：退出提示从 "Goodbye!" 改为 "再见！"
+- ✅ **默认语言**：确保 npm 包安装后默认显示为中文
 
 ### 2026-01-21 (v1.7.47)
 - 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词，修复会话复用失败问题 (exit code 42)

@@ -51,7 +51,7 @@ export async function showMainMenu(): Promise<void> {
         showHelp()
         break
       case 'exit':
-        console.log(ansis.gray('Goodbye!'))
+        console.log(ansis.gray('再见！'))
         return // 退出循环和函数
     }
 

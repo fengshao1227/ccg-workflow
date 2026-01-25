@@ -81,8 +81,8 @@ export async function setupCommands(cli: CAC): Promise<void> {
 
   // Default command - show menu
   cli
-    .command('', 'Show interactive menu (default)')
-    .option('--lang, -l <lang>', 'Display language (zh-CN, en)')
+    .command('', '显示交互式菜单（默认）')
+    .option('--lang, -l <lang>', '显示语言 (zh-CN, en)')
     .action(async (options: CliOptions) => {
       if (options.lang) {
         await initI18n(options.lang)
@@ -92,17 +92,17 @@ export async function setupCommands(cli: CAC): Promise<void> {
 
   // Init command
   cli
-    .command('init', 'Initialize CCG multi-model collaboration system')
+    .command('init', '初始化 CCG 多模型协作系统')
     .alias('i')
-    .option('--lang, -l <lang>', 'Display language (zh-CN, en)')
-    .option('--force, -f', 'Force overwrite existing configuration')
-    .option('--skip-prompt, -s', 'Skip all interactive prompts (non-interactive mode)')
-    .option('--skip-mcp', 'Skip MCP configuration (used during update)')
-    .option('--frontend, -F <models>', 'Frontend models (comma-separated: gemini,codex,claude)')
-    .option('--backend, -B <models>', 'Backend models (comma-separated: codex,gemini,claude)')
-    .option('--mode, -m <mode>', 'Collaboration mode (parallel, smart, sequential)')
-    .option('--workflows, -w <workflows>', 'Workflows to install (comma-separated or "all")')
-    .option('--install-dir, -d <path>', 'Installation directory (default: ~/.claude)')
+    .option('--lang, -l <lang>', '显示语言 (zh-CN, en)')
+    .option('--force, -f', '强制覆盖现有配置')
+    .option('--skip-prompt, -s', '跳过所有交互式提示（非交互模式）')
+    .option('--skip-mcp', '跳过 MCP 配置（更新时使用）')
+    .option('--frontend, -F <models>', '前端模型（逗号分隔: gemini,codex,claude）')
+    .option('--backend, -B <models>', '后端模型（逗号分隔: codex,gemini,claude）')
+    .option('--mode, -m <mode>', '协作模式 (parallel, smart, sequential)')
+    .option('--workflows, -w <workflows>', '要安装的工作流（逗号分隔或 "all"）')
+    .option('--install-dir, -d <path>', '安装目录（默认: ~/.claude）')
     .action(async (options: CliOptions) => {
       if (options.lang) {
         await initI18n(options.lang)
@@ -112,28 +112,28 @@ export async function setupCommands(cli: CAC): Promise<void> {
 
   // Diagnose MCP command
   cli
-    .command('diagnose-mcp', 'Diagnose MCP configuration issues')
+    .command('diagnose-mcp', '诊断 MCP 配置问题')
     .action(async () => {
       await diagnoseMcp()
     })
 
   // Fix MCP command (Windows only)
   cli
-    .command('fix-mcp', 'Fix Windows MCP configuration issues')
+    .command('fix-mcp', '修复 Windows MCP 配置问题')
     .action(async () => {
       await fixMcp()
     })
 
   // Config MCP command
   cli
-    .command('config <subcommand>', 'Configure CCG settings')
+    .command('config <subcommand>', '配置 CCG 设置')
     .action(async (subcommand: string) => {
       if (subcommand === 'mcp') {
         await configMcp()
       }
       else {
-        console.log(ansis.red(`Unknown subcommand: ${subcommand}`))
-        console.log(ansis.gray('Available subcommands: mcp'))
+        console.log(ansis.red(`未知子命令: ${subcommand}`))
+        console.log(ansis.gray('可用子命令: mcp'))
       }
     })
 
