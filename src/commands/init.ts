@@ -1,4 +1,4 @@
-import type { CollaborationMode, InitOptions, ModelRouting, ModelType, SupportedLang } from '../types'
+import type { CollaborationMode, InitOptions, ModelRouting, ModelType, PromptEnhancerType, SupportedLang } from '../types'
 import ansis from 'ansis'
 import fs from 'fs-extra'
 import inquirer from 'inquirer'
@@ -126,6 +126,23 @@ export async function init(options: InitOptions = {}): Promise<void> {
     }
   }
 
+  // Prompt enhancer selection
+  // 默认保持原有行为 (ace-tool)，只有通过命令行参数明确指定时才使用其他方式
+  let promptEnhancer: PromptEnhancerType = 'ace-tool'
+
+  if (options.promptEnhancer) {
+    // 命令行参数明确指定
+    promptEnhancer = options.promptEnhancer
+  }
+  else {
+    // 读取现有配置，保持用户之前的选择
+    const existingConfig = await readCcgConfig()
+    if (existingConfig?.mcp?.prompt_enhancer) {
+      promptEnhancer = existingConfig.mcp.prompt_enhancer
+    }
+    // 否则保持默认值 ace-tool
+  }
+
   // Performance mode selection (always ask unless skipPrompt is true)
   if (!options.skipPrompt) {
     // Read existing config to show current setting
@@ -177,6 +194,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
   console.log(`  ${ansis.cyan('模型路由')}  ${ansis.green('Gemini')} (前端) + ${ansis.blue('Codex')} (后端)`)
   console.log(`  ${ansis.cyan('命令数量')}  ${ansis.yellow(selectedWorkflows.length.toString())} 个`)
   console.log(`  ${ansis.cyan('MCP 工具')}  ${(mcpProvider === 'ace-tool' || mcpProvider === 'ace-tool-rs') ? (aceToolToken ? ansis.green(mcpProvider) : ansis.yellow(`${mcpProvider} (待配置)`)) : ansis.gray('跳过')}`)
+  console.log(`  ${ansis.cyan('Prompt 增强')} ${promptEnhancer === 'claude-context' ? ansis.green('claude-context (内置向量搜索)') : ansis.blue('ace-tool (MCP)')}`)
   console.log(`  ${ansis.cyan('Web UI')}    ${liteMode ? ansis.gray('禁用') : ansis.green('启用')}`)
   console.log(ansis.yellow('━'.repeat(50)))
   console.log()
@@ -241,6 +259,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
       installedWorkflows: selectedWorkflows,
       mcpProvider,
       liteMode,
+      promptEnhancer,
     })
 
     // Save config FIRST - ensure it's created even if installation fails
@@ -251,6 +270,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
     const result = await installWorkflows(selectedWorkflows, installDir, options.force, {
       routing,
       liteMode,
+      promptEnhancer,
     })
 
     // Install ace-tool or ace-tool-rs MCP if token was provided

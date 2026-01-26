@@ -44,6 +44,7 @@ function customizeHelp(sections: any[]): any[] {
       `  ${ansis.green('--mode, -m')} <mode>         ${i18n.t('cli:help.optionDescriptions.collaborationMode')}`,
       `  ${ansis.green('--workflows, -w')} <list>    ${i18n.t('cli:help.optionDescriptions.workflows')}`,
       `  ${ansis.green('--install-dir, -d')} <path>  ${i18n.t('cli:help.optionDescriptions.installDir')}`,
+      `  ${ansis.green('--prompt-enhancer, -e')} <type>  Prompt 增强方式 (ace-tool, claude-context)`,
     ].join('\n'),
   })
 
@@ -103,6 +104,7 @@ export async function setupCommands(cli: CAC): Promise<void> {
     .option('--mode, -m <mode>', '协作模式 (parallel, smart, sequential)')
     .option('--workflows, -w <workflows>', '要安装的工作流（逗号分隔或 "all"）')
     .option('--install-dir, -d <path>', '安装目录（默认: ~/.claude）')
+    .option('--prompt-enhancer, -e <type>', 'Prompt 增强方式 (ace-tool, claude-context)')
     .action(async (options: CliOptions) => {
       if (options.lang) {
         await initI18n(options.lang)

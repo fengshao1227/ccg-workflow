@@ -30,10 +30,10 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
 
 ### 2026-01-25 (v1.7.51)
+- ✨ **Prompt 增强器支持多种增强方式**：新增 `prompt_enhancer` 配置项
+  - `ace-tool`（默认）：使用 ace-tool MCP（需配置 Token）
+  - `claude-context`：使用向量搜索增强（需配置 claude-context MCP）
 - 🌏 **修复默认语言为英文的问题**：将 CLI 所有命令描述从硬编码英文改为中文
-- 🐛 **修复 `cli-setup.ts`**：所有命令注册时的描述文本改为中文
-- 🐛 **修复 `menu.ts`**：退出提示从 "Goodbye!" 改为 "再见！"
-- ✅ **默认语言**：确保 npm 包安装后默认显示为中文
 
 ### 2026-01-21 (v1.7.47)
 - 🐛 **修复 `gemini/architect.md` 缺失**：新增前端架构师角色提示词，修复会话复用失败问题 (exit code 42)

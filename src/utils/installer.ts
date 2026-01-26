@@ -1,4 +1,4 @@
-import type { AceToolConfig, InstallResult, WorkflowConfig } from '../types'
+import type { AceToolConfig, InstallResult, PromptEnhancerType, WorkflowConfig } from '../types'
 import { homedir } from 'node:os'
 import fs from 'fs-extra'
 import { fileURLToPath } from 'node:url'
@@ -343,6 +343,7 @@ function injectConfigVariables(content: string, config: {
     review?: { models?: string[] }
   }
   liteMode?: boolean
+  promptEnhancer?: PromptEnhancerType
 }): string {
   let processed = content
 
@@ -373,6 +374,28 @@ function injectConfigVariables(content: string, config: {
   // If liteMode is true, inject "--lite" flag
   const liteModeFlag = config.liteMode ? '--lite ' : ''
   processed = processed.replace(/\{\{LITE_MODE_FLAG\}\}/g, liteModeFlag)
+
+  // Prompt enhancer configuration
+  const promptEnhancer = config.promptEnhancer || 'ace-tool'
+  processed = processed.replace(/\{\{PROMPT_ENHANCER\}\}/g, promptEnhancer)
+
+  // Process conditional blocks for prompt enhancer
+  // {{#if PROMPT_ENHANCER_ACE_TOOL}}...{{/if}} - only include if ace-tool
+  // {{#if PROMPT_ENHANCER_CLAUDE_CONTEXT}}...{{/if}} - only include if claude-context
+  const isAceTool = promptEnhancer === 'ace-tool'
+  const isClaudeContext = promptEnhancer === 'claude-context'
+
+  // Handle ace-tool conditional blocks
+  processed = processed.replace(
+    /\{\{#if PROMPT_ENHANCER_ACE_TOOL\}\}([\s\S]*?)\{\{\/if\}\}/g,
+    isAceTool ? '$1' : '',
+  )
+
+  // Handle claude-context conditional blocks
+  processed = processed.replace(
+    /\{\{#if PROMPT_ENHANCER_CLAUDE_CONTEXT\}\}([\s\S]*?)\{\{\/if\}\}/g,
+    isClaudeContext ? '$1' : '',
+  )
 
   return processed
 }
@@ -467,6 +490,7 @@ export async function installWorkflows(
       review?: { models?: string[] }
     }
     liteMode?: boolean
+    promptEnhancer?: PromptEnhancerType
   },
 ): Promise<InstallResult> {
   // Default config
@@ -478,6 +502,7 @@ export async function installWorkflows(
       review: { models: ['codex', 'gemini'] },
     },
     liteMode: config?.liteMode || false,
+    promptEnhancer: config?.promptEnhancer || 'ace-tool',
   }
   const result: InstallResult = {
     success: true,
