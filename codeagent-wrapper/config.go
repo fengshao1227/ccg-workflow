@@ -20,6 +20,7 @@ type Config struct {
 	Backend            string
 	SkipPermissions    bool
 	MaxParallelWorkers int
+	GeminiModel        string // Gemini model name (empty = use default)
 }
 
 // ParallelConfig defines the JSON schema for parallel execution
@@ -197,6 +198,9 @@ func parseArgs() (*Config, error) {
 		return nil, fmt.Errorf("task required")
 	}
 
+	// Read environment variable (lowest precedence)
+	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
+
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
 	filtered := make([]string, 0, len(args))
@@ -220,6 +224,24 @@ func parseArgs() (*Config, error) {
 			}
 			backendName = value
 			continue
+		case arg == "--gemini-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--gemini-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--gemini-model flag requires a non-empty model name")
+			}
+			geminiModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--gemini-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--gemini-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--gemini-model flag requires a non-empty model name")
+			}
+			geminiModel = value
+			continue
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
@@ -238,7 +260,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {
