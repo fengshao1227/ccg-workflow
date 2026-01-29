@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // Backend defines the contract for invoking different AI CLI backends.
@@ -120,7 +121,16 @@ func buildGeminiArgs(cfg *Config, targetArg string) []string {
 	if cfg == nil {
 		return nil
 	}
-	args := []string{"--output-format", "stream-json", "-y"}
+
+	args := []string{}
+
+	// Add model parameter first (if specified)
+	if model := strings.TrimSpace(cfg.GeminiModel); model != "" {
+		args = append(args, "-m", model)
+	}
+
+	// Existing args
+	args = append(args, "-o", "stream-json", "-y")
 
 	if cfg.Mode == "resume" {
 		if cfg.SessionID != "" {
