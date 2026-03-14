@@ -61,7 +61,7 @@ description: 'Agent Teams 规划 - Lead 调用 Codex/Gemini 并行分析，产�
    - 按依赖关系分 Layer：同 Layer 可并行，跨 Layer 串行。
 
 4. **写入计划文件**
-   - 路径：`.claude/team-plan/<任务名>.md`（英文短横线命名）
+   - 路径：`.claude/team-plan/<任务名>-YYYYMMDD-HHmmss.md`（英文短横线命名，时间戳使用当前本地时间，避免覆盖已有计划）
    - 格式：
 
    ```markdown

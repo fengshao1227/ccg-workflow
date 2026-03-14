@@ -5,7 +5,7 @@ description: 'Agent Teams 需求研究 - 并行探索代码库，产出约束集
 **Core Philosophy**
 - Research 产出的是**约束集**，不是信息堆砌。每条约束缩小解决方案空间。
 - 约束告诉后续阶段"不要考虑这个方向"，使 plan 阶段能产出零决策计划。
-- 输出：约束集合 + 可验证的成功判据，写入 `.claude/team-plan/<任务名>-research.md`。
+- 输出：约束集合 + 可验证的成功判据，写入 `.claude/team-plan/<任务名>-research-YYYYMMDD-HHmmss.md`，避免覆盖上一轮研究结果。
 
 **Guardrails**
 - **STOP! BEFORE ANY OTHER ACTION**: 必须先做 Prompt 增强。
@@ -78,7 +78,7 @@ description: 'Agent Teams 需求研究 - 并行探索代码库，产出约束集
    - 将用户回答转化为额外约束。
 
 6. **写入研究文件**
-   - 路径：`.claude/team-plan/<任务名>-research.md`
+   - 路径：`.claude/team-plan/<任务名>-research-YYYYMMDD-HHmmss.md`
    - 格式：
 
    ```markdown

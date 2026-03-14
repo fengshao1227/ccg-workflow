@@ -136,8 +136,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 #### 2.4 保存计划
 
 **文件命名规则**：
-- 首次规划：`.claude/plan/功能名.md`
-- 迭代版本：`.claude/plan/功能名-1.md`、`.claude/plan/功能名-2.md`...
+- 新建计划：`.claude/plan/功能名-YYYYMMDD-HHmmss.md`
+- 调整计划：优先更新当前正在审查的同一个计划文件；仅在用户明确要求保留多个版本时再生成新文件
 
 #### 2.5 交互确认
 

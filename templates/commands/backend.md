@@ -126,7 +126,7 @@ EOF",
 - 上下文：阶段 2 的分析结果
 - OUTPUT: 文件结构、函数/类设计、依赖关系
 
-Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
+Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名-YYYYMMDD-HHmmss.md`
 
 ### ⚡ 阶段 4：执行
 

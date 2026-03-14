@@ -126,7 +126,7 @@ EOF",
 - 上下文：阶段 2 的分析结果
 - OUTPUT: 组件结构、UI 流程、样式方案
 
-Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名.md`
+Claude 综合规划，请求用户批准后存入 `.claude/plan/任务名-YYYYMMDD-HHmmss.md`
 
 ### ⚡ 阶段 4：执行
 

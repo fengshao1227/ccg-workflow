@@ -152,13 +152,13 @@ Supports: npm, homebrew, curl, powershell, cmd.
 /ccg:plan implement user authentication
 
 # 2. Review the plan (editable)
-# Plan saved to .claude/plan/user-auth.md
+# Plan saved to .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 
 # 3a. Execute (Claude refactors) — fine-grained control
-/ccg:execute .claude/plan/user-auth.md
+/ccg:execute .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 
 # 3b. Execute (Codex does everything) — efficient, low Claude token usage
-/ccg:codex-exec .claude/plan/user-auth.md
+/ccg:codex-exec .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 ```
 
 ### OPSX Spec-Driven Workflow

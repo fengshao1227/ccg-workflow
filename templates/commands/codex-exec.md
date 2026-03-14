@@ -387,7 +387,7 @@ FIXEOF",
 # 标准流程：先规划，再执行
 /ccg:plan 实现用户认证功能
 # 审查计划后...
-/ccg:codex-exec .claude/plan/user-auth.md
+/ccg:codex-exec .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 
 # 直接执行（会提示先 /ccg:plan）
 /ccg:codex-exec 实现用户认证功能
@@ -398,7 +398,7 @@ FIXEOF",
 ## 与 /ccg:plan 的关系
 
 ```
-/ccg:plan ──→ .claude/plan/xxx.md
+/ccg:plan ──→ .claude/plan/xxx-YYYYMMDD-HHmmss.md
                     │
           ┌─────────┴─────────┐
           ↓                   ↓

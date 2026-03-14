@@ -152,13 +152,13 @@ npx ccg-workflow menu  # 选择「安装 Claude Code」
 /ccg:plan 实现用户认证功能
 
 # 2. 审查计划（可修改）
-# 计划保存至 .claude/plan/user-auth.md
+# 计划保存至 .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 
 # 3a. 执行计划（Claude 重构）— 精细控制
-/ccg:execute .claude/plan/user-auth.md
+/ccg:execute .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 
 # 3b. 执行计划（Codex 全权）— 高效执行，Claude token 极低
-/ccg:codex-exec .claude/plan/user-auth.md
+/ccg:codex-exec .claude/plan/user-auth-YYYYMMDD-HHmmss.md
 ```
 
 ### OPSX 规范驱动工作流

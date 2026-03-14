@@ -1,4 +1,5 @@
 import type { AceToolConfig, FastContextConfig } from '../types'
+import type { McpServerConfig } from './mcp'
 import { homedir } from 'node:os'
 import fs from 'fs-extra'
 import { join } from 'pathe'
@@ -20,7 +21,7 @@ type McpInstallResult = { success: boolean, message: string, configPath?: string
  */
 async function configureMcpInClaude(
   serverId: string,
-  serverConfig: Record<string, any>,
+  serverConfig: McpServerConfig,
   label: string,
 ): Promise<McpInstallResult> {
   try {

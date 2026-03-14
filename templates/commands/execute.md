@@ -302,7 +302,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 ```bash
 # 执行计划文件
-/ccg:execute .claude/plan/功能名.md
+/ccg:execute .claude/plan/功能名-YYYYMMDD-HHmmss.md
 
 # 直接执行任务（适用于已在上下文中讨论过的计划）
 /ccg:execute 根据之前的计划实施用户认证功能

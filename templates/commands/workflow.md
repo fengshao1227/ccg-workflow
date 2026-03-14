@@ -150,7 +150,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 **务必遵循上方 `多模型调用规范` 的 `重要` 指示**
 
-**Claude 综合规划**：采纳 Codex 后端规划 + Gemini 前端规划，用户批准后存入 `.claude/plan/任务名.md`
+**Claude 综合规划**：采纳 Codex 后端规划 + Gemini 前端规划，用户批准后存入 `.claude/plan/任务名-YYYYMMDD-HHmmss.md`
 
 ### ⚡ 阶段 4：实施
 

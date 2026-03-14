@@ -80,6 +80,16 @@ describe('installWorkflows E2E — mcpProvider="skip"', () => {
     expect(content).toContain('MCP 未配置')
   })
 
+  it('generated planning templates use timestamped output filenames', async () => {
+    const plan = readFileSync(join(tmpDir, 'commands', 'ccg', 'plan.md'), 'utf-8')
+    const teamPlan = readFileSync(join(tmpDir, 'commands', 'ccg', 'team-plan.md'), 'utf-8')
+    const teamResearch = readFileSync(join(tmpDir, 'commands', 'ccg', 'team-research.md'), 'utf-8')
+
+    expect(plan).toContain('.claude/plan/<功能名>-YYYYMMDD-HHmmss.md')
+    expect(teamPlan).toContain('.claude/team-plan/<任务名>-YYYYMMDD-HHmmss.md')
+    expect(teamResearch).toContain('.claude/team-plan/<任务名>-research-YYYYMMDD-HHmmss.md')
+  })
+
   it('planner.md frontmatter has no MCP tool in tools declaration', async () => {
     const content = readFileSync(join(tmpDir, 'agents', 'ccg', 'planner.md'), 'utf-8')
     const toolsLine = content.split('\n').find(l => l.startsWith('tools:'))

@@ -191,22 +191,22 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 **`/ccg:plan` 的职责到此结束，必须执行以下动作**：
 
 1. 向用户展示完整实施计划（含伪代码）
-2. 将计划保存至 `.claude/plan/<功能名>.md`（功能名从需求中提取，如 `user-auth`、`payment-module` 等）
+2. 将计划保存至 `.claude/plan/<功能名>-YYYYMMDD-HHmmss.md`（功能名从需求中提取，如 `user-auth`、`payment-module` 等；时间戳使用当前本地时间，防止覆盖旧计划）
 3. 以**加粗文本**输出提示（必须使用实际保存的文件路径）：
 
    ---
-   **📋 计划已生成并保存至 `.claude/plan/实际功能名.md`**
+   **📋 计划已生成并保存至 `.claude/plan/实际功能名-YYYYMMDD-HHmmss.md`**
 
    **请审查上述计划，您可以：**
    - 🔧 **修改计划**：告诉我需要调整的部分，我会更新计划
    - ▶️ **执行计划**：复制以下命令到新会话执行
 
    ```
-   /ccg:execute .claude/plan/实际功能名.md
+   /ccg:execute .claude/plan/实际功能名-YYYYMMDD-HHmmss.md
    ```
    ---
 
-   **⚠️ 注意**：上面的 `实际功能名.md` 必须替换为你实际保存的文件名！
+   **⚠️ 注意**：上面的 `实际功能名-YYYYMMDD-HHmmss.md` 必须替换为你实际保存的文件名！
 
 4. **立即终止当前回复**（Stop here. No more tool calls.）
 
@@ -222,8 +222,8 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 规划完成后，将计划保存至：
 
-- **首次规划**：`.claude/plan/<功能名>.md`
-- **迭代版本**：`.claude/plan/<功能名>-v2.md`、`.claude/plan/<功能名>-v3.md`...
+- **新建计划**：`.claude/plan/<功能名>-YYYYMMDD-HHmmss.md`
+- **修改已有计划**：更新当前审查中的同一个计划文件，不额外创建副本，除非用户明确要求保留多个版本
 
 计划文件写入应在向用户展示计划前完成。
 
@@ -234,7 +234,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 如果用户要求修改计划：
 
 1. 根据用户反馈调整计划内容
-2. 更新 `.claude/plan/<功能名>.md` 文件
+2. 更新当前审查中的 `.claude/plan/<功能名>-YYYYMMDD-HHmmss.md` 文件
 3. 重新展示修改后的计划
 4. 再次提示用户审查或执行
 
@@ -245,7 +245,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 用户审查满意后，**手动**执行：
 
 ```bash
-/ccg:execute .claude/plan/<功能名>.md
+/ccg:execute .claude/plan/<功能名>-YYYYMMDD-HHmmss.md
 ```
 
 ---
