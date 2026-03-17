@@ -2,7 +2,7 @@
 export type SupportedLang = 'zh-CN' | 'en'
 
 // 模型类型
-export type ModelType = 'codex' | 'gemini' | 'claude'
+export type ModelType = 'codex' | 'gemini' | 'claude' | 'minimax'
 
 // 协作模式
 export type CollaborationMode = 'parallel' | 'smart' | 'sequential'

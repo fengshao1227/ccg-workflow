@@ -25,12 +25,12 @@ A multi-model collaboration development system where Claude Code orchestrates Co
 ```
 Claude Code (Orchestrator)
        │
-   ┌───┴───┐
-   ↓       ↓
-Codex   Gemini
-(Backend) (Frontend)
-   │       │
-   └───┬───┘
+   ┌───┼───────┐
+   ↓   ↓       ↓
+Codex Gemini  MiniMax
+(Backend) (Frontend) (Alternative)
+   │   │       │
+   └───┼───────┘
        ↓
   Unified Patch
 ```
@@ -48,6 +48,7 @@ External models have no write access — they only return patches, which Claude 
 | **jq** | Yes | Used for auto-authorization hook ([install](#install-jq)) |
 | **Codex CLI** | No | Enables backend routing |
 | **Gemini CLI** | No | Enables frontend routing |
+| **MiniMax API Key** | No | Enables MiniMax backend (`MINIMAX_API_KEY` env var) |
 
 ### Installation
 
@@ -218,6 +219,8 @@ Configure in `~/.claude/settings.json` under `"env"`:
 | `CODEX_TIMEOUT` | Wrapper execution timeout (sec) | `7200` | Increase for very long tasks |
 | `BASH_DEFAULT_TIMEOUT_MS` | Claude Code Bash timeout (ms) | `120000` | Increase if commands time out |
 | `BASH_MAX_TIMEOUT_MS` | Claude Code Bash max timeout (ms) | `600000` | Increase for long builds |
+| `MINIMAX_API_KEY` | MiniMax API key for MiniMax backend | — | Required when using `--backend minimax` |
+| `MINIMAX_MODEL` | MiniMax model name | `MiniMax-M2.5` | Use `MiniMax-M2.5-highspeed` for faster responses |
 
 <details>
 <summary>Example settings.json</summary>

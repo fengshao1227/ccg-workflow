@@ -138,21 +138,30 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 
 func TestClaudeBuildArgs_BackendMetadata(t *testing.T) {
 	tests := []struct {
-		backend Backend
-		name    string
-		command string
+		backend   Backend
+		name      string
+		command   string
+		skipExact bool // skip exact command match (e.g. minimax uses os.Executable())
 	}{
 		{backend: CodexBackend{}, name: "codex", command: "codex"},
 		{backend: ClaudeBackend{}, name: "claude", command: "claude"},
 		{backend: GeminiBackend{}, name: "gemini", command: "gemini"},
+		{backend: MinimaxBackend{}, name: "minimax", command: "", skipExact: true},
 	}
 
 	for _, tt := range tests {
 		if got := tt.backend.Name(); got != tt.name {
 			t.Fatalf("Name() = %s, want %s", got, tt.name)
 		}
-		if got := tt.backend.Command(); got != tt.command {
-			t.Fatalf("Command() = %s, want %s", got, tt.command)
+		if !tt.skipExact {
+			if got := tt.backend.Command(); got != tt.command {
+				t.Fatalf("Command() = %s, want %s", got, tt.command)
+			}
+		} else {
+			// For backends using os.Executable(), just verify it's non-empty
+			if got := tt.backend.Command(); got == "" {
+				t.Fatalf("Command() returned empty string for %s", tt.name)
+			}
 		}
 	}
 }

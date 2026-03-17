@@ -21,6 +21,7 @@ type Config struct {
 	SkipPermissions    bool
 	MaxParallelWorkers int
 	GeminiModel        string // Gemini model name (empty = use default)
+	MinimaxModel       string // MiniMax model name (empty = use default "MiniMax-M2.5")
 }
 
 // ParallelConfig defines the JSON schema for parallel execution
@@ -62,9 +63,10 @@ type TaskResult struct {
 }
 
 var backendRegistry = map[string]Backend{
-	"codex":  CodexBackend{},
-	"claude": ClaudeBackend{},
-	"gemini": GeminiBackend{},
+	"codex":   CodexBackend{},
+	"claude":  ClaudeBackend{},
+	"gemini":  GeminiBackend{},
+	"minimax": MinimaxBackend{},
 }
 
 func selectBackend(name string) (Backend, error) {
@@ -198,8 +200,9 @@ func parseArgs() (*Config, error) {
 		return nil, fmt.Errorf("task required")
 	}
 
-	// Read environment variable (lowest precedence)
+	// Read environment variables (lowest precedence)
 	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
+	minimaxModel := strings.TrimSpace(os.Getenv("MINIMAX_MODEL"))
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
@@ -242,6 +245,24 @@ func parseArgs() (*Config, error) {
 			}
 			geminiModel = value
 			continue
+		case arg == "--minimax-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			minimaxModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--minimax-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--minimax-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			minimaxModel = value
+			continue
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
@@ -260,7 +281,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, MinimaxModel: minimaxModel}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

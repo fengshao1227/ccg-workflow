@@ -136,6 +136,8 @@ func run() (exitCode int) {
 			return 0
 		case "--cleanup":
 			return runCleanupMode()
+		case "--minimax-api":
+			return runMinimaxAPIMode(os.Args[2:])
 		}
 	}
 
@@ -197,8 +199,9 @@ func run() (exitCode int) {
 			fullOutput := false
 			var extras []string
 
-			// Check for gemini-model in parallel mode
+			// Check for model flags in parallel mode
 			geminiModelInParallel := false
+			minimaxModelInParallel := false
 
 			for i := 0; i < len(args); i++ {
 				arg := args[i]
@@ -224,14 +227,20 @@ func run() (exitCode int) {
 				case arg == "--gemini-model" || strings.HasPrefix(arg, "--gemini-model="):
 					geminiModelInParallel = true
 					continue
+				case arg == "--minimax-model" || strings.HasPrefix(arg, "--minimax-model="):
+					minimaxModelInParallel = true
+					continue
 				default:
 					extras = append(extras, arg)
 				}
 			}
 
-			// Warn about unsupported parameter
+			// Warn about unsupported parameters
 			if geminiModelInParallel {
 				logWarn("--gemini-model parameter is not supported in parallel mode")
+			}
+			if minimaxModelInParallel {
+				logWarn("--minimax-model parameter is not supported in parallel mode")
 			}
 
 			if len(extras) > 0 {
@@ -340,6 +349,12 @@ func run() (exitCode int) {
 			logInfo(fmt.Sprintf("Gemini model from env: %s", cfg.GeminiModel))
 		}
 	}
+	if cfg.MinimaxModel != "" {
+		envModel := strings.TrimSpace(os.Getenv("MINIMAX_MODEL"))
+		if envModel != "" && envModel == cfg.MinimaxModel {
+			logInfo(fmt.Sprintf("MiniMax model from env: %s", cfg.MinimaxModel))
+		}
+	}
 
 	backend, err := selectBackendFn(cfg.Backend)
 	if err != nil {
@@ -365,10 +380,16 @@ func run() (exitCode int) {
 	if cfg.GeminiModel != "" && cfg.Backend == "gemini" {
 		logInfo(fmt.Sprintf("Using Gemini model: %s", cfg.GeminiModel))
 	}
+	if cfg.MinimaxModel != "" && cfg.Backend == "minimax" {
+		logInfo(fmt.Sprintf("Using MiniMax model: %s", cfg.MinimaxModel))
+	}
 
-	// Warn if model parameter used with non-gemini backend
+	// Warn if model parameter used with non-matching backend
 	if cfg.GeminiModel != "" && cfg.Backend != "gemini" {
 		logWarn("--gemini-model parameter is only effective with --backend gemini")
+	}
+	if cfg.MinimaxModel != "" && cfg.Backend != "minimax" {
+		logWarn("--minimax-model parameter is only effective with --backend minimax")
 	}
 
 	timeoutSec := resolveTimeout()
@@ -559,12 +580,16 @@ Parallel mode examples:
     %[1]s --parallel <<'EOF'
 
 Options:
-    --lite, -L            Lite mode: disable Web UI, faster response
-    --backend <name>      Select backend (codex, gemini, claude)
-    --gemini-model <name> Specify Gemini model (gemini backend only)
-                          Can also be set via GEMINI_MODEL environment variable
-                          CLI parameter takes precedence over environment variable
-                          Examples: gemini-2.5-flash, gemini-1.5-pro
+    --lite, -L             Lite mode: disable Web UI, faster response
+    --backend <name>       Select backend (codex, gemini, claude, minimax)
+    --gemini-model <name>  Specify Gemini model (gemini backend only)
+                           Can also be set via GEMINI_MODEL environment variable
+                           CLI parameter takes precedence over environment variable
+                           Examples: gemini-2.5-flash, gemini-1.5-pro
+    --minimax-model <name> Specify MiniMax model (minimax backend only)
+                           Can also be set via MINIMAX_MODEL environment variable
+                           Default: MiniMax-M2.5
+                           Examples: MiniMax-M2.5, MiniMax-M2.5-highspeed
 
 Environment Variables:
     CODEX_TIMEOUT              Timeout in milliseconds (default: 7200000)
@@ -572,6 +597,8 @@ Environment Variables:
     CODEX_DISABLE_SKIP_GIT_CHECK  Disable skip-git-repo-check flag (default: false)
     CODEAGENT_ASCII_MODE       Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
     CODEAGENT_LITE_MODE        Enable lite mode (true/false)
+    MINIMAX_API_KEY            MiniMax API key (required for minimax backend)
+    MINIMAX_MODEL              Default MiniMax model name
 
 Exit Codes:
     0    Success

@@ -25,12 +25,12 @@ Claude Code 编排 Codex + Gemini 的多模型协作开发系统。前端任务�
 ```
 Claude Code (编排)
        │
-   ┌───┴───┐
-   ↓       ↓
-Codex   Gemini
-(后端)   (前端)
-   │       │
-   └───┬───┘
+   ┌───┼───────┐
+   ↓   ↓       ↓
+Codex Gemini  MiniMax
+(后端) (前端) (备选)
+   │   │       │
+   └───┼───────┘
        ↓
   Unified Patch
 ```
@@ -48,6 +48,7 @@ Codex   Gemini
 | **jq** | 是 | 用于自动授权 Hook（[安装方法](#安装-jq)） |
 | **Codex CLI** | 否 | 启用后端路由 |
 | **Gemini CLI** | 否 | 启用前端路由 |
+| **MiniMax API Key** | 否 | 启用 MiniMax 后端（`MINIMAX_API_KEY` 环境变量） |
 
 ### 安装
 
@@ -218,6 +219,8 @@ npx ccg-workflow menu  # 选择「安装 Claude Code」
 | `CODEX_TIMEOUT` | wrapper 执行超时（秒） | `7200` | 超长任务时增大 |
 | `BASH_DEFAULT_TIMEOUT_MS` | Claude Code Bash 超时（毫秒） | `120000` | 命令超时时增大 |
 | `BASH_MAX_TIMEOUT_MS` | Claude Code Bash 最大超时（毫秒） | `600000` | 长时间构建时增大 |
+| `MINIMAX_API_KEY` | MiniMax API 密钥 | — | 使用 `--backend minimax` 时必需 |
+| `MINIMAX_MODEL` | MiniMax 模型名称 | `MiniMax-M2.5` | 可切换为 `MiniMax-M2.5-highspeed` 获得更快响应 |
 
 <details>
 <summary>settings.json 示例</summary>

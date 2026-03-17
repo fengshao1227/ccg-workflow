@@ -7,6 +7,8 @@ import (
 	"strings"
 )
 
+const defaultMinimaxModel = "MiniMax-M2.5"
+
 // Backend defines the contract for invoking different AI CLI backends.
 // Each backend is responsible for supplying the executable command and
 // building the argument list based on the wrapper config.
@@ -145,6 +147,41 @@ func buildGeminiArgs(cfg *Config, targetArg string) []string {
 	if cfg.Mode != "resume" && cfg.WorkDir != "" {
 		args = append(args, "--include-directories", cfg.WorkDir)
 	}
+
+	args = append(args, "-p", targetArg)
+
+	return args
+}
+
+// MinimaxBackend invokes the codeagent-wrapper itself in --minimax-api mode,
+// which calls the MiniMax API (OpenAI-compatible) directly and outputs
+// Gemini-compatible stream-json to stdout.
+type MinimaxBackend struct{}
+
+func (MinimaxBackend) Name() string { return "minimax" }
+func (MinimaxBackend) Command() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "codeagent-wrapper"
+	}
+	return exe
+}
+func (MinimaxBackend) BuildArgs(cfg *Config, targetArg string) []string {
+	return buildMinimaxArgs(cfg, targetArg)
+}
+
+func buildMinimaxArgs(cfg *Config, targetArg string) []string {
+	if cfg == nil {
+		return nil
+	}
+
+	args := []string{"--minimax-api"}
+
+	model := strings.TrimSpace(cfg.MinimaxModel)
+	if model == "" {
+		model = defaultMinimaxModel
+	}
+	args = append(args, "-m", model)
 
 	args = append(args, "-p", targetArg)
 

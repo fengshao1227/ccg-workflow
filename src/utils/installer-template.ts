@@ -79,6 +79,16 @@ export function injectConfigVariables(content: string, config: {
   const liteModeFlag = config.liteMode ? '--lite ' : ''
   processed = processed.replace(/\{\{LITE_MODE_FLAG\}\}/g, liteModeFlag)
 
+  // MiniMax model flag for codeagent-wrapper
+  // Injected when minimax is used as a backend model
+  const minimaxModelFlag = '{{MINIMAX_MODEL_FLAG}}'
+  if (processed.includes(minimaxModelFlag)) {
+    const flag = (routing.backend?.primary === 'minimax' || routing.frontend?.primary === 'minimax')
+      ? '--minimax-model MiniMax-M2.5 '
+      : ''
+    processed = processed.replace(/\{\{MINIMAX_MODEL_FLAG\}\}/g, flag)
+  }
+
   // MCP tool injection based on provider (registry-driven)
   const mcpProvider = config.mcpProvider || 'ace-tool'
   if (mcpProvider === 'skip') {

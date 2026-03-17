@@ -985,14 +985,17 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	//   See: https://github.com/google-gemini/gemini-cli/issues/2493
 	// - Claude: uses cmd.Dir as project context (no .env loading issue).
 	if cfg.Mode != "resume" && cfg.WorkDir != "" {
-		switch commandName {
-		case "codex":
+		switch {
+		case commandName == "codex":
 			// Codex uses -C flag, don't set cmd.Dir
-		case "gemini":
+		case commandName == "gemini":
 			// Use $HOME to avoid project .env interference; project dir passed via --include-directories
 			if home, err := os.UserHomeDir(); err == nil {
 				cmd.SetDir(home)
 			}
+		case cfg.Backend == "minimax":
+			// MiniMax uses self-invocation (--minimax-api); run from WorkDir
+			cmd.SetDir(cfg.WorkDir)
 		default:
 			cmd.SetDir(cfg.WorkDir)
 		}
