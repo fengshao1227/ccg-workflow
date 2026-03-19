@@ -95,6 +95,9 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    TaskOutput({ task_id: "<gemini_task_id>", block: true, timeout: 600000 })
    ```
 
+   ⛔ **Gemini 失败必须重试**：若 Gemini 调用失败，最多重试 2 次（间隔 5 秒）。3 次全败才跳过。
+   ⛔ **Codex 结果必须等待**：Codex 执行 5-15 分钟属正常，超时后继续轮询，禁止跳过。
+
 5. **Aggregate and Synthesize**
    - Collect all subagent outputs.
    - Merge into unified constraint sets:

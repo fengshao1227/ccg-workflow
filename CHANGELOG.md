@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.87] - 2026-03-19
+
+### 🐛 修复
+
+- **Gemini 调用失败不重试**：所有 20 个命令模板新增 Gemini 失败重试规则（最多 2 次，间隔 5s），3 次全败才降级为单模型
+- **Codex 结果被跳过**：所有 20 个命令模板新增 Codex 必须等待规则，禁止在 Codex 未返回时跳过或继续下一阶段
+- **team-exec 退化为普通 Agent**：明确指定必须使用 TeamCreate + TaskCreate + Agent(team_name=...) 创建 Agent Teams，禁止退化为普通 Agent 子代理
+
+---
+
 ## [1.7.86] - 2026-03-18
 
 ### 🐛 修复

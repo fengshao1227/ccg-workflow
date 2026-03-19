@@ -36,9 +36,12 @@ description: 'Agent Teams 并行实施 - 读取计划文件，spawn Builder team
      确认开始？
      ```
 
-3. **创建 Team + spawn Builders**
-   - 创建 Agent Team。
-   - 按 Layer 分组 spawn Builder teammates（Sonnet）。
+3. **使用 TeamCreate 创建 Team，然后 spawn teammates 加入该 Team**
+   - ⛔ **禁止使用普通 Agent 子代理。必须通过 TeamCreate 创建 team，再通过 Agent(team_name=...) spawn teammates 加入 team。**
+   - 先调用 TeamCreate 创建 team。
+   - 为每个子任务调用 TaskCreate 创建 task。
+   - 按 Layer 分组，通过 Agent(team_name=..., name="builder-N") spawn Builder teammates（Sonnet）。
+   - 通过 TaskUpdate(owner="builder-N") 将 task 分配给对应 Builder。
    - 每个 Builder 的 spawn prompt 必须包含：
 
    ```
@@ -70,10 +73,11 @@ description: 'Agent Teams 并行实施 - 读取计划文件，spawn Builder team
    - **依赖关系**：Layer 2 的 Builder 任务设为依赖 Layer 1 的对应任务，等 Layer 1 完成后自动解锁。
    - spawn 完成后，进入 **delegate 模式**，只协调不写码。
 
-4. **监控进度**
-   - 等待所有 Builder 完成。
+4. **通过 TaskList + SendMessage 监控进度**
+   - 通过 TaskList 查看各 task 状态，通过 SendMessage 与 Builder 沟通。
+   - teammates 完成 task 后会自动发消息通知你，无需轮询。
    - 如果某个 Builder 遇到问题并发消息求助：
-     * 分析问题，给出指导建议
+     * 通过 SendMessage 回复指导建议
      * 不要自己写代码替它完成
    - 如果某个 Builder 失败：
      * 记录失败原因
@@ -98,7 +102,7 @@ description: 'Agent Teams 并行实施 - 读取计划文件，spawn Builder team
    3. 提交代码：`git add -A && git commit`
    ```
 
-   - 关闭所有 teammates，清理 team。
+   - 通过 SendMessage 发送 shutdown_request 关闭所有 teammates，清理 team。
 
 **Exit Criteria**
 - [ ] 所有 Builder 任务完成（或明确失败并记录原因）

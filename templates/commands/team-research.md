@@ -62,6 +62,9 @@ description: 'Agent Teams 需求研究 - 并行探索代码库，产出约束集
    TaskOutput({ task_id: "<gemini_task_id>", block: true, timeout: 600000 })
    ```
 
+   ⛔ **Gemini 失败必须重试**：若 Gemini 调用失败，最多重试 2 次（间隔 5 秒）。3 次全败才跳过。
+   ⛔ **Codex 结果必须等待**：Codex 执行 5-15 分钟属正常，超时后继续轮询，禁止跳过。
+
 4. **聚合与综合**
    - 合并所有探索输出为统一约束集：
      * **硬约束**：技术限制、不可违反的模式
