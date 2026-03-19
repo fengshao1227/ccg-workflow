@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.7.88] - 2026-03-19
+
+### 🐛 修复
+
+- **TS 类型错误修复**：`installer-mcp.ts` 的 `serverConfig` 参数从 `Record<string, any>` 收紧为 `McpServerConfig`，修复 `tsc --noEmit` 报错 TS2345
+
+### 🔄 变更
+
+- **发版流程加固**：`pnpm typecheck` + `pnpm test` 列为必检项，位于 `pnpm build` 之前，防止类型错误漏网
+
+---
+
 ## [1.7.87] - 2026-03-19
 
 ### 🐛 修复

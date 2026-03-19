@@ -2,13 +2,17 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-03-19 (v1.7.87)
+**Last Updated**: 2026-03-19 (v1.7.88)
 
 ---
 
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-03-19 (v1.7.88)
+- 🐛 **TS 类型错误修复**：`installer-mcp.ts` 参数类型收紧为 `McpServerConfig`，修复 `tsc --noEmit` 报错
+- 🔄 **发版流程加固**：`pnpm typecheck` + `pnpm test` 列为发版必检项
 
 ### 2026-03-19 (v1.7.87)
 - 🐛 **Gemini 失败重试**：20 个命令模板新增 Gemini 调用失败重试规则（最多 2 次，间隔 5s），3 次全败才降级单模型
@@ -404,8 +408,14 @@ graph TD
 ### 5. 构建 + 发布 + 推送
 
 ```bash
+# 类型检查（必须在 build 之前通过）
+pnpm typecheck
+
 # 构建
 pnpm build
+
+# 测试
+pnpm test
 
 # 发布 npm 包
 npm publish
@@ -421,7 +431,9 @@ git push origin main
 - [ ] CHANGELOG.md 已添加新版本条目
 - [ ] README.md 已更新（命令表 + 使用说明 + 底部版本号）
 - [ ] CLAUDE.md 已更新（Last Updated + 变更记录 + 受影响章节）
+- [ ] `pnpm typecheck` 通过（tsc --noEmit，不可跳过）
 - [ ] `pnpm build` 通过
+- [ ] `pnpm test` 通过
 - [ ] `npm publish` 成功
 - [ ] `git push origin main` 成功
 

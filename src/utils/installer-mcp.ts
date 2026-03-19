@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import fs from 'fs-extra'
 import { join } from 'pathe'
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml'
-import { backupClaudeCodeConfig, buildMcpServerConfig, fixWindowsMcpConfig, mergeMcpServers, readClaudeCodeConfig, writeClaudeCodeConfig } from './mcp'
+import { type McpServerConfig, backupClaudeCodeConfig, buildMcpServerConfig, fixWindowsMcpConfig, mergeMcpServers, readClaudeCodeConfig, writeClaudeCodeConfig } from './mcp'
 import { isWindows } from './platform'
 
 // ═══════════════════════════════════════════════════════
@@ -20,7 +20,7 @@ type McpInstallResult = { success: boolean, message: string, configPath?: string
  */
 async function configureMcpInClaude(
   serverId: string,
-  serverConfig: Record<string, any>,
+  serverConfig: McpServerConfig,
   label: string,
 ): Promise<McpInstallResult> {
   try {
