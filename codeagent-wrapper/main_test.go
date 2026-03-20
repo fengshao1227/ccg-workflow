@@ -1196,6 +1196,86 @@ func TestBackendParseArgs_SkipPermissions(t *testing.T) {
 	}
 }
 
+func TestParseArgs_CodexConfigFlag(t *testing.T) {
+	t.Cleanup(func() { os.Unsetenv("CODEX_CONFIG") })
+	os.Unsetenv("CODEX_CONFIG")
+
+	// --codex-config with space-separated value
+	os.Args = []string{"codeagent-wrapper", "--codex-config", `model_provider="other"`, "task"}
+	cfg, err := parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs() unexpected error: %v", err)
+	}
+	if len(cfg.CodexConfigFlags) != 1 || cfg.CodexConfigFlags[0] != `model_provider="other"` {
+		t.Fatalf("CodexConfigFlags = %v, want [model_provider=\"other\"]", cfg.CodexConfigFlags)
+	}
+
+	// --codex-config= form
+	os.Args = []string{"codeagent-wrapper", `--codex-config=model_provider="other"`, "task"}
+	cfg, err = parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs() unexpected error: %v", err)
+	}
+	if len(cfg.CodexConfigFlags) != 1 || cfg.CodexConfigFlags[0] != `model_provider="other"` {
+		t.Fatalf("CodexConfigFlags = %v, want [model_provider=\"other\"]", cfg.CodexConfigFlags)
+	}
+
+	// Multiple --codex-config flags
+	os.Args = []string{"codeagent-wrapper",
+		"--codex-config", `model_provider="other"`,
+		"--codex-config", `model_providers.other.base_url="http://host/v1"`,
+		"task",
+	}
+	cfg, err = parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs() unexpected error: %v", err)
+	}
+	if len(cfg.CodexConfigFlags) != 2 {
+		t.Fatalf("CodexConfigFlags length = %d, want 2", len(cfg.CodexConfigFlags))
+	}
+
+	// Missing value after --codex-config
+	os.Args = []string{"codeagent-wrapper", "--codex-config"}
+	_, err = parseArgs()
+	if err == nil {
+		t.Fatal("expected error for --codex-config without value")
+	}
+
+	// Invalid value (no = sign)
+	os.Args = []string{"codeagent-wrapper", "--codex-config", "invalid", "task"}
+	_, err = parseArgs()
+	if err == nil {
+		t.Fatal("expected error for --codex-config without key=value")
+	}
+}
+
+func TestParseArgs_CodexConfigEnvVar(t *testing.T) {
+	t.Cleanup(func() { os.Unsetenv("CODEX_CONFIG") })
+
+	os.Setenv("CODEX_CONFIG", `model_provider="other";model_providers.other.base_url="http://host/v1"`)
+	os.Args = []string{"codeagent-wrapper", "task"}
+	cfg, err := parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs() unexpected error: %v", err)
+	}
+	if len(cfg.CodexConfigFlags) != 2 {
+		t.Fatalf("CodexConfigFlags length = %d, want 2; got %v", len(cfg.CodexConfigFlags), cfg.CodexConfigFlags)
+	}
+	if cfg.CodexConfigFlags[0] != `model_provider="other"` {
+		t.Fatalf("CodexConfigFlags[0] = %q, want model_provider=\"other\"", cfg.CodexConfigFlags[0])
+	}
+
+	// CLI flags append to env var entries
+	os.Args = []string{"codeagent-wrapper", "--codex-config", `extra="val"`, "task"}
+	cfg, err = parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs() unexpected error: %v", err)
+	}
+	if len(cfg.CodexConfigFlags) != 3 {
+		t.Fatalf("CodexConfigFlags length = %d, want 3; got %v", len(cfg.CodexConfigFlags), cfg.CodexConfigFlags)
+	}
+}
+
 func TestBackendParseBoolFlag(t *testing.T) {
 	tests := []struct {
 		name string

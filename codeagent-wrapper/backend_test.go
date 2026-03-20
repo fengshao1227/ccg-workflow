@@ -134,6 +134,64 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
 	})
+
+	t.Run("codex build args forwards --config flags", func(t *testing.T) {
+		t.Setenv("CODEX_REQUIRE_APPROVAL", "")
+
+		backend := CodexBackend{}
+		cfg := &Config{
+			Mode:    "new",
+			WorkDir: "/tmp",
+			CodexConfigFlags: []string{
+				`model_provider="other"`,
+				`model_providers.other.base_url="http://example.com/v1"`,
+			},
+		}
+		got := backend.BuildArgs(cfg, "task")
+		want := []string{
+			"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check",
+			"--config", `model_provider="other"`,
+			"--config", `model_providers.other.base_url="http://example.com/v1"`,
+			"-C", "/tmp", "--json", "task",
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("codex build args empty config flags does not add --config", func(t *testing.T) {
+		t.Setenv("CODEX_REQUIRE_APPROVAL", "")
+
+		backend := CodexBackend{}
+		cfg := &Config{Mode: "new", WorkDir: "/tmp"}
+		got := backend.BuildArgs(cfg, "task")
+		for _, a := range got {
+			if a == "--config" {
+				t.Fatalf("unexpected --config in args: %v", got)
+			}
+		}
+	})
+
+	t.Run("codex resume mode forwards --config flags", func(t *testing.T) {
+		t.Setenv("CODEX_REQUIRE_APPROVAL", "")
+
+		backend := CodexBackend{}
+		cfg := &Config{
+			Mode:             "resume",
+			SessionID:        "sess-1",
+			WorkDir:          "/tmp",
+			CodexConfigFlags: []string{`model_provider="other"`},
+		}
+		got := backend.BuildArgs(cfg, "follow-up")
+		want := []string{
+			"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check",
+			"--config", `model_provider="other"`,
+			"--json", "resume", "sess-1", "follow-up",
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
 }
 
 func TestClaudeBuildArgs_BackendMetadata(t *testing.T) {

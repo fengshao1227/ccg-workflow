@@ -565,11 +565,18 @@ Options:
                           Can also be set via GEMINI_MODEL environment variable
                           CLI parameter takes precedence over environment variable
                           Examples: gemini-2.5-flash, gemini-1.5-pro
+    --codex-config k=v    Pass --config key=value to codex CLI (repeatable)
+                          Can also be set via CODEX_CONFIG env var (semicolon-separated)
+                          Examples:
+                            --codex-config 'model_provider="other"'
+                            --codex-config 'model_providers.other.base_url="http://host/v1"'
 
 Environment Variables:
     CODEX_TIMEOUT              Timeout in milliseconds (default: 7200000)
     CODEX_REQUIRE_APPROVAL     Require manual approval for file operations (default: false)
     CODEX_DISABLE_SKIP_GIT_CHECK  Disable skip-git-repo-check flag (default: false)
+    CODEX_CONFIG               Semicolon-separated codex --config flags
+                               Example: model_provider="other";model_providers.other.base_url="http://..."
     CODEAGENT_ASCII_MODE       Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
     CODEAGENT_LITE_MODE        Enable lite mode (true/false)
 

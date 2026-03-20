@@ -782,6 +782,11 @@ func buildCodexArgs(cfg *Config, targetArg string) []string {
 		args = append(args, "--skip-git-repo-check")
 	}
 
+	// Forward --config key=value pairs to codex CLI (e.g. model_provider, base_url)
+	for _, cfgFlag := range cfg.CodexConfigFlags {
+		args = append(args, "--config", cfgFlag)
+	}
+
 	if isResume {
 		return append(args,
 			"--json",

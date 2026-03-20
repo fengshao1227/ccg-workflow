@@ -20,7 +20,8 @@ type Config struct {
 	Backend            string
 	SkipPermissions    bool
 	MaxParallelWorkers int
-	GeminiModel        string // Gemini model name (empty = use default)
+	GeminiModel        string   // Gemini model name (empty = use default)
+	CodexConfigFlags   []string // --config key=value pairs forwarded to codex CLI
 }
 
 // ParallelConfig defines the JSON schema for parallel execution
@@ -203,6 +204,19 @@ func parseArgs() (*Config, error) {
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
+	var codexConfigFlags []string
+
+	// Parse CODEX_CONFIG env var: semicolon-separated key=value pairs
+	// e.g. CODEX_CONFIG='model_provider="other";model_providers.other.base_url="http://..."'
+	if envCfg := strings.TrimSpace(os.Getenv("CODEX_CONFIG")); envCfg != "" {
+		for _, entry := range strings.Split(envCfg, ";") {
+			entry = strings.TrimSpace(entry)
+			if entry != "" && strings.Contains(entry, "=") {
+				codexConfigFlags = append(codexConfigFlags, entry)
+			}
+		}
+	}
+
 	filtered := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -242,6 +256,24 @@ func parseArgs() (*Config, error) {
 			}
 			geminiModel = value
 			continue
+		case arg == "--codex-config":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--codex-config flag requires a key=value argument")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" || !strings.Contains(value, "=") {
+				return nil, fmt.Errorf("--codex-config flag requires a key=value argument")
+			}
+			codexConfigFlags = append(codexConfigFlags, value)
+			i++
+			continue
+		case strings.HasPrefix(arg, "--codex-config="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--codex-config="))
+			if value == "" || !strings.Contains(value, "=") {
+				return nil, fmt.Errorf("--codex-config flag requires a key=value argument")
+			}
+			codexConfigFlags = append(codexConfigFlags, value)
+			continue
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
@@ -260,7 +292,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, CodexConfigFlags: codexConfigFlags}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {
