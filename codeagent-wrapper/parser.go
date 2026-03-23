@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -96,10 +97,10 @@ type ItemContent struct {
 }
 
 func parseJSONStreamInternal(r io.Reader, warnFn func(string), infoFn func(string), onMessage func(), onComplete func()) (message, threadID string) {
-	return parseJSONStreamInternalWithContent(r, warnFn, infoFn, onMessage, onComplete, nil)
+	return parseJSONStreamInternalWithContent(r, warnFn, infoFn, onMessage, onComplete, nil, nil)
 }
 
-func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn func(string), onMessage func(), onComplete func(), onContent func(content, contentType string)) (message, threadID string) {
+func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn func(string), onMessage func(), onComplete func(), onContent func(content, contentType string), onProgress func(line string)) (message, threadID string) {
 	reader := bufio.NewReaderSize(r, jsonLineReaderSize)
 
 	if warnFn == nil {
@@ -119,6 +120,13 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 		if onComplete != nil {
 			onComplete()
 		}
+	}
+
+	emitProgress := func(line string) {
+		if onProgress == nil || strings.TrimSpace(line) == "" {
+			return
+		}
+		onProgress("[PROGRESS] " + line)
 	}
 
 	totalEvents := 0
@@ -196,12 +204,21 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 			case "thread.started":
 				threadID = event.ThreadID
 				infoFn(fmt.Sprintf("thread.started event thread_id=%s", threadID))
+				emitProgress(formatProgressLine("session_started", map[string]string{"id": threadID}))
+
+			case "turn.started":
+				emitProgress(formatProgressLine("turn_started", nil))
 
 			case "thread.completed", "turn.completed":
 				if event.ThreadID != "" && threadID == "" {
 					threadID = event.ThreadID
 				}
 				infoFn(fmt.Sprintf("%s event thread_id=%s", event.Type, event.ThreadID))
+				eventName := "turn_completed"
+				if event.Type == "thread.completed" {
+					eventName = "session_completed"
+				}
+				emitProgress(formatProgressLine(eventName, map[string]string{"total_events": strconv.Itoa(totalEvents)}))
 				notifyComplete()
 
 			case "item.completed":
@@ -226,6 +243,9 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 							if itemType == "agent_message" {
 								codexMessage = normalized
 								notifyMessage()
+								emitProgress(formatProgressLine("message", map[string]string{"text": strconv.Quote(safeProgressSnippet(normalized, 120))}))
+							} else {
+								emitProgress(formatProgressLine("reasoning", map[string]string{"text": strconv.Quote(safeProgressSnippet(normalized, 120))}))
 							}
 							// Send content (Codex outputs complete blocks, not streaming deltas)
 							if onContent != nil {
@@ -252,6 +272,11 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 							content.WriteString(cmdItem.AggregatedOutput)
 						}
 						infoFn(fmt.Sprintf("item.completed event item_type=command_execution cmd=%s exit=%v", cmdItem.Command, cmdItem.ExitCode))
+						fields := map[string]string{"cmd": strconv.Quote(safeProgressSnippet(cmdItem.Command, 120))}
+						if cmdItem.ExitCode != nil {
+							fields["exit"] = strconv.Itoa(*cmdItem.ExitCode)
+						}
+						emitProgress(formatProgressLine("cmd_done", fields))
 						if onContent != nil && content.Len() > 0 {
 							onContent(content.String(), "command")
 						}
@@ -259,6 +284,9 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 
 				default:
 					infoFn(fmt.Sprintf("item.completed event item_type=%s", itemType))
+					if itemType == "mcp_tool_call" {
+						emitProgress(formatProgressLine("mcp_call", nil))
+					}
 				}
 			}
 			continue
@@ -333,6 +361,31 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 
 	infoFn(fmt.Sprintf("parseJSONStream completed: events=%d, message_len=%d, thread_id_found=%t", totalEvents, len(message), threadID != ""))
 	return message, threadID
+}
+
+func formatProgressLine(event string, fields map[string]string) string {
+	parts := []string{event}
+	for _, key := range []string{"id", "text", "cmd", "exit", "total_events"} {
+		if fields == nil {
+			continue
+		}
+		if value, ok := fields[key]; ok && strings.TrimSpace(value) != "" {
+			parts = append(parts, key+"="+value)
+		}
+	}
+	return strings.Join(parts, " ")
+}
+
+func safeProgressSnippet(s string, maxLen int) string {
+	s = strings.TrimSpace(strings.ReplaceAll(s, "\n", " "))
+	s = strings.Join(strings.Fields(s), " ")
+	if maxLen <= 0 || len(s) <= maxLen {
+		return s
+	}
+	if maxLen <= 3 {
+		return s[:maxLen]
+	}
+	return s[:maxLen-3] + "..."
 }
 
 func hasKey(m map[string]json.RawMessage, key string) bool {

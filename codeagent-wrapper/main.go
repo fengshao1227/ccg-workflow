@@ -471,6 +471,7 @@ func run() (exitCode int) {
 		Mode:      cfg.Mode,
 		SessionID: cfg.SessionID,
 		UseStdin:  useStdin,
+		Progress:  cfg.Progress,
 	}
 
 	result := runTaskFn(taskSpec, false, cfg.Timeout)
@@ -565,6 +566,7 @@ Options:
                           Can also be set via GEMINI_MODEL environment variable
                           CLI parameter takes precedence over environment variable
                           Examples: gemini-2.5-flash, gemini-1.5-pro
+    --progress            Emit compact progress lines to stderr during execution
 
 Environment Variables:
     CODEX_TIMEOUT              Timeout in milliseconds (default: 7200000)

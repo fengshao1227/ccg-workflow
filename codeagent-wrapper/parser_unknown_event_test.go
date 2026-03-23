@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 )
@@ -28,6 +29,68 @@ func TestBackendParseJSONStream_UnknownEventsAreSilent(t *testing.T) {
 		if strings.Contains(msg, "Agent event:") {
 			t.Fatalf("unexpected log for unknown event: %q", msg)
 		}
+	}
+}
+
+func TestParseJSONStreamInternalWithContent_EmitsProgressLines(t *testing.T) {
+	input := strings.Join([]string{
+		`{"type":"thread.started","thread_id":"tid-123"}`,
+		`{"type":"turn.started"}`,
+		`{"type":"item.completed","item":{"type":"reasoning","text":"Checking files and APIs"}}`,
+		`{"type":"item.completed","item":{"type":"mcp_tool_call"}}`,
+		`{"type":"item.completed","item":{"type":"command_execution","command":"echo hi","aggregated_output":"hi\n","exit_code":0}}`,
+		`{"type":"item.completed","item":{"type":"agent_message","text":"Done with changes"}}`,
+		`{"type":"turn.completed","thread_id":"tid-123"}`,
+	}, "\n")
+
+	var progress []string
+	message, threadID := parseJSONStreamInternalWithContent(
+		strings.NewReader(input),
+		nil,
+		func(string) {},
+		nil,
+		nil,
+		nil,
+		func(line string) { progress = append(progress, line) },
+	)
+
+	if message != "Done with changes" {
+		t.Fatalf("message=%q, want %q", message, "Done with changes")
+	}
+	if threadID != "tid-123" {
+		t.Fatalf("threadID=%q, want %q", threadID, "tid-123")
+	}
+
+	joined := strings.Join(progress, "\n")
+	for _, want := range []string{
+		"[PROGRESS] session_started id=tid-123",
+		"[PROGRESS] turn_started",
+		"[PROGRESS] reasoning text=\"Checking files and APIs\"",
+		"[PROGRESS] mcp_call",
+		"[PROGRESS] cmd_done cmd=\"echo hi\" exit=0",
+		"[PROGRESS] message text=\"Done with changes\"",
+		"[PROGRESS] turn_completed total_events=7",
+	} {
+		if !strings.Contains(joined, want) {
+			t.Fatalf("missing progress %q in %q", want, joined)
+		}
+	}
+}
+
+func TestParseArgs_ParsesProgressFlag(t *testing.T) {
+	oldArgs := os.Args
+	defer func() { os.Args = oldArgs }()
+
+	os.Args = []string{"codeagent-wrapper", "--progress", "task body", "/tmp/work"}
+	cfg, err := parseArgs()
+	if err != nil {
+		t.Fatalf("parseArgs error: %v", err)
+	}
+	if !cfg.Progress {
+		t.Fatalf("expected Progress=true")
+	}
+	if cfg.Task != "task body" || cfg.WorkDir != "/tmp/work" {
+		t.Fatalf("unexpected cfg: %+v", cfg)
 	}
 }
 

@@ -21,6 +21,7 @@ type Config struct {
 	SkipPermissions    bool
 	MaxParallelWorkers int
 	GeminiModel        string // Gemini model name (empty = use default)
+	Progress           bool   // Emit compact progress lines to stderr
 }
 
 // ParallelConfig defines the JSON schema for parallel execution
@@ -37,6 +38,7 @@ type TaskSpec struct {
 	Dependencies []string        `json:"dependencies,omitempty"`
 	SessionID    string          `json:"session_id,omitempty"`
 	Backend      string          `json:"backend,omitempty"`
+	Progress     bool            `json:"-"`
 	Mode         string          `json:"-"`
 	UseStdin     bool            `json:"-"`
 	Context      context.Context `json:"-"`
@@ -203,6 +205,7 @@ func parseArgs() (*Config, error) {
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
+	progress := false
 	filtered := make([]string, 0, len(args))
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
@@ -245,6 +248,9 @@ func parseArgs() (*Config, error) {
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
+		case arg == "--progress":
+			progress = true
+			continue
 		case strings.HasPrefix(arg, "--skip-permissions="):
 			skipPermissions = parseBoolFlag(strings.TrimPrefix(arg, "--skip-permissions="), skipPermissions)
 			continue
@@ -260,7 +266,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, Progress: progress}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

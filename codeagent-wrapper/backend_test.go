@@ -134,6 +134,16 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
 	})
+
+	t.Run("progress flag does not affect backend args", func(t *testing.T) {
+		backend := CodexBackend{}
+		cfg := &Config{Mode: "new", WorkDir: "/tmp", Progress: true}
+		got := backend.BuildArgs(cfg, "task")
+		want := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "/tmp", "--json", "task"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
 }
 
 func TestClaudeBuildArgs_BackendMetadata(t *testing.T) {
