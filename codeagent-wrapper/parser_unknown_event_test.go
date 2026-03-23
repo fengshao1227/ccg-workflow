@@ -77,6 +77,24 @@ func TestParseJSONStreamInternalWithContent_EmitsProgressLines(t *testing.T) {
 	}
 }
 
+func TestSafeProgressSnippet_UsesRuneSafeTruncation(t *testing.T) {
+	got := safeProgressSnippet("中文测试进度输出", 5)
+	if got != "中文..." {
+		t.Fatalf("got %q, want %q", got, "中文...")
+	}
+
+	got = safeProgressSnippet("中文", 2)
+	if got != "中文" {
+		t.Fatalf("got %q, want %q", got, "中文")
+	}
+}
+
+func TestFormatProgressLine_HandlesNilFields(t *testing.T) {
+	if got := formatProgressLine("turn_started", nil); got != "turn_started" {
+		t.Fatalf("got %q, want %q", got, "turn_started")
+	}
+}
+
 func TestParseArgs_ParsesProgressFlag(t *testing.T) {
 	oldArgs := os.Args
 	defer func() { os.Args = oldArgs }()

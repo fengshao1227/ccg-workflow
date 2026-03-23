@@ -803,7 +803,7 @@ func runCodexTask(taskSpec TaskSpec, silent bool, timeoutSec int) TaskResult {
 }
 
 func runCodexProcess(parentCtx context.Context, codexArgs []string, taskText string, useStdin bool, timeoutSec int) (message, threadID string, exitCode int) {
-	res := runCodexTaskWithContext(parentCtx, TaskSpec{Task: taskText, WorkDir: defaultWorkdir, Mode: "new", UseStdin: useStdin, Progress: true}, nil, codexArgs, true, false, timeoutSec)
+	res := runCodexTaskWithContext(parentCtx, TaskSpec{Task: taskText, WorkDir: defaultWorkdir, Mode: "new", UseStdin: useStdin}, nil, codexArgs, true, false, timeoutSec)
 	return res.Message, res.SessionID, res.ExitCode
 }
 

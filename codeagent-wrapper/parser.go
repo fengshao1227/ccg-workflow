@@ -365,10 +365,10 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 
 func formatProgressLine(event string, fields map[string]string) string {
 	parts := []string{event}
+	if fields == nil {
+		return strings.Join(parts, " ")
+	}
 	for _, key := range []string{"id", "text", "cmd", "exit", "total_events"} {
-		if fields == nil {
-			continue
-		}
 		if value, ok := fields[key]; ok && strings.TrimSpace(value) != "" {
 			parts = append(parts, key+"="+value)
 		}
@@ -379,13 +379,14 @@ func formatProgressLine(event string, fields map[string]string) string {
 func safeProgressSnippet(s string, maxLen int) string {
 	s = strings.TrimSpace(strings.ReplaceAll(s, "\n", " "))
 	s = strings.Join(strings.Fields(s), " ")
-	if maxLen <= 0 || len(s) <= maxLen {
+	runes := []rune(s)
+	if maxLen <= 0 || len(runes) <= maxLen {
 		return s
 	}
 	if maxLen <= 3 {
-		return s[:maxLen]
+		return string(runes[:maxLen])
 	}
-	return s[:maxLen-3] + "..."
+	return string(runes[:maxLen-3]) + "..."
 }
 
 func hasKey(m map[string]json.RawMessage, key string) bool {

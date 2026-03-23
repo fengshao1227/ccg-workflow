@@ -47,7 +47,7 @@ description: '按规范执行 + 多模型协作 + 归档'
 
    For each task:
    ```
-   codeagent-wrapper --backend <codex|gemini> --gemini-model gemini-3.1-pro-preview - "{{WORKDIR}}" <<'EOF'
+   codeagent-wrapper --progress --backend <codex|gemini> --gemini-model gemini-3.1-pro-preview - "{{WORKDIR}}" <<'EOF'
    TASK: <task description from tasks.md>
    CONTEXT: <relevant code context>
    CONSTRAINTS: <constraints from spec>
@@ -83,7 +83,7 @@ description: '按规范执行 + 多模型协作 + 归档'
    **FIRST Bash call (Codex)**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend codex - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Correctness: logic errors, edge cases\n- Security: injection, auth issues\n- Spec compliance: constraints satisfied\nOUTPUT: JSON with findings\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --progress --backend codex - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Correctness: logic errors, edge cases\n- Security: injection, auth issues\n- Spec compliance: constraints satisfied\nOUTPUT: JSON with findings\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Codex: correctness/security review"
@@ -93,7 +93,7 @@ description: '按规范执行 + 多模型协作 + 归档'
    **SECOND Bash call (Gemini) - IN THE SAME MESSAGE**:
    ```
    Bash({
-     command: "~/.claude/bin/codeagent-wrapper --backend gemini --gemini-model gemini-3.1-pro-preview - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Maintainability: readability, complexity\n- Patterns: consistency with project style\n- Integration: cross-module impacts\nOUTPUT: JSON with findings\nEOF",
+     command: "~/.claude/bin/codeagent-wrapper --progress --backend gemini --gemini-model gemini-3.1-pro-preview - \"{{WORKDIR}}\" <<'EOF'\nReview the implementation changes:\n- Maintainability: readability, complexity\n- Patterns: consistency with project style\n- Integration: cross-module impacts\nOUTPUT: JSON with findings\nEOF",
      run_in_background: true,
      timeout: 300000,
      description: "Gemini: maintainability/patterns review"
