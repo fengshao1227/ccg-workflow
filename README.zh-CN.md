@@ -7,7 +7,7 @@
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Compatible-green.svg)](https://claude.ai/code)
 [![Tests](https://img.shields.io/badge/Tests-134%20passed-brightgreen.svg)]()
 
-简体中文 | [English](./README.md)
+简体中文 | [English](./README.md) | [日本語](./README.ja-JP.md)
 
 </div>
 
