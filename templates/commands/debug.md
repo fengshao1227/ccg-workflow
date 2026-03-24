@@ -32,7 +32,7 @@ description: '多模型调试：Codex 后端诊断 + Gemini 前端诊断，交�
 
 **Codex 后端诊断**：
 ```bash
-~/.claude/bin/codeagent-wrapper --progress --backend codex - "$(pwd)" <<'EOF'
+~/.claude/bin/codeagent-wrapper --progress --backend codex "$(pwd)" - <<'EOF'
 ROLE_FILE: ~/.claude/.ccg/prompts/codex/debugger.md
 <TASK>
 需求：<增强后的需求>
@@ -44,7 +44,7 @@ EOF
 
 **Gemini 前端诊断**：
 ```bash
-~/.claude/bin/codeagent-wrapper --progress --backend gemini --gemini-model gemini-3.1-pro-preview - "$(pwd)" <<'EOF'
+~/.claude/bin/codeagent-wrapper --progress --backend gemini --gemini-model gemini-3.1-pro-preview "$(pwd)" - <<'EOF'
 ROLE_FILE: ~/.claude/.ccg/prompts/gemini/debugger.md
 <TASK>
 需求：<增强后的需求>

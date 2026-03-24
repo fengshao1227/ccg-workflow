@@ -176,7 +176,7 @@ npx ccg-workflow menu
 - **主入口**：`codeagent-wrapper/main.go`
 - **调用语法**：
   ```bash
-  codeagent-wrapper --backend <codex|gemini|claude> - [工作目录] <<'EOF'
+  codeagent-wrapper --backend <codex|gemini|claude> [工作目录] - <<'EOF'
   <任务内容>
   EOF
   ```

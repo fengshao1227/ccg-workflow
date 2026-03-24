@@ -39,7 +39,7 @@ description: '多模型测试生成：智能路由 Codex 后端测试 / Gemini �
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend <codex|gemini> {{GEMINI_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend <codex|gemini> {{GEMINI_MODEL_FLAG}}\"{{WORKDIR}}\" - <<'EOF'
 ROLE_FILE: <角色提示词路径>
 <TASK>
 需求：为以下代码生成测试
