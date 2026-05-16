@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+const envUnsetValue = "\x00CODEAGENT_UNSET_ENV"
+
 // resolvePostMessageDelay returns the delay duration after receiving agent_message
 // before terminating the backend process. This delay allows the backend to send
 // completion events (turn.completed/thread.completed) which may arrive after the message.
@@ -141,10 +143,15 @@ func (r *realCmd) SetEnv(env map[string]string) {
 		merged[kv[:idx]] = kv[idx+1:]
 	}
 	for k, v := range env {
-		if strings.TrimSpace(k) == "" {
+		key := strings.TrimSpace(k)
+		if key == "" {
 			continue
 		}
-		merged[k] = v
+		if v == envUnsetValue {
+			delete(merged, key)
+			continue
+		}
+		merged[key] = v
 	}
 
 	keys := make([]string, 0, len(merged))
@@ -165,6 +172,42 @@ func (r *realCmd) Process() processHandle {
 		return nil
 	}
 	return &realProcess{proc: r.cmd.Process}
+}
+
+func isolateOpencodeProcess(cmd commandRunner) {
+	rc, ok := cmd.(*realCmd)
+	if !ok || rc == nil || rc.cmd == nil {
+		return
+	}
+	isolateOpencodeExecCmd(rc.cmd)
+}
+
+func opencodeEnvOverrides() map[string]string {
+	env := make(map[string]string)
+	for _, kv := range os.Environ() {
+		idx := strings.IndexByte(kv, '=')
+		if idx <= 0 {
+			continue
+		}
+		key := kv[:idx]
+		if shouldUnsetOpencodeEnv(key) {
+			env[key] = envUnsetValue
+		}
+	}
+	return env
+}
+
+func shouldUnsetOpencodeEnv(key string) bool {
+	key = strings.ToUpper(strings.TrimSpace(key))
+	if !strings.HasPrefix(key, "OPENCODE_") {
+		return false
+	}
+	for _, marker := range []string{"SESSION", "PARENT", "RUN", "CLIENT", "INSTANCE"} {
+		if strings.Contains(key, marker) {
+			return true
+		}
+	}
+	return false
 }
 
 // realProcess implements processHandle using os.Process
@@ -820,12 +863,15 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	logger := injectedLogger
 
 	cfg := &Config{
-		Mode:      taskSpec.Mode,
-		Task:      taskSpec.Task,
-		SessionID: taskSpec.SessionID,
-		WorkDir:   taskSpec.WorkDir,
-		Backend:   defaultBackendName,
-		Progress:  taskSpec.Progress,
+		Mode:            taskSpec.Mode,
+		Task:            taskSpec.Task,
+		SessionID:       taskSpec.SessionID,
+		WorkDir:         taskSpec.WorkDir,
+		Backend:         defaultBackendName,
+		SkipPermissions: taskSpec.SkipPermissions,
+		GeminiModel:     taskSpec.GeminiModel,
+		OpencodeModel:   taskSpec.OpencodeModel,
+		Progress:        taskSpec.Progress,
 	}
 
 	commandName := codexCommand
@@ -863,11 +909,16 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	// Use stdin pipe instead and omit -p so Gemini reads from piped stdin.
 	geminiDirect := useStdin && cfg.Backend == "gemini" && !isWindows()
 	geminiStdinPipe := useStdin && cfg.Backend == "gemini" && isWindows()
-	if useStdin && !geminiDirect && !geminiStdinPipe {
+	// Opencode CLI passes prompt as the last positional argument, not via stdin.
+	opencodeDirect := useStdin && cfg.Backend == "opencode"
+	if useStdin && !geminiDirect && !geminiStdinPipe && !opencodeDirect {
 		targetArg = "-"
 	}
 	if geminiStdinPipe {
 		targetArg = "" // signal buildGeminiArgs to omit -p flag
+	}
+	if opencodeDirect {
+		targetArg = taskSpec.Task
 	}
 
 	var codexArgs []string
@@ -980,12 +1031,20 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	}
 
 	cmd := newCommandRunner(ctx, commandName, codexArgs...)
+	if cfg.Backend == "opencode" {
+		isolateOpencodeProcess(cmd)
+	}
 
 	// 统一处理所有后端的环境变量
 	// 修复 Windows Git Bash 后台进程 PATH 继承问题
 	env := loadMinimalEnvSettings()
 	if env == nil {
 		env = make(map[string]string)
+	}
+	if cfg.Backend == "opencode" {
+		for k, v := range opencodeEnvOverrides() {
+			env[k] = v
+		}
 	}
 	cmd.SetEnv(env) // SetEnv 会自动合并 os.Environ() (executor.go:122-161)
 
@@ -1001,6 +1060,8 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		switch commandName {
 		case "codex":
 			// Codex uses -C flag, don't set cmd.Dir
+		case "opencode":
+			// Opencode uses --dir flag in BuildArgs, don't set cmd.Dir
 		default:
 			cmd.SetDir(cfg.WorkDir)
 		}
@@ -1026,7 +1087,7 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 
 	var stdinPipe io.WriteCloser
 	var err error
-	if useStdin && !geminiDirect {
+	if useStdin && !geminiDirect && !opencodeDirect {
 		stdinPipe, err = cmd.StdinPipe()
 		if err != nil {
 			logErrorFn("Failed to create stdin pipe: " + err.Error())
@@ -1285,6 +1346,8 @@ waitLoop:
 	if waitErr != nil {
 		if forcedAfterComplete && parsed.message != "" {
 			logWarnFn(fmt.Sprintf("%s terminated after delivering output", commandName))
+		} else if cfg.Backend == "opencode" && parsed.message != "" {
+			logWarnFn(fmt.Sprintf("%s exited (opencode backend, message captured, ignoring exit code)", commandName))
 		} else {
 			if exitErr, ok := waitErr.(*exec.ExitError); ok {
 				code := exitErr.ExitCode()

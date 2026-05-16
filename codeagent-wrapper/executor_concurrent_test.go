@@ -152,6 +152,44 @@ func (f *execFakeRunner) Process() processHandle {
 }
 
 func TestExecutorHelperCoverage(t *testing.T) {
+	t.Run("opencodeOptionsReachChildProcess", func(t *testing.T) {
+		defer resetTestHooks()
+		t.Setenv("OPENCODE_SERVER_URL", "http://localhost:58656")
+		t.Setenv("OPENCODE_SESSION_ID", "ses_parent")
+
+		var gotName string
+		var gotArgs []string
+		var rc *execFakeRunner
+		newCommandRunner = func(ctx context.Context, name string, args ...string) commandRunner {
+			gotName = name
+			gotArgs = append([]string(nil), args...)
+			rc = &execFakeRunner{
+				stdout:  newReasonReadCloser(`{"type":"text","sessionID":"ses_child","part":{"type":"text","text":"ok","sessionID":"ses_child"}}`),
+				process: &execFakeProcess{pid: 15},
+			}
+			return rc
+		}
+
+		res := runCodexTaskWithContext(context.Background(), TaskSpec{
+			Task:            "hello",
+			WorkDir:         "/workspace",
+			Mode:            "new",
+			Backend:         "opencode",
+			SkipPermissions: true,
+			OpencodeModel:   "zhoumo/glm-5.1",
+		}, OpencodeBackend{}, nil, false, true, 1)
+		if res.ExitCode != 0 || res.Message != "ok" {
+			t.Fatalf("unexpected result: %+v", res)
+		}
+		wantArgs := []string{"run", "--format", "json", "--dangerously-skip-permissions", "-m", "zhoumo/glm-5.1", "--dir", "/workspace", "hello"}
+		if gotName != "opencode" || !slices.Equal(gotArgs, wantArgs) {
+			t.Fatalf("command = %s %v, want opencode %v", gotName, gotArgs, wantArgs)
+		}
+		if rc == nil || rc.env["OPENCODE_SESSION_ID"] != envUnsetValue {
+			t.Fatalf("expected parent opencode session env to be unset, got %+v", rc)
+		}
+	})
+
 	t.Run("realCmdAndProcess", func(t *testing.T) {
 		rc := &realCmd{}
 		if err := rc.Start(); err == nil {

@@ -21,6 +21,7 @@ type Config struct {
 	SkipPermissions    bool
 	MaxParallelWorkers int
 	GeminiModel        string // Gemini model name (empty = use default)
+	OpencodeModel      string // Opencode model name in provider/model format (empty = use default)
 	Progress           bool   // Emit compact progress lines to stderr
 }
 
@@ -32,16 +33,19 @@ type ParallelConfig struct {
 
 // TaskSpec describes an individual task entry in the parallel config
 type TaskSpec struct {
-	ID           string          `json:"id"`
-	Task         string          `json:"task"`
-	WorkDir      string          `json:"workdir,omitempty"`
-	Dependencies []string        `json:"dependencies,omitempty"`
-	SessionID    string          `json:"session_id,omitempty"`
-	Backend      string          `json:"backend,omitempty"`
-	Progress     bool            `json:"-"`
-	Mode         string          `json:"-"`
-	UseStdin     bool            `json:"-"`
-	Context      context.Context `json:"-"`
+	ID              string          `json:"id"`
+	Task            string          `json:"task"`
+	WorkDir         string          `json:"workdir,omitempty"`
+	Dependencies    []string        `json:"dependencies,omitempty"`
+	SessionID       string          `json:"session_id,omitempty"`
+	Backend         string          `json:"backend,omitempty"`
+	Progress        bool            `json:"-"`
+	Mode            string          `json:"-"`
+	UseStdin        bool            `json:"-"`
+	SkipPermissions bool            `json:"-"`
+	GeminiModel     string          `json:"-"`
+	OpencodeModel   string          `json:"-"`
+	Context         context.Context `json:"-"`
 }
 
 // TaskResult captures the execution outcome of a task
@@ -64,9 +68,10 @@ type TaskResult struct {
 }
 
 var backendRegistry = map[string]Backend{
-	"codex":  CodexBackend{},
-	"claude": ClaudeBackend{},
-	"gemini": GeminiBackend{},
+	"codex":    CodexBackend{},
+	"claude":   ClaudeBackend{},
+	"gemini":   GeminiBackend{},
+	"opencode": OpencodeBackend{},
 }
 
 func selectBackend(name string) (Backend, error) {
@@ -202,6 +207,7 @@ func parseArgs() (*Config, error) {
 
 	// Read environment variable (lowest precedence)
 	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
+	opencodeModel := strings.TrimSpace(os.Getenv("OPENCODE_MODEL"))
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
@@ -245,6 +251,24 @@ func parseArgs() (*Config, error) {
 			}
 			geminiModel = value
 			continue
+		case arg == "--opencode-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			opencodeModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--opencode-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--opencode-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			opencodeModel = value
+			continue
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
@@ -266,7 +290,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, Progress: progress}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, OpencodeModel: opencodeModel, Progress: progress}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

@@ -90,6 +90,31 @@ type UnifiedEvent struct {
 	Content        string `json:"content,omitempty"`
 	Delta          *bool  `json:"delta,omitempty"`
 	Status         string `json:"status,omitempty"`
+
+	// Opencode-specific fields
+	Timestamp int64          `json:"timestamp,omitempty"`
+	Part      *OpencodePart  `json:"part,omitempty"`
+	Error     *OpencodeError `json:"error,omitempty"`
+}
+
+// OpencodePart represents the "part" field in opencode JSON events
+type OpencodePart struct {
+	Type      string          `json:"type"`
+	Text      string          `json:"text,omitempty"`
+	SessionID string          `json:"sessionID,omitempty"`
+	MessageID string          `json:"messageID,omitempty"`
+	Tool      string          `json:"tool,omitempty"`
+	CallID    string          `json:"callID,omitempty"`
+	Reason    string          `json:"reason,omitempty"`
+	State     json.RawMessage `json:"state,omitempty"`
+	Tokens    json.RawMessage `json:"tokens,omitempty"`
+}
+
+type OpencodeError struct {
+	Name string `json:"name,omitempty"`
+	Data struct {
+		Message string `json:"message,omitempty"`
+	} `json:"data,omitempty"`
 }
 
 // GetSessionID returns the session ID from either snake_case or camelCase field.
@@ -143,9 +168,10 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 	totalEvents := 0
 
 	var (
-		codexMessage  string
-		claudeMessage string
-		geminiBuffer  strings.Builder
+		codexMessage   string
+		claudeMessage  string
+		geminiBuffer   strings.Builder
+		opencodeBuffer strings.Builder
 	)
 
 	for {
@@ -209,6 +235,7 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 		}
 		isGemini := event.Role != "" || event.Delta != nil || event.Status != "" ||
 			(event.Type == "init" && event.GetSessionID() != "")
+		isOpencode := event.Part != nil || event.Timestamp > 0 || event.Error != nil
 
 		// Handle Codex events
 		if isCodex {
@@ -372,11 +399,85 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 			continue
 		}
 
+		// Handle Opencode events
+		if isOpencode {
+			if event.Part != nil && event.Part.SessionID != "" && threadID == "" {
+				threadID = event.Part.SessionID
+				if onSessionStarted != nil {
+					onSessionStarted(threadID)
+				}
+			}
+
+			switch event.Type {
+			case "step_start":
+				emitProgress(formatProgressLine("turn_started", nil))
+				sid := ""
+				if event.Part != nil {
+					sid = event.Part.SessionID
+				}
+				infoFn(fmt.Sprintf("Parsed Opencode event #%d type=step_start sessionID=%s", totalEvents, sid))
+
+			case "text":
+				textLen := 0
+				if event.Part != nil && event.Part.Text != "" {
+					textLen = len(event.Part.Text)
+					opencodeBuffer.WriteString(event.Part.Text)
+					notifyMessage()
+					if onContent != nil {
+						onContent(event.Part.Text, "message")
+					}
+					emitProgress(formatProgressLine("message", map[string]string{"text": strconv.Quote(safeProgressSnippet(event.Part.Text, 120))}))
+				}
+				infoFn(fmt.Sprintf("Parsed Opencode event #%d type=text text_len=%d", totalEvents, textLen))
+
+			case "tool_use":
+				toolName := ""
+				if event.Part != nil {
+					toolName = event.Part.Tool
+				}
+				emitProgress(formatProgressLine("mcp_call", map[string]string{"cmd": strconv.Quote(toolName)}))
+				infoFn(fmt.Sprintf("Parsed Opencode event #%d type=tool_use tool=%s", totalEvents, toolName))
+
+			case "step_finish":
+				reason := ""
+				if event.Part != nil {
+					reason = event.Part.Reason
+				}
+				infoFn(fmt.Sprintf("Parsed Opencode event #%d type=step_finish reason=%s", totalEvents, reason))
+				emitProgress(formatProgressLine("turn_completed", nil))
+				notifyComplete()
+
+			case "error":
+				errMsg := ""
+				if event.Part != nil {
+					errMsg = event.Part.Text
+				}
+				if errMsg == "" && event.Error != nil {
+					errMsg = event.Error.Data.Message
+					if errMsg == "" {
+						errMsg = event.Error.Name
+					}
+				}
+				infoFn(fmt.Sprintf("Parsed Opencode event #%d type=error error=%s", totalEvents, errMsg))
+				emitProgress(formatProgressLine("error", map[string]string{"text": strconv.Quote(safeProgressSnippet(errMsg, 120))}))
+
+			default:
+				if event.Part != nil {
+					infoFn(fmt.Sprintf("Parsed Opencode event #%d type=%s part_type=%s", totalEvents, event.Type, event.Part.Type))
+				} else {
+					infoFn(fmt.Sprintf("Parsed Opencode event #%d type=%s", totalEvents, event.Type))
+				}
+			}
+			continue
+		}
+
 		// Unknown event format from other backends (turn.started/assistant/user); ignore.
 		continue
 	}
 
 	switch {
+	case opencodeBuffer.Len() > 0:
+		message = opencodeBuffer.String()
 	case geminiBuffer.Len() > 0:
 		message = geminiBuffer.String()
 	case claudeMessage != "":

@@ -117,6 +117,49 @@ func (GeminiBackend) BuildArgs(cfg *Config, targetArg string) []string {
 	return buildGeminiArgs(cfg, targetArg)
 }
 
+type OpencodeBackend struct{}
+
+func (OpencodeBackend) Name() string { return "opencode" }
+func (OpencodeBackend) Command() string {
+	return "opencode"
+}
+func (OpencodeBackend) BuildArgs(cfg *Config, targetArg string) []string {
+	return buildOpencodeArgs(cfg, targetArg)
+}
+
+func buildOpencodeArgs(cfg *Config, targetArg string) []string {
+	if cfg == nil {
+		return nil
+	}
+
+	args := []string{"run", "--format", "json"}
+
+	if cfg.SkipPermissions {
+		args = append(args, "--dangerously-skip-permissions")
+	}
+
+	if model := strings.TrimSpace(cfg.OpencodeModel); model != "" {
+		args = append(args, "-m", model)
+	}
+
+	if cfg.Mode == "resume" && cfg.SessionID != "" {
+		args = append(args, "--session", cfg.SessionID)
+	}
+
+	if cfg.WorkDir != "" {
+		args = append(args, "--dir", cfg.WorkDir)
+	}
+
+	opencodeServerURL := strings.TrimSpace(os.Getenv("OPENCODE_SERVER_URL"))
+	if opencodeServerURL != "" && envFlagEnabled("CODEAGENT_OPENCODE_ATTACH") {
+		args = append(args, "--attach", opencodeServerURL)
+	}
+
+	args = append(args, targetArg)
+
+	return args
+}
+
 func buildGeminiArgs(cfg *Config, targetArg string) []string {
 	if cfg == nil {
 		return nil

@@ -365,10 +365,16 @@ func run() (exitCode int) {
 	if cfg.GeminiModel != "" && cfg.Backend == "gemini" {
 		logInfo(fmt.Sprintf("Using Gemini model: %s", cfg.GeminiModel))
 	}
+	if cfg.OpencodeModel != "" && cfg.Backend == "opencode" {
+		logInfo(fmt.Sprintf("Using Opencode model: %s", cfg.OpencodeModel))
+	}
 
 	// Warn if model parameter used with non-gemini backend
 	if cfg.GeminiModel != "" && cfg.Backend != "gemini" {
 		logWarn("--gemini-model parameter is only effective with --backend gemini")
+	}
+	if cfg.OpencodeModel != "" && cfg.Backend != "opencode" {
+		logWarn("--opencode-model parameter is only effective with --backend opencode")
 	}
 
 	timeoutSec := resolveTimeout()
@@ -417,14 +423,18 @@ func run() (exitCode int) {
 	useStdin := cfg.ExplicitStdin || shouldUseStdin(taskText, piped)
 
 	targetArg := taskText
-	// Match the geminiDirect/geminiStdinPipe logic in executor.go so the display is accurate.
+	// Match the geminiDirect/geminiStdinPipe/opencodeDirect logic in executor.go
 	geminiDirect := useStdin && cfg.Backend == "gemini" && !isWindows()
 	geminiStdinPipe := useStdin && cfg.Backend == "gemini" && isWindows()
-	if useStdin && !geminiDirect && !geminiStdinPipe {
+	opencodeDirect := useStdin && cfg.Backend == "opencode"
+	if useStdin && !geminiDirect && !geminiStdinPipe && !opencodeDirect {
 		targetArg = "-"
 	}
 	if geminiStdinPipe {
 		targetArg = ""
+	}
+	if opencodeDirect {
+		targetArg = taskText
 	}
 	codexArgs := buildCodexArgsFn(cfg, targetArg)
 
@@ -472,12 +482,16 @@ func run() (exitCode int) {
 	logInfo(fmt.Sprintf("%s running...", cfg.Backend))
 
 	taskSpec := TaskSpec{
-		Task:      taskText,
-		WorkDir:   cfg.WorkDir,
-		Mode:      cfg.Mode,
-		SessionID: cfg.SessionID,
-		UseStdin:  useStdin,
-		Progress:  cfg.Progress,
+		Task:            taskText,
+		WorkDir:         cfg.WorkDir,
+		Mode:            cfg.Mode,
+		SessionID:       cfg.SessionID,
+		Backend:         cfg.Backend,
+		UseStdin:        useStdin,
+		SkipPermissions: cfg.SkipPermissions,
+		GeminiModel:     cfg.GeminiModel,
+		OpencodeModel:   cfg.OpencodeModel,
+		Progress:        cfg.Progress,
 	}
 
 	result := runTaskFn(taskSpec, false, cfg.Timeout)
@@ -567,11 +581,15 @@ Parallel mode examples:
 
 Options:
     --lite, -L            Lite mode: disable Web UI, faster response
-    --backend <name>      Select backend (codex, gemini, claude)
+    --backend <name>      Select backend (codex, gemini, claude, opencode)
     --gemini-model <name> Specify Gemini model (gemini backend only)
                           Can also be set via GEMINI_MODEL environment variable
                           CLI parameter takes precedence over environment variable
                           Examples: gemini-2.5-flash, gemini-1.5-pro
+    --opencode-model <name> Specify Opencode model in provider/model format (opencode backend only)
+                          Can also be set via OPENCODE_MODEL environment variable
+                          CLI parameter takes precedence over environment variable
+                          Examples: zhoumo/glm-5.1, anthropic/claude-sonnet-4-6
     --progress            Emit compact progress lines to stderr during execution
 
 Environment Variables:
@@ -580,6 +598,9 @@ Environment Variables:
     CODEX_DISABLE_SKIP_GIT_CHECK  Disable skip-git-repo-check flag (default: false)
     CODEAGENT_ASCII_MODE       Use ASCII symbols instead of Unicode (PASS/WARN/FAIL)
     CODEAGENT_LITE_MODE        Enable lite mode (true/false)
+    CODEAGENT_OPENCODE_ATTACH  Attach opencode to OPENCODE_SERVER_URL (true/false, default: false)
+    OPENCODE_MODEL             Model for opencode backend in provider/model format
+    OPENCODE_SERVER_URL        Opencode server URL used when CODEAGENT_OPENCODE_ATTACH=true
 
 Exit Codes:
     0    Success

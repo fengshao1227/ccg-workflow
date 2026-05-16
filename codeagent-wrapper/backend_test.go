@@ -111,6 +111,44 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		}
 	})
 
+	t.Run("opencode new mode includes model permissions dir and attach", func(t *testing.T) {
+		t.Setenv("OPENCODE_SERVER_URL", "http://localhost:58656")
+		t.Setenv("CODEAGENT_OPENCODE_ATTACH", "true")
+
+		backend := OpencodeBackend{}
+		cfg := &Config{Mode: "new", WorkDir: "/workspace", SkipPermissions: true, OpencodeModel: "zhoumo/glm-5.1"}
+		got := backend.BuildArgs(cfg, "hello")
+		want := []string{"run", "--format", "json", "--dangerously-skip-permissions", "-m", "zhoumo/glm-5.1", "--dir", "/workspace", "--attach", "http://localhost:58656", "hello"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("opencode server env alone uses standalone mode", func(t *testing.T) {
+		t.Setenv("OPENCODE_SERVER_URL", "http://localhost:58656")
+		t.Setenv("CODEAGENT_OPENCODE_ATTACH", "")
+
+		backend := OpencodeBackend{}
+		cfg := &Config{Mode: "new", WorkDir: "/workspace", SkipPermissions: true, OpencodeModel: "zhoumo/glm-5.1"}
+		got := backend.BuildArgs(cfg, "hello")
+		want := []string{"run", "--format", "json", "--dangerously-skip-permissions", "-m", "zhoumo/glm-5.1", "--dir", "/workspace", "hello"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
+	t.Run("opencode resume mode includes session", func(t *testing.T) {
+		t.Setenv("OPENCODE_SERVER_URL", "")
+
+		backend := OpencodeBackend{}
+		cfg := &Config{Mode: "resume", SessionID: "ses_123", WorkDir: "/workspace"}
+		got := backend.BuildArgs(cfg, "continue")
+		want := []string{"run", "--format", "json", "--session", "ses_123", "--dir", "/workspace", "continue"}
+		if !reflect.DeepEqual(got, want) {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	})
+
 	t.Run("codex build args includes bypass by default (CODEX_REQUIRE_APPROVAL unset)", func(t *testing.T) {
 		t.Setenv("CODEX_REQUIRE_APPROVAL", "")
 
@@ -216,6 +254,7 @@ func TestClaudeBuildArgs_BackendMetadata(t *testing.T) {
 		{backend: CodexBackend{}, name: "codex", command: "codex"},
 		{backend: ClaudeBackend{}, name: "claude", command: "claude"},
 		{backend: GeminiBackend{}, name: "gemini", command: "gemini"},
+		{backend: OpencodeBackend{}, name: "opencode", command: "opencode"},
 	}
 
 	for _, tt := range tests {
