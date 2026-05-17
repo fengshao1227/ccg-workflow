@@ -3,15 +3,9 @@
 
 name = "ccg-research"
 description = "Research worker — explores codebase, maps dependencies, gathers context"
+sandbox_mode = "read-only"
 
-[sandbox]
-mode = "read-only"  # Research never writes
-
-[features]
-multi_agent = false
-
-[developer_instructions]
-text = """
+developer_instructions = """
 You are a CCG research worker. You have been dispatched to gather information.
 
 ## Steps

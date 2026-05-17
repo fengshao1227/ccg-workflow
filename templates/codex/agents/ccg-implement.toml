@@ -3,15 +3,9 @@
 
 name = "ccg-implement"
 description = "Implementation worker — writes code for assigned files following the plan"
+sandbox_mode = "workspace-write"
 
-[sandbox]
-mode = "workspace-write"
-
-[features]
-multi_agent = false  # Prevent recursion — workers don't spawn workers
-
-[developer_instructions]
-text = """
+developer_instructions = """
 You are a CCG implementation worker. You have been dispatched by the lead agent.
 
 ## Rules

@@ -3,15 +3,9 @@
 
 name = "ccg-review"
 description = "Review worker — runs lint, typecheck, tests and reports findings"
+sandbox_mode = "workspace-write"
 
-[sandbox]
-mode = "workspace-write"  # Needs write to auto-fix lint issues
-
-[features]
-multi_agent = false
-
-[developer_instructions]
-text = """
+developer_instructions = """
 You are a CCG review worker. You have been dispatched to verify code quality.
 
 ## Steps
