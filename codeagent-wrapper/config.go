@@ -22,6 +22,8 @@ type Config struct {
 	MaxParallelWorkers int
 	GeminiModel        string // Gemini model name (empty = use default)
 	GrokModel          string // Grok model name (empty = use default)
+	MinimaxModel       string // MiniMax model name (empty = use default)
+	MinimaxRegion      string // MiniMax region key (empty = use default)
 	Progress           bool   // Emit compact progress lines to stderr
 }
 
@@ -33,18 +35,20 @@ type ParallelConfig struct {
 
 // TaskSpec describes an individual task entry in the parallel config
 type TaskSpec struct {
-	ID           string          `json:"id"`
-	Task         string          `json:"task"`
-	WorkDir      string          `json:"workdir,omitempty"`
-	Dependencies []string        `json:"dependencies,omitempty"`
-	SessionID    string          `json:"session_id,omitempty"`
-	Backend      string          `json:"backend,omitempty"`
-	Progress     bool            `json:"-"`
-	Mode         string          `json:"-"`
-	UseStdin     bool            `json:"-"`
-	GeminiModel  string          `json:"-"`
-	GrokModel    string          `json:"-"`
-	Context      context.Context `json:"-"`
+	ID            string          `json:"id"`
+	Task          string          `json:"task"`
+	WorkDir       string          `json:"workdir,omitempty"`
+	Dependencies  []string        `json:"dependencies,omitempty"`
+	SessionID     string          `json:"session_id,omitempty"`
+	Backend       string          `json:"backend,omitempty"`
+	Progress      bool            `json:"-"`
+	Mode          string          `json:"-"`
+	UseStdin      bool            `json:"-"`
+	GeminiModel   string          `json:"-"`
+	GrokModel     string          `json:"-"`
+	MinimaxModel  string          `json:"-"`
+	MinimaxRegion string          `json:"-"`
+	Context       context.Context `json:"-"`
 }
 
 // TaskResult captures the execution outcome of a task
@@ -73,6 +77,7 @@ var backendRegistry = map[string]Backend{
 	"antigravity": AntigravityBackend{},
 	"agy":         AntigravityBackend{},
 	"grok":        GrokBackend{},
+	"minimax":     MinimaxBackend{},
 }
 
 func selectBackend(name string) (Backend, error) {
@@ -209,6 +214,8 @@ func parseArgs() (*Config, error) {
 	// Read environment variables (lowest precedence)
 	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
 	grokModel := strings.TrimSpace(os.Getenv("GROK_MODEL"))
+	minimaxModel := strings.TrimSpace(os.Getenv("MINIMAX_MODEL"))
+	minimaxRegion := strings.TrimSpace(os.Getenv("MINIMAX_REGION"))
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
@@ -270,6 +277,42 @@ func parseArgs() (*Config, error) {
 			}
 			grokModel = value
 			continue
+		case arg == "--minimax-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			minimaxModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--minimax-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--minimax-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-model flag requires a non-empty model name")
+			}
+			minimaxModel = value
+			continue
+		case arg == "--minimax-region":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--minimax-region flag requires a non-empty region name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-region flag requires a non-empty region name")
+			}
+			minimaxRegion = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--minimax-region="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--minimax-region="))
+			if value == "" {
+				return nil, fmt.Errorf("--minimax-region flag requires a non-empty region name")
+			}
+			minimaxRegion = value
+			continue
 		case arg == "--skip-permissions", arg == "--dangerously-skip-permissions":
 			skipPermissions = true
 			continue
@@ -291,7 +334,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, Progress: progress}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, MinimaxModel: minimaxModel, MinimaxRegion: minimaxRegion, Progress: progress}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

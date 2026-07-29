@@ -228,7 +228,7 @@ func run() (exitCode int) {
 						return 1
 					}
 					backendName = value
-				case arg == "--gemini-model", arg == "--grok-model":
+				case arg == "--gemini-model", arg == "--grok-model", arg == "--minimax-model", arg == "--minimax-region":
 					// Bare form carries its value in the next arg — consume it too,
 					// otherwise the value lands in extras and hard-fails the run.
 					geminiModelInParallel = true
@@ -236,7 +236,7 @@ func run() (exitCode int) {
 						i++
 					}
 					continue
-				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="):
+				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="), strings.HasPrefix(arg, "--minimax-model="), strings.HasPrefix(arg, "--minimax-region="):
 					geminiModelInParallel = true
 					continue
 				default:
@@ -246,7 +246,7 @@ func run() (exitCode int) {
 
 			// Warn about unsupported parameter
 			if geminiModelInParallel {
-				logWarn("--gemini-model/--grok-model parameters are not supported in parallel mode")
+				logWarn("--gemini-model/--grok-model/--minimax-model/--minimax-region parameters are not supported in parallel mode")
 			}
 
 			if len(extras) > 0 {
@@ -394,6 +394,16 @@ func run() (exitCode int) {
 		logWarn("--grok-model parameter is only effective with --backend grok")
 	}
 
+	if cfg.MinimaxModel != "" && cfg.Backend == "minimax" {
+		logInfo(fmt.Sprintf("Using MiniMax model: %s", cfg.MinimaxModel))
+	}
+	if cfg.MinimaxModel != "" && cfg.Backend != "minimax" {
+		logWarn("--minimax-model parameter is only effective with --backend minimax")
+	}
+	if cfg.MinimaxRegion != "" && cfg.Backend != "minimax" {
+		logWarn("--minimax-region parameter is only effective with --backend minimax")
+	}
+
 	timeoutSec := resolveTimeout()
 	logInfo(fmt.Sprintf("Timeout: %ds", timeoutSec))
 	cfg.Timeout = timeoutSec
@@ -497,15 +507,17 @@ func run() (exitCode int) {
 	logInfo(fmt.Sprintf("%s running...", cfg.Backend))
 
 	taskSpec := TaskSpec{
-		Task:        taskText,
-		WorkDir:     cfg.WorkDir,
-		Mode:        cfg.Mode,
-		SessionID:   cfg.SessionID,
-		UseStdin:    useStdin,
-		Progress:    cfg.Progress,
-		Backend:     cfg.Backend,
-		GeminiModel: cfg.GeminiModel,
-		GrokModel:   cfg.GrokModel,
+		Task:          taskText,
+		WorkDir:       cfg.WorkDir,
+		Mode:          cfg.Mode,
+		SessionID:     cfg.SessionID,
+		UseStdin:      useStdin,
+		Progress:      cfg.Progress,
+		Backend:       cfg.Backend,
+		GeminiModel:   cfg.GeminiModel,
+		GrokModel:     cfg.GrokModel,
+		MinimaxModel:  cfg.MinimaxModel,
+		MinimaxRegion: cfg.MinimaxRegion,
 	}
 
 	result := runTaskFn(taskSpec, false, cfg.Timeout)

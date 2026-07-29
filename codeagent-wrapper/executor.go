@@ -821,14 +821,16 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	logger := injectedLogger
 
 	cfg := &Config{
-		Mode:        taskSpec.Mode,
-		Task:        taskSpec.Task,
-		SessionID:   taskSpec.SessionID,
-		WorkDir:     taskSpec.WorkDir,
-		Backend:     defaultBackendName,
-		Progress:    taskSpec.Progress,
-		GeminiModel: taskSpec.GeminiModel,
-		GrokModel:   taskSpec.GrokModel,
+		Mode:          taskSpec.Mode,
+		Task:          taskSpec.Task,
+		SessionID:     taskSpec.SessionID,
+		WorkDir:       taskSpec.WorkDir,
+		Backend:       defaultBackendName,
+		Progress:      taskSpec.Progress,
+		GeminiModel:   taskSpec.GeminiModel,
+		GrokModel:     taskSpec.GrokModel,
+		MinimaxModel:  taskSpec.MinimaxModel,
+		MinimaxRegion: taskSpec.MinimaxRegion,
 	}
 
 	commandName := codexCommand
@@ -994,6 +996,9 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	if env == nil {
 		env = make(map[string]string)
 	}
+	// Redirect the Claude CLI to MiniMax's regional Anthropic endpoint when the
+	// minimax backend is selected; no-op for every other backend.
+	applyMinimaxEnv(env, cfg)
 	cmd.SetEnv(env) // SetEnv 会自动合并 os.Environ() (executor.go:122-161)
 
 	// Set working directory for backends that don't support -C flag.
