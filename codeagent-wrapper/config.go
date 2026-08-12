@@ -23,6 +23,7 @@ type Config struct {
 	GeminiModel        string // Gemini model name (empty = use default)
 	GrokModel          string // Grok model name (empty = use default)
 	KimiModel          string // Kimi model alias (empty = use default)
+	OpencodeModel      string // Opencode model as provider/model (empty = use default)
 	Progress           bool   // Emit compact progress lines to stderr
 	WithMCP            bool   // Let the sub-agent load Claude's MCP servers (slow; off by default)
 }
@@ -35,20 +36,21 @@ type ParallelConfig struct {
 
 // TaskSpec describes an individual task entry in the parallel config
 type TaskSpec struct {
-	ID           string          `json:"id"`
-	Task         string          `json:"task"`
-	WorkDir      string          `json:"workdir,omitempty"`
-	Dependencies []string        `json:"dependencies,omitempty"`
-	SessionID    string          `json:"session_id,omitempty"`
-	Backend      string          `json:"backend,omitempty"`
-	Progress     bool            `json:"-"`
-	Mode         string          `json:"-"`
-	UseStdin     bool            `json:"-"`
-	GeminiModel  string          `json:"-"`
-	GrokModel    string          `json:"-"`
-	KimiModel    string          `json:"-"`
-	WithMCP      bool            `json:"-"`
-	Context      context.Context `json:"-"`
+	ID            string          `json:"id"`
+	Task          string          `json:"task"`
+	WorkDir       string          `json:"workdir,omitempty"`
+	Dependencies  []string        `json:"dependencies,omitempty"`
+	SessionID     string          `json:"session_id,omitempty"`
+	Backend       string          `json:"backend,omitempty"`
+	Progress      bool            `json:"-"`
+	Mode          string          `json:"-"`
+	UseStdin      bool            `json:"-"`
+	GeminiModel   string          `json:"-"`
+	GrokModel     string          `json:"-"`
+	KimiModel     string          `json:"-"`
+	OpencodeModel string          `json:"-"`
+	WithMCP       bool            `json:"-"`
+	Context       context.Context `json:"-"`
 }
 
 // TaskResult captures the execution outcome of a task
@@ -78,6 +80,7 @@ var backendRegistry = map[string]Backend{
 	"agy":         AntigravityBackend{},
 	"grok":        GrokBackend{},
 	"kimi":        KimiBackend{},
+	"opencode":    OpencodeBackend{},
 }
 
 func selectBackend(name string) (Backend, error) {
@@ -215,6 +218,7 @@ func parseArgs() (*Config, error) {
 	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
 	grokModel := strings.TrimSpace(os.Getenv("GROK_MODEL"))
 	kimiModel := strings.TrimSpace(os.Getenv("KIMI_MODEL"))
+	opencodeModel := strings.TrimSpace(os.Getenv("OPENCODE_MODEL"))
 	withMCP := envFlagEnabled("CODEAGENT_WITH_MCP")
 
 	backendName := defaultBackendName
@@ -288,6 +292,24 @@ func parseArgs() (*Config, error) {
 			}
 			kimiModel = value
 			continue
+		case arg == "--opencode-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			opencodeModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--opencode-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--opencode-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--opencode-model flag requires a non-empty model name")
+			}
+			opencodeModel = value
+			continue
 		case arg == "--with-mcp":
 			withMCP = true
 			continue
@@ -319,7 +341,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, KimiModel: kimiModel, Progress: progress, WithMCP: withMCP}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, KimiModel: kimiModel, OpencodeModel: opencodeModel, Progress: progress, WithMCP: withMCP}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

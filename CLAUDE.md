@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-12 (v3.3.0)
+**Last Updated**: 2026-08-12 (v3.4.0)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,12 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-12 (v3.4.0)
+- ✨ **OpenCode CLI 后端**：第七个模型选项。`opencode run --format json`，`-m provider/model`，`-s <sessionID>` 恢复。parser 的 opencode 分支靠 `sessionID`（大写 D，与 Gemini 的 `sessionId` 不撞）+ 嵌套 `part` 识别。
+- ✨ **纯 Claude Code 模式**：前后端同选 Claude Code 时全程走 Agent Teams 子代理，零外部 CLI 依赖。model-router.md 第 1b 节为优先判定分支。
+- 🐛 **嵌套 wrapper 互相误杀（#151）**：Unix 下未设 `Setpgid`，子进程与 wrapper 同组；嵌套会话挤在一个组里，任一层组级清理就会用 SIGINT/SIGTERM 打死无关 wrapper（exit 130 "execution cancelled"）。现在后端独立成组，清理用 `kill(-pgid)`，顺带回收后端自己的 shell 子进程。
+- 🔄 **Binary `5.13.0` → `5.14.0`**。
 
 ### 2026-08-12 (v3.3.0)
 - ⚡ **子代理调用提速 4 倍**：grok/kimi 自动发现 `~/.claude.json` 并连接其中所有 MCP server，实测一句 "hi" 墙钟 32–36 秒而 CPU 仅 6.5 秒。wrapper 现构造"影子 HOME"——真实 HOME 全项符号链接透传，只藏 `.claude.json` 和 `.claude/`，`.gitconfig`/`.npmrc` 不受影响。**32–36 秒 → 7.8 秒**。`--with-mcp` 恢复旧行为，Windows 无符号链接权限自动回退。
@@ -404,6 +410,7 @@ npx ccg-workflow menu
 | Gemini 型号 | gemini-3.1-pro-preview | ✓ (v2.1.0+) | 选 gemini 时可配 |
 | Grok 型号 | grok-4.5 | ✓ (v3.2.0+) | 选 grok 时可配，代码任务可选 grok-composer-2.5-fast |
 | Kimi 型号 | 空（用 kimi 默认） | ✓ (v3.3.0+) | 选 kimi 时可配 |
+| OpenCode 型号 | 空（用 opencode 默认） | ✓ (v3.4.0+) | 选 opencode 时可配，格式 provider/model |
 | 协作模式 | smart | ✗ | 最佳实践 |
 | 命令数量 | 29 个 | ✗ | 全部安装 |
 

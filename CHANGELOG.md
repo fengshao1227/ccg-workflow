@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.4.0] - 2026-08-12
+
+### ✨ Features
+
+- **OpenCode CLI 后端** — 第七个模型选项（`opencode run --format json`），支持 `-m provider/model` 与 `-s <sessionID>` 会话恢复，配套 8 个角色提示词。解析器新增 opencode 分支：它的会话键是 `sessionID`（大写 D），与 Gemini 的 `sessionId` 不冲突；正文在嵌套的 `part.text` 里，`part.type == "step-finish"` + `reason == "stop"` 表示回合结束。
+- **纯 Claude Code 模式** — 前端与后端**同时选 Claude Code** 时，工作流完全改用 **Agent Teams 子代理**，不再调用 codeagent-wrapper，也不需要安装任何外部模型 CLI。适合只有 Claude 账号的用户：交叉验证的价值来自独立上下文 + 不同视角，而非不同厂商，因此多视角审查的收益仍然保留。代价是全部 token 计在 Claude 账号上。
+- **`--opencode-model` flag + `{{OPENCODE_MODEL_FLAG}}` 模板变量**，以及 `ccg doctor` 的 OpenCode / 纯 CC 模式检查项。
+
+### 🐛 Fixes
+
+- **嵌套 wrapper 会话被彼此的信号误杀（#151）** — Unix 下 wrapper 启动后端时没有 `Setpgid`，子进程与 wrapper 共享进程组。编排中的模型很容易再拉起一个 codeagent-wrapper（例如提示词要求跨模型复核），于是多个逻辑会话挤在同一个进程组里；任何一层做组级清理，`SIGINT`/`SIGTERM` 就会打到无关且仍在运行的 wrapper 上，触发 `signal.NotifyContext` 路径以 exit 130 "execution cancelled" 收场——通常发生在临近收尾、后端文件改动其实已完成的时候。
+  现在后端以独立进程组启动（`SysProcAttr{Setpgid: true}`），并且清理时对整个组发信号（`kill(-pgid)`）。双向收益：外部的组级信号不再穿透进来，我们自己的清理也不再外溢，同时顺带回收了后端自己 spawn 的 shell 子进程——与 Windows 上 `taskkill /T` 的行为对齐。
+
+### 🔄 Binary
+
+- **codeagent-wrapper `5.13.0` → `5.14.0`** — opencode 后端、进程组隔离。
+
+---
+
 ## [3.3.0] - 2026-08-12
 
 ### ⚡ Performance — 子代理调用提速 4 倍（最重要的一项）

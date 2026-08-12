@@ -107,6 +107,19 @@ type UnifiedEvent struct {
 	// Note it reuses "role" and "content", which Gemini also uses — detection
 	// keys off role=="meta" and the absence of Gemini's mandatory "type".
 	ToolCallID string `json:"tool_call_id,omitempty"`
+
+	// Opencode (opencode run --format json) wraps content in a "part" object and
+	// spells its session key "sessionID" — capital D, distinct from Gemini's
+	// "sessionId", so the two never collide.
+	OpencodeSessionID string          `json:"sessionID,omitempty"`
+	Part              json.RawMessage `json:"part,omitempty"`
+}
+
+// OpencodePart is the lazily-parsed `part` payload of an opencode event.
+type OpencodePart struct {
+	Type   string `json:"type"`
+	Text   string `json:"text,omitempty"`
+	Reason string `json:"reason,omitempty"`
 }
 
 // GetSessionID returns the session ID from either snake_case or camelCase field.
@@ -160,11 +173,12 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 	totalEvents := 0
 
 	var (
-		codexMessage  string
-		claudeMessage string
-		geminiBuffer  strings.Builder
-		grokBuffer    strings.Builder
-		kimiBuffer    strings.Builder
+		codexMessage   string
+		claudeMessage  string
+		geminiBuffer   strings.Builder
+		grokBuffer     strings.Builder
+		kimiBuffer     strings.Builder
+		opencodeBuffer strings.Builder
 	)
 
 	for {
@@ -226,14 +240,18 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 		if !isClaude && event.Type == "result" && event.GetSessionID() != "" && event.Status == "" {
 			isClaude = true
 		}
+		// Opencode is the most specific shape: its own sessionID key plus a
+		// nested part object.
+		isOpencode := event.OpencodeSessionID != "" && len(event.Part) > 0
+
 		// Kimi must be classified before Gemini: both carry "role"/"content",
 		// but Gemini always stamps a "type" on its events while kimi's chat
 		// messages carry none. role=="meta" is kimi-exclusive.
-		isKimi := !isCodex && !isClaude &&
+		isKimi := !isCodex && !isClaude && !isOpencode &&
 			(event.Role == "meta" ||
 				(event.Type == "" && (event.Role == "assistant" || event.Role == "tool")))
 
-		isGemini := !isKimi && (event.Role != "" || event.Delta != nil || event.Status != "" ||
+		isGemini := !isKimi && !isOpencode && (event.Role != "" || event.Delta != nil || event.Status != "" ||
 			(event.Type == "init" && event.GetSessionID() != ""))
 		// Grok streaming-json: token deltas carry "data"; the terminal "end"
 		// event carries stopReason + camelCase sessionId (no role/status).
@@ -403,6 +421,38 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 			continue
 		}
 
+		// Handle Opencode events
+		if isOpencode {
+			if threadID == "" {
+				threadID = event.OpencodeSessionID
+				if onSessionStarted != nil {
+					onSessionStarted(threadID)
+				}
+			}
+
+			var part OpencodePart
+			if err := json.Unmarshal(event.Part, &part); err != nil {
+				warnFn(fmt.Sprintf("Failed to parse opencode part: %s", err.Error()))
+				continue
+			}
+			infoFn(fmt.Sprintf("Parsed Opencode event #%d type=%s part_type=%s", totalEvents, event.Type, part.Type))
+
+			if event.Type == "text" && part.Text != "" {
+				opencodeBuffer.WriteString(part.Text)
+				notifyMessage()
+				emitProgress(formatProgressLine("message", map[string]string{"text": strconv.Quote(safeProgressSnippet(part.Text, 120))}))
+				if onContent != nil {
+					onContent(part.Text, "message")
+				}
+			}
+
+			if part.Type == "step-finish" && part.Reason == "stop" {
+				emitProgress(formatProgressLine("session_completed", map[string]string{"total_events": strconv.Itoa(totalEvents)}))
+				notifyComplete()
+			}
+			continue
+		}
+
 		// Handle Kimi events
 		if isKimi {
 			switch event.Role {
@@ -460,6 +510,8 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 	}
 
 	switch {
+	case opencodeBuffer.Len() > 0:
+		message = opencodeBuffer.String()
 	case kimiBuffer.Len() > 0:
 		message = kimiBuffer.String()
 	case grokBuffer.Len() > 0:

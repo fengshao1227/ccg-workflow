@@ -202,6 +202,43 @@ func buildGrokArgs(cfg *Config, targetArg string) []string {
 	return args
 }
 
+type OpencodeBackend struct{}
+
+func (OpencodeBackend) Name() string    { return "opencode" }
+func (OpencodeBackend) Command() string { return "opencode" }
+
+func (OpencodeBackend) BuildArgs(cfg *Config, targetArg string) []string {
+	return buildOpencodeArgs(cfg, targetArg)
+}
+
+func buildOpencodeArgs(cfg *Config, targetArg string) []string {
+	if cfg == nil {
+		return nil
+	}
+
+	// `opencode run` is the non-interactive entry point; --format json emits one
+	// JSON event per line.
+	args := []string{"run"}
+
+	if model := strings.TrimSpace(cfg.OpencodeModel); model != "" {
+		// opencode takes provider/model, e.g. anthropic/claude-sonnet-4-5.
+		args = append(args, "-m", model)
+	}
+
+	if cfg.Mode == "resume" && cfg.SessionID != "" {
+		args = append(args, "-s", cfg.SessionID)
+	}
+
+	args = append(args, "--format", "json")
+
+	// The message is a positional arg. "-" is our internal stdin marker and is
+	// not something opencode understands, so never forward it.
+	if targetArg != "" && targetArg != "-" {
+		args = append(args, targetArg)
+	}
+	return args
+}
+
 type KimiBackend struct{}
 
 func (KimiBackend) Name() string    { return "kimi" }

@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "5.13.0"
+	version               = "5.14.0"
 	defaultWorkdir        = "."
 	defaultTimeout        = 7200 // seconds (2 hours)
 	defaultCoverageTarget = 90.0
@@ -233,7 +233,7 @@ func run() (exitCode int) {
 				case arg == "--with-mcp":
 					withMCPInParallel = true
 					continue
-				case arg == "--gemini-model", arg == "--grok-model", arg == "--kimi-model":
+				case arg == "--gemini-model", arg == "--grok-model", arg == "--kimi-model", arg == "--opencode-model":
 					// Bare form carries its value in the next arg — consume it too,
 					// otherwise the value lands in extras and hard-fails the run.
 					geminiModelInParallel = true
@@ -241,7 +241,7 @@ func run() (exitCode int) {
 						i++
 					}
 					continue
-				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="), strings.HasPrefix(arg, "--kimi-model="):
+				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="), strings.HasPrefix(arg, "--kimi-model="), strings.HasPrefix(arg, "--opencode-model="):
 					geminiModelInParallel = true
 					continue
 				default:
@@ -449,7 +449,7 @@ func run() (exitCode int) {
 	// Gemini/Antigravity/Grok CLI doesn't support "-" as stdin marker — pass text directly via -p.
 	// Keep in sync with runCodexTaskWithContext (executor.go): only gemini uses
 	// the Windows stdin pipe; antigravity (#146) and grok take -p everywhere.
-	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok" || cfg.Backend == "kimi")
+	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok" || cfg.Backend == "kimi" || cfg.Backend == "opencode")
 	promptStdinPipe := useStdin && cfg.Backend == "gemini" && isWindows()
 	if useStdin && !promptDirect && !promptStdinPipe {
 		targetArg = "-"
@@ -503,17 +503,18 @@ func run() (exitCode int) {
 	logInfo(fmt.Sprintf("%s running...", cfg.Backend))
 
 	taskSpec := TaskSpec{
-		Task:        taskText,
-		WorkDir:     cfg.WorkDir,
-		Mode:        cfg.Mode,
-		SessionID:   cfg.SessionID,
-		UseStdin:    useStdin,
-		Progress:    cfg.Progress,
-		Backend:     cfg.Backend,
-		GeminiModel: cfg.GeminiModel,
-		GrokModel:   cfg.GrokModel,
-		KimiModel:   cfg.KimiModel,
-		WithMCP:     cfg.WithMCP,
+		Task:          taskText,
+		WorkDir:       cfg.WorkDir,
+		Mode:          cfg.Mode,
+		SessionID:     cfg.SessionID,
+		UseStdin:      useStdin,
+		Progress:      cfg.Progress,
+		Backend:       cfg.Backend,
+		GeminiModel:   cfg.GeminiModel,
+		GrokModel:     cfg.GrokModel,
+		KimiModel:     cfg.KimiModel,
+		OpencodeModel: cfg.OpencodeModel,
+		WithMCP:       cfg.WithMCP,
 	}
 
 	result := runTaskFn(taskSpec, false, cfg.Timeout)

@@ -154,6 +154,23 @@ export async function doctor(): Promise<void> {
     ...(config?.routing?.frontend?.models || []),
     ...(config?.routing?.backend?.models || []),
   ]
+  if (routingModels.includes('opencode')) {
+    const ocVer = execSafe('opencode --version')
+    checks.push({
+      label: 'OpenCode CLI',
+      status: ocVer ? OK : FAIL,
+      detail: ocVer ? `v${ocVer.split('\n')[0]}` : 'Not found — install: npm i -g opencode-ai',
+    })
+  }
+
+  if (routingModels.includes('claude') && config?.routing?.frontend?.primary === 'claude' && config?.routing?.backend?.primary === 'claude') {
+    checks.push({
+      label: 'Pure Claude Code',
+      status: OK,
+      detail: 'Agent Teams mode — no external model CLI required',
+    })
+  }
+
   if (routingModels.includes('kimi')) {
     const kimiVer = execSafe('kimi --version')
     const kimiHome = join(homedir(), '.kimi-code')

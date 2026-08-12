@@ -538,3 +538,92 @@ func TestApplyFastHome(t *testing.T) {
 		}
 	})
 }
+
+func TestOpencodeBuildArgs_NewMode(t *testing.T) {
+	cfg := &Config{Mode: "new", WorkDir: "/tmp/project", Backend: "opencode"}
+	args := buildOpencodeArgs(cfg, "do the task")
+
+	if len(args) == 0 || args[0] != "run" {
+		t.Fatalf("opencode must start with the run subcommand: %v", args)
+	}
+	joined := strings.Join(args, " ")
+	if !strings.Contains(joined, "--format json") {
+		t.Fatalf("args missing --format json: %v", args)
+	}
+	if args[len(args)-1] != "do the task" {
+		t.Fatalf("message must be the trailing positional arg: %v", args)
+	}
+}
+
+func TestOpencodeBuildArgs_NeverForwardsStdinMarker(t *testing.T) {
+	// "-" is the wrapper's internal stdin marker; opencode would treat it as a
+	// literal message.
+	cfg := &Config{Mode: "new", Backend: "opencode"}
+	for _, a := range buildOpencodeArgs(cfg, "-") {
+		if a == "-" {
+			t.Fatalf("stdin marker leaked into opencode args: %v", buildOpencodeArgs(cfg, "-"))
+		}
+	}
+}
+
+func TestOpencodeBuildArgs_ResumeAndModel(t *testing.T) {
+	cfg := &Config{Mode: "resume", SessionID: "ses_abc", Backend: "opencode", OpencodeModel: "anthropic/claude-sonnet-4-5"}
+	joined := strings.Join(buildOpencodeArgs(cfg, "continue"), " ")
+
+	if !strings.Contains(joined, "-s ses_abc") {
+		t.Fatalf("resume args missing -s <session>: %s", joined)
+	}
+	if !strings.Contains(joined, "-m anthropic/claude-sonnet-4-5") {
+		t.Fatalf("args missing -m provider/model: %s", joined)
+	}
+}
+
+func TestParseJSONStream_OpencodeEvents(t *testing.T) {
+	stream := `{"type":"text","sessionID":"ses_001","part":{"type":"text","text":"Hello"}}
+{"type":"text","sessionID":"ses_001","part":{"type":"text","text":" world"}}
+{"type":"step-finish","sessionID":"ses_001","part":{"type":"step-finish","reason":"stop"}}
+`
+	message, threadID := parseJSONStreamInternal(strings.NewReader(stream), nil, nil, nil, nil)
+	if message != "Hello world" {
+		t.Fatalf("message = %q, want %q", message, "Hello world")
+	}
+	if threadID != "ses_001" {
+		t.Fatalf("threadID = %q, want ses_001", threadID)
+	}
+}
+
+func TestParseJSONStream_OpencodeErrorEventCarriesSession(t *testing.T) {
+	// Real shape captured from `opencode run --format json` on an auth failure:
+	// sessionID present, no part. Must not be misread as another backend.
+	stream := `{"type":"error","timestamp":1786513156960,"sessionID":"ses_002","error":{"name":"APIError"}}
+`
+	message, threadID := parseJSONStreamInternal(strings.NewReader(stream), nil, nil, nil, nil)
+	if message != "" {
+		t.Fatalf("error-only stream should produce no message, got %q", message)
+	}
+	if threadID != "" && threadID != "ses_002" {
+		t.Fatalf("unexpected threadID %q", threadID)
+	}
+}
+
+func TestParseJSONStream_OpencodeDoesNotCollideWithGemini(t *testing.T) {
+	// Gemini uses "sessionId" (lowercase d) and no part; opencode uses
+	// "sessionID" plus part. Both must land in their own branch.
+	gem := `{"type":"init","sessionId":"g1"}
+{"type":"message","role":"assistant","content":"GEM"}
+{"type":"result","status":"success","sessionId":"g1"}
+`
+	msg, _ := parseJSONStreamInternal(strings.NewReader(gem), nil, nil, nil, nil)
+	if msg != "GEM" {
+		t.Fatalf("gemini message = %q, want GEM", msg)
+	}
+
+	oc := `{"type":"text","sessionID":"o1","part":{"type":"text","text":"OC"}}`
+	msg2, tid := parseJSONStreamInternal(strings.NewReader(oc), nil, nil, nil, nil)
+	if msg2 != "OC" {
+		t.Fatalf("opencode message = %q, want OC", msg2)
+	}
+	if tid != "o1" {
+		t.Fatalf("opencode threadID = %q, want o1", tid)
+	}
+}

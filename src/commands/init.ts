@@ -412,6 +412,8 @@ export async function init(options: InitOptions = {}): Promise<void> {
           { name: 'Grok', value: 'grok' as ModelType },
           { name: 'Kimi', value: 'kimi' as ModelType },
           { name: 'Codex', value: 'codex' as ModelType },
+          { name: 'OpenCode', value: 'opencode' as ModelType },
+          { name: `Claude Code ${ansis.cyan(`(${i18n.t('init:model.agentTeams')})`)}`, value: 'claude' as ModelType },
           { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' as ModelType },
           ...navSentinels(canGoBack),
         ],
@@ -432,6 +434,8 @@ export async function init(options: InitOptions = {}): Promise<void> {
           { name: 'Grok', value: 'grok' as ModelType },
           { name: 'Kimi', value: 'kimi' as ModelType },
           { name: 'Antigravity', value: 'antigravity' as ModelType },
+          { name: 'OpenCode', value: 'opencode' as ModelType },
+          { name: `Claude Code ${ansis.cyan(`(${i18n.t('init:model.agentTeams')})`)}`, value: 'claude' as ModelType },
           { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' as ModelType },
         ],
         default: backendModels[0] || 'codex',
@@ -466,6 +470,12 @@ export async function init(options: InitOptions = {}): Promise<void> {
         else {
           geminiModel = selectedGeminiModel
         }
+      }
+
+      if (selectedFrontend === 'claude' && selectedBackend === 'claude') {
+        console.log()
+        console.log(ansis.cyan(`  ${i18n.t('init:model.pureCcNotice')}`))
+        console.log()
       }
 
       if (selectedFrontend === 'kimi' || selectedBackend === 'kimi') {

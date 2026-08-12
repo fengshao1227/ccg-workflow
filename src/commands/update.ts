@@ -124,6 +124,7 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
       { name: 'Antigravity', value: 'antigravity' as ModelType, checked: currentRouting?.frontend.models.includes('antigravity') ?? true },
       { name: 'Grok', value: 'grok' as ModelType, checked: currentRouting?.frontend.models.includes('grok') ?? false },
       { name: 'Kimi', value: 'kimi' as ModelType, checked: currentRouting?.frontend.models.includes('kimi') ?? false },
+      { name: 'OpenCode', value: 'opencode' as ModelType, checked: currentRouting?.frontend.models.includes('opencode') ?? false },
       { name: 'Claude', value: 'claude' as ModelType, checked: currentRouting?.frontend.models.includes('claude') ?? false },
       { name: 'Codex', value: 'codex' as ModelType, checked: currentRouting?.frontend.models.includes('codex') ?? false },
       { name: `Gemini (${i18n.t('init:model.deprecated')})`, value: 'gemini' as ModelType, checked: currentRouting?.frontend.models.includes('gemini') ?? false },
@@ -140,6 +141,7 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
       { name: 'Codex', value: 'codex' as ModelType, checked: currentRouting?.backend.models.includes('codex') ?? true },
       { name: 'Grok', value: 'grok' as ModelType, checked: currentRouting?.backend.models.includes('grok') ?? false },
       { name: 'Kimi', value: 'kimi' as ModelType, checked: currentRouting?.backend.models.includes('kimi') ?? false },
+      { name: 'OpenCode', value: 'opencode' as ModelType, checked: currentRouting?.backend.models.includes('opencode') ?? false },
       { name: 'Antigravity', value: 'antigravity' as ModelType, checked: currentRouting?.backend.models.includes('antigravity') ?? false },
       { name: 'Claude', value: 'claude' as ModelType, checked: currentRouting?.backend.models.includes('claude') ?? false },
       { name: `Gemini (${i18n.t('init:model.deprecated')})`, value: 'gemini' as ModelType, checked: currentRouting?.backend.models.includes('gemini') ?? false },
@@ -170,6 +172,7 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
     geminiModel: currentRouting?.geminiModel,
     grokModel: currentRouting?.grokModel,
     kimiModel: currentRouting?.kimiModel,
+    opencodeModel: currentRouting?.opencodeModel,
   }
 
   console.log()
