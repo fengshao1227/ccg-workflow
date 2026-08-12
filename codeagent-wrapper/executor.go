@@ -829,6 +829,8 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 		Progress:    taskSpec.Progress,
 		GeminiModel: taskSpec.GeminiModel,
 		GrokModel:   taskSpec.GrokModel,
+		KimiModel:   taskSpec.KimiModel,
+		WithMCP:     taskSpec.WithMCP,
 	}
 
 	commandName := codexCommand
@@ -868,7 +870,7 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	// platform, including Windows (#146). The cmd.exe truncation risk is
 	// accepted because a truncated prompt is better than a silent no-op.
 	// Grok is a native binary (no .cmd shim), so -p is safe on every platform.
-	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok")
+	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok" || cfg.Backend == "kimi")
 	promptStdinPipe := useStdin && cfg.Backend == "gemini" && isWindows()
 	if useStdin && !promptDirect && !promptStdinPipe {
 		targetArg = "-"
@@ -994,6 +996,9 @@ func runCodexTaskWithContext(parentCtx context.Context, taskSpec TaskSpec, backe
 	if env == nil {
 		env = make(map[string]string)
 	}
+	// Hide Claude Code's MCP/skill config from backends that auto-discover it —
+	// the single biggest latency win (~25s/call). See fasthome.go.
+	env = applyFastHome(env, cfg.Backend, cfg.WithMCP)
 	cmd.SetEnv(env) // SetEnv 会自动合并 os.Environ() (executor.go:122-161)
 
 	// Set working directory for backends that don't support -C flag.

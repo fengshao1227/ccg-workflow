@@ -7,6 +7,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.3.0] - 2026-08-12
+
+### ⚡ Performance — 子代理调用提速 4 倍（最重要的一项）
+
+- **隐藏 Claude 的 MCP 配置，不再让子模型白等** — grok / kimi 会自动发现 `~/.claude.json` 并逐个连接其中的 MCP server。实测（9 个 MCP 的环境）：一句 "hi" 墙钟 **32–36 秒，其中 CPU 仅 6.5 秒**，其余全花在拉起用不上的 MCP 上。子模型只负责读写文件跑命令，MCP 由编排层 Claude 持有，它们根本不需要。
+  wrapper 现在为这些后端构造一个"影子 HOME"：把真实 HOME 的每一项都符号链接过去，**只藏掉 `.claude.json` 和 `.claude/`**。`.gitconfig` / `.npmrc` / `.ssh` 原样可见，子代理跑 `git commit`、`npm install` 行为不变。
+  **实测 32–36 秒 → 7.8 秒。** 走 wrapper 端到端（MCP 缓存已热）11.9 秒 → 6.1 秒。
+  需要子模型访问 MCP 时加 `--with-mcp` 恢复旧行为；Windows 无符号链接权限时自动回退，不报错。
+
+### ✨ Features
+
+- **Kimi Code CLI 后端** — Kimi (Moonshot AI) 成为第六个模型选项，init / 菜单 / update 均可选为前端或后端，配套 8 个角色提示词（含 `builder.md`，`/ccg:go` Builder 模式可让 Kimi 全权写代码）。
+  接入要点：`-p` **不能**与 `--yolo`/`--auto`/`--plan` 同用（kimi 启动即拒绝），prompt 模式本身就以 `auto` 权限自主运行；会话恢复用 `-S <id>`；工作目录走 `cmd.Dir`。
+- **`--kimi-model` flag + `{{KIMI_MODEL_FLAG}}` 模板变量** — 行级感知注入，留空则沿用 kimi 自身 `config.toml` 的 `default_model`。
+- **`ccg doctor` Kimi 检查** — 路由用到 kimi 时检查 CLI 存在 + 登录态。
+
+### 🔄 Changes — Gemini 降级
+
+Gemini CLI 已停止服务。它仍可选，但：
+
+- init / 菜单 / update 的模型列表中**移到最后一位并标注「已停止服务，不推荐」**，推荐位让给 Antigravity（前端）与 Codex / Grok / Kimi。
+- 引擎模板中「Gemini = 前端模型」的过时表述全部改为 `{{FRONTEND_PRIMARY}}` 动态占位符。
+- i18n 中已失效的模型描述块补上 antigravity / grok / kimi 条目。
+
+### 🐛 Fixes
+
+- **每个会话都被告知「frontend=gemini」** — `session-start.js` 硬编码了这句默认值，且读的是项目里根本不存在的 `.ccg/config.toml`，因此**永远**走 fallback 分支。现改为读取真实的 `~/.claude/.ccg/config.toml`（项目级配置优先），显示实际路由。
+- **skill-router 把前端角色写死成 gemini** — 双模型审查/分析的默认发射路径硬编码 `--backend gemini` 与 `prompts/gemini/`，改为 `{{FRONTEND_PRIMARY}}`。
+- **默认前端从未被自动放行** — 权限白名单只枚举了 `--backend gemini*` 和 `--backend codex*`，导致默认的 antigravity（以及 grok/kimi）每次都弹权限提示。改为单条前缀规则覆盖全部后端。
+- **`prompts/grok/frontend.md` 自称 "powered by Grok (Gemini 3.5 Flash)"** — v3.2.0 从 antigravity 模板复制时残留的品牌串。
+
+### 🔄 Binary
+
+- **codeagent-wrapper `5.12.0` → `5.13.0`** — kimi 后端（stream-json 解析：`role:meta` / `assistant` / `tool`，session 来自 `session.resume_hint`）、影子 HOME 提速、`--with-mcp` / `--kimi-model` flag。
+  解析器新增 kimi 分支且**必须排在 gemini 之前**：两者都用 `role`/`content` 字段，kimi 的 meta 事件里那句 "To resume this session…" 会被 gemini 分支当成正文输出。
+
+---
+
+## [3.2.3] - 2026-07-15
+
+### ✨ Features
+
+- **SEO skill 扩充** — 新增内容优先级矩阵（5 维加权评分）、Topic Cluster 架构（pillar + spoke）、竞食检测脚本、GEO（生成式引擎优化，面向 AI Overview 引用）、E-E-A-T 发布前检查表；已转化的 seoTitle 保护规则；阿拉伯语品牌名音译双匹配。
+
+---
+
+## [3.2.2] - 2026-07-15
+
+### 🐛 Fixes
+
+- **SEO skill GSC 自动化** — Phase 1 改用 `scripts/gsc-report.py` 经 GSC API 自动拉数并分成 5 类行动项（零点击高曝光 / 临门一脚 / 赢家 / 深埋 / Top 页面）。
+
+---
+
 ## [3.2.1] - 2026-07-15
 
 ### ✨ Features

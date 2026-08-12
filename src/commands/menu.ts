@@ -408,8 +408,8 @@ async function configApi(): Promise<void> {
   if (!settings.permissions.allow)
     settings.permissions.allow = []
   const wrapperPerms = [
-    'Bash(~/.claude/bin/codeagent-wrapper --backend gemini*)',
-    'Bash(~/.claude/bin/codeagent-wrapper --backend codex*)',
+    'Bash(~/.claude/bin/codeagent-wrapper*)',
+    'Bash(*codeagent-wrapper*)',
   ]
   for (const perm of wrapperPerms) {
     if (!settings.permissions.allow.includes(perm))
@@ -457,6 +457,7 @@ async function configModelRouting(): Promise<void> {
   const currentBackend = config?.routing?.backend?.primary || 'codex'
   const currentGeminiModel = config?.routing?.geminiModel || 'gemini-3.1-pro-preview'
   const currentGrokModel = config?.routing?.grokModel || 'grok-4.5'
+  const currentKimiModel = config?.routing?.kimiModel || ''
 
   console.log(ansis.gray(`  ${i18n.t('init:model.currentRouting')}:`))
   console.log(`  ${ansis.cyan('Frontend:')} ${ansis.green(currentFrontend)}`)
@@ -476,9 +477,10 @@ async function configModelRouting(): Promise<void> {
     message: i18n.t('init:model.selectFrontend'),
     choices: [
       { name: `Antigravity ${ansis.green(`(${i18n.t('init:model.recommended')})`)}`, value: 'antigravity' },
-      { name: 'Gemini', value: 'gemini' },
-      { name: 'Codex', value: 'codex' },
       { name: 'Grok', value: 'grok' },
+      { name: 'Kimi', value: 'kimi' },
+      { name: 'Codex', value: 'codex' },
+      { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' },
     ],
     default: currentFrontend,
   }])
@@ -490,9 +492,10 @@ async function configModelRouting(): Promise<void> {
     message: i18n.t('init:model.selectBackend'),
     choices: [
       { name: `Codex ${ansis.green(`(${i18n.t('init:model.recommended')})`)}`, value: 'codex' },
-      { name: 'Antigravity', value: 'antigravity' },
-      { name: 'Gemini', value: 'gemini' },
       { name: 'Grok', value: 'grok' },
+      { name: 'Kimi', value: 'kimi' },
+      { name: 'Antigravity', value: 'antigravity' },
+      { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' },
     ],
     default: currentBackend,
   }])
@@ -579,6 +582,7 @@ async function configModelRouting(): Promise<void> {
     }
     config.routing.geminiModel = geminiModel
     config.routing.grokModel = grokModel
+    config.routing.kimiModel = currentKimiModel
     await writeCcgConfig(config)
   }
 

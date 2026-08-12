@@ -85,9 +85,9 @@ try {
    <TASK>${modelAction.action}</TASK>
    EOF
 
-   Frontend (gemini):
-   ${wrapperPath} --progress --backend gemini - "$WORKDIR" <<'EOF'
-   ROLE_FILE: ${path.join(homeDir, '.claude', '.ccg', 'prompts', 'gemini', modelAction.role + '.md')}
+   Frontend ({{FRONTEND_PRIMARY}}):
+   ${wrapperPath} --progress --backend {{FRONTEND_PRIMARY}} - "$WORKDIR" <<'EOF'
+   ROLE_FILE: ${path.join(homeDir, '.claude', '.ccg', 'prompts', '{{FRONTEND_PRIMARY}}', modelAction.role + '.md')}
    <TASK>${modelAction.action}</TASK>
    EOF
 

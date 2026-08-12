@@ -147,7 +147,7 @@ TaskOutput({ task_id: "$FRONTEND_TASK_ID", block: true, timeout: 600000 })
 1. **Agent Teams** — Claude Builders 并行写，多文件同时进行
 2. **外部模型写**（{{BACKEND_PRIMARY}}）— 更快更便宜、省 Claude 额度，Claude 监控审查
 
-请回复 1 或 2（或直接点名模型，如"用team"/"用codex"/"用grok" — 点名时用该模型替换默认 backend）。
+请回复 1 或 2（或直接点名模型，如"用team"/"用codex"/"用grok"/"用kimi" — 点名时用该模型替换默认 backend）。
 ---
 
 **在用户回复之前，你不可以执行任何文件写入操作。** 未审批不可进入 Phase 4。
@@ -247,7 +247,7 @@ SendMessage({ to: "reviewer", message: { type: "shutdown_request" } })
 
 **Task 更新**：`currentPhase → "4-implementation"`, `nextAction → "Parallel Builder 执行 plan"`
 
-Claude 作为编排者，调用外部模型**并行写代码**。默认用 `{{BACKEND_PRIMARY}}`；用户点名了其他模型（codex / grok / gemini / antigravity）则替换下方调用中的 `--backend` 和 ROLE_FILE 路径。
+Claude 作为编排者，调用外部模型**并行写代码**。默认用 `{{BACKEND_PRIMARY}}`；用户点名了其他模型（codex / grok / kimi / antigravity）则替换下方调用中的 `--backend` 和 ROLE_FILE 路径。
 
 **Step 1**: 从 plan.md 按**文件归属**拆分为并行子任务：
 - **Layer 1** — 无依赖（底层模块：model/store/util/schema）→ 并行
@@ -258,7 +258,7 @@ Claude 作为编排者，调用外部模型**并行写代码**。默认用 `{{BA
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --parallel --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}- \"$WORKDIR\" <<'PARALLEL_EOF'\n---TASK---\nid: layer1-{name1}\nworkdir: $WORKDIR\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围（⛔ 只改这些文件）\n{file1, file2}\n\n## 实施步骤\n{steps from plan.md Layer 1}\n\n## 验证命令\n{test/lint commands}\n</TASK>\n---TASK---\nid: layer1-{name2}\nworkdir: $WORKDIR\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围\n{file3, file4}\n\n## 实施步骤\n{steps}\n</TASK>\n---TASK---\nid: layer2-{name3}\nworkdir: $WORKDIR\ndependencies: layer1-{name1},layer1-{name2}\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围\n{file5, file6}\n\n## 实施步骤\n{steps from Layer 2}\n</TASK>\nPARALLEL_EOF",
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --parallel --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}- \"$WORKDIR\" <<'PARALLEL_EOF'\n---TASK---\nid: layer1-{name1}\nworkdir: $WORKDIR\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围（⛔ 只改这些文件）\n{file1, file2}\n\n## 实施步骤\n{steps from plan.md Layer 1}\n\n## 验证命令\n{test/lint commands}\n</TASK>\n---TASK---\nid: layer1-{name2}\nworkdir: $WORKDIR\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围\n{file3, file4}\n\n## 实施步骤\n{steps}\n</TASK>\n---TASK---\nid: layer2-{name3}\nworkdir: $WORKDIR\ndependencies: layer1-{name1},layer1-{name2}\n---CONTENT---\nROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/builder.md\n<TASK>\n## 文件范围\n{file5, file6}\n\n## 实施步骤\n{steps from Layer 2}\n</TASK>\nPARALLEL_EOF",
   run_in_background: true,
   timeout: 3600000,
   description: "Parallel Builder: {N} 个子任务（L1: {X} 并行 → L2: {Y} 串行）"

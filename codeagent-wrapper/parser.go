@@ -97,6 +97,16 @@ type UnifiedEvent struct {
 	//   {"type":"end","stopReason":"EndTurn","sessionId":"...","requestId":"..."}
 	Data       string `json:"data,omitempty"`
 	StopReason string `json:"stopReason,omitempty"`
+
+	// Kimi Code CLI (kimi -p --output-format stream-json) emits OpenAI-shaped
+	// chat messages plus meta lines:
+	//   {"role":"meta","type":"system.version","version":"0.35.0"}
+	//   {"role":"meta","type":"session.resume_hint","session_id":"...","content":"..."}
+	//   {"role":"assistant","content":"..."}
+	//   {"role":"tool","tool_call_id":"...","content":"..."}
+	// Note it reuses "role" and "content", which Gemini also uses — detection
+	// keys off role=="meta" and the absence of Gemini's mandatory "type".
+	ToolCallID string `json:"tool_call_id,omitempty"`
 }
 
 // GetSessionID returns the session ID from either snake_case or camelCase field.
@@ -154,6 +164,7 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 		claudeMessage string
 		geminiBuffer  strings.Builder
 		grokBuffer    strings.Builder
+		kimiBuffer    strings.Builder
 	)
 
 	for {
@@ -215,8 +226,15 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 		if !isClaude && event.Type == "result" && event.GetSessionID() != "" && event.Status == "" {
 			isClaude = true
 		}
-		isGemini := event.Role != "" || event.Delta != nil || event.Status != "" ||
-			(event.Type == "init" && event.GetSessionID() != "")
+		// Kimi must be classified before Gemini: both carry "role"/"content",
+		// but Gemini always stamps a "type" on its events while kimi's chat
+		// messages carry none. role=="meta" is kimi-exclusive.
+		isKimi := !isCodex && !isClaude &&
+			(event.Role == "meta" ||
+				(event.Type == "" && (event.Role == "assistant" || event.Role == "tool")))
+
+		isGemini := !isKimi && (event.Role != "" || event.Delta != nil || event.Status != "" ||
+			(event.Type == "init" && event.GetSessionID() != ""))
 		// Grok streaming-json: token deltas carry "data"; the terminal "end"
 		// event carries stopReason + camelCase sessionId (no role/status).
 		isGrok := !isCodex && !isClaude && !isGemini &&
@@ -385,6 +403,34 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 			continue
 		}
 
+		// Handle Kimi events
+		if isKimi {
+			switch event.Role {
+			case "assistant":
+				// Only assistant text is the answer. Tool results and the
+				// meta "content" (a resume hint) must stay out of it.
+				if event.Content != "" {
+					kimiBuffer.WriteString(event.Content)
+					notifyMessage()
+					emitProgress(formatProgressLine("message", map[string]string{"text": strconv.Quote(safeProgressSnippet(event.Content, 120))}))
+					if onContent != nil {
+						onContent(event.Content, "message")
+					}
+				}
+			case "tool":
+				emitProgress(formatProgressLine("tool_done", map[string]string{"id": strconv.Quote(event.ToolCallID)}))
+				if onContent != nil && event.Content != "" {
+					onContent(event.Content, "command")
+				}
+			case "meta":
+				infoFn(fmt.Sprintf("Parsed Kimi meta event #%d type=%s session_id=%s", totalEvents, event.Type, event.SessionID))
+				if event.Type == "session.resume_hint" {
+					emitProgress(formatProgressLine("session_started", map[string]string{"id": event.SessionID}))
+				}
+			}
+			continue
+		}
+
 		// Handle Grok events
 		if isGrok {
 			switch event.Type {
@@ -414,6 +460,8 @@ func parseJSONStreamInternalWithContent(r io.Reader, warnFn func(string), infoFn
 	}
 
 	switch {
+	case kimiBuffer.Len() > 0:
+		message = kimiBuffer.String()
 	case grokBuffer.Len() > 0:
 		message = grokBuffer.String()
 	case geminiBuffer.Len() > 0:

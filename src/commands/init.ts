@@ -230,6 +230,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
   let backendModels: ModelType[] = ['codex']
   let geminiModel = 'gemini-3.1-pro-preview'
   let grokModel = 'grok-4.5'
+  let kimiModel = ''
   const mode: CollaborationMode = 'smart'
   let selectedWorkflows = getCoreCommandIds()
   let installMode: 'v3' | 'legacy' = 'v3'
@@ -242,6 +243,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
       backendModels = existingConfig.routing.backend?.models || ['codex']
       geminiModel = existingConfig.routing.geminiModel || 'gemini-3.1-pro-preview'
       grokModel = existingConfig.routing.grokModel || 'grok-4.5'
+      kimiModel = existingConfig.routing.kimiModel || ''
     }
     // Preserve install mode: if existing install has legacy commands, keep them
     if (existingConfig?.workflows?.installed) {
@@ -319,6 +321,8 @@ export async function init(options: InitOptions = {}): Promise<void> {
         geminiModel = existingConfig.routing.geminiModel
       if (existingConfig.routing.grokModel)
         grokModel = existingConfig.routing.grokModel
+      if (existingConfig.routing.kimiModel)
+        kimiModel = existingConfig.routing.kimiModel
     }
     if (existingConfig?.performance?.liteMode !== undefined) {
       liteMode = existingConfig.performance.liteMode
@@ -405,9 +409,10 @@ export async function init(options: InitOptions = {}): Promise<void> {
         message: i18n.t('init:model.selectFrontend'),
         choices: [
           { name: `Antigravity ${ansis.green(`(${i18n.t('init:model.recommended')})`)}`, value: 'antigravity' as ModelType },
-          { name: 'Gemini', value: 'gemini' as ModelType },
-          { name: 'Codex', value: 'codex' as ModelType },
           { name: 'Grok', value: 'grok' as ModelType },
+          { name: 'Kimi', value: 'kimi' as ModelType },
+          { name: 'Codex', value: 'codex' as ModelType },
+          { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' as ModelType },
           ...navSentinels(canGoBack),
         ],
         default: frontendModels[0] || 'antigravity',
@@ -424,9 +429,10 @@ export async function init(options: InitOptions = {}): Promise<void> {
         message: i18n.t('init:model.selectBackend'),
         choices: [
           { name: `Codex ${ansis.green(`(${i18n.t('init:model.recommended')})`)}`, value: 'codex' as ModelType },
-          { name: 'Antigravity', value: 'antigravity' as ModelType },
-          { name: 'Gemini', value: 'gemini' as ModelType },
           { name: 'Grok', value: 'grok' as ModelType },
+          { name: 'Kimi', value: 'kimi' as ModelType },
+          { name: 'Antigravity', value: 'antigravity' as ModelType },
+          { name: `Gemini ${ansis.gray(`(${i18n.t('init:model.deprecated')})`)}`, value: 'gemini' as ModelType },
         ],
         default: backendModels[0] || 'codex',
       }])
@@ -459,6 +465,33 @@ export async function init(options: InitOptions = {}): Promise<void> {
         }
         else {
           geminiModel = selectedGeminiModel
+        }
+      }
+
+      if (selectedFrontend === 'kimi' || selectedBackend === 'kimi') {
+        const { selectedKimiModel } = await inquirer.prompt([{
+          type: 'list',
+          name: 'selectedKimiModel',
+          message: i18n.t('init:model.selectKimiModel'),
+          choices: [
+            { name: `${i18n.t('init:model.kimiDefault')} ${ansis.green(`(${i18n.t('init:model.recommended')})`)}`, value: '' },
+            { name: `${i18n.t('init:model.custom')}`, value: 'custom' },
+          ],
+          default: kimiModel || '',
+        }])
+
+        if (selectedKimiModel === 'custom') {
+          const { customModel } = await inquirer.prompt([{
+            type: 'input',
+            name: 'customModel',
+            message: i18n.t('init:model.enterCustomModel'),
+            default: kimiModel || '',
+            validate: (v: string) => v.trim() !== '' || i18n.t('init:model.enterCustomModel'),
+          }])
+          kimiModel = customModel.trim()
+        }
+        else {
+          kimiModel = selectedKimiModel
         }
       }
 
@@ -761,6 +794,9 @@ export async function init(options: InitOptions = {}): Promise<void> {
       if (frontendModels[0] === 'grok' || backendModels[0] === 'grok') {
         console.log(`  ${ansis.cyan(i18n.t('init:summary.grokModel'))}   ${ansis.gray(grokModel)}`)
       }
+      if ((frontendModels[0] === 'kimi' || backendModels[0] === 'kimi') && kimiModel) {
+        console.log(`  ${ansis.cyan(i18n.t('init:summary.kimiModel'))}   ${ansis.gray(kimiModel)}`)
+      }
       console.log(`  ${ansis.cyan(i18n.t('init:summary.commandCount'))}  ${ansis.yellow(workflowsCount.toString())}`)
       const mcpSummary = (() => {
         if (mcpProvider === 'fast-context')
@@ -884,6 +920,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
     mode,
     geminiModel,
     grokModel,
+    kimiModel,
   }
 
   // Summary + confirmation handled by runSummaryStep() inside the state
@@ -1033,9 +1070,11 @@ export async function init(options: InitOptions = {}): Promise<void> {
         settings.permissions = {}
       if (!settings.permissions.allow)
         settings.permissions.allow = []
+      // A single prefix rule covers every backend (and any future one) —
+      // enumerating them meant the default frontend was never auto-approved.
       const wrapperPerms = [
-        'Bash(~/.claude/bin/codeagent-wrapper --backend gemini*)',
-        'Bash(~/.claude/bin/codeagent-wrapper --backend codex*)',
+        'Bash(~/.claude/bin/codeagent-wrapper*)',
+        'Bash(*codeagent-wrapper*)',
       ]
       for (const perm of wrapperPerms) {
         if (!settings.permissions.allow.includes(perm))

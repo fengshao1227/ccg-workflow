@@ -29,18 +29,33 @@ Dirty files: ${git.dirtyCount}
 Root: ${root}
 </project>`);
 
-  // Model routing config
-  const configPath = path.join(root, '.ccg', 'config.toml');
-  if (fs.existsSync(configPath)) {
-    const configRaw = readFileSafe(configPath);
-    if (configRaw) {
-      const frontendMatch = configRaw.match(/primary\s*=\s*"(\w+)"/);
-      const models = frontendMatch ? `Configured (see .ccg/config.toml)` : 'Default (frontend=gemini, backend=codex)';
-      sections.push(`<models>${models}</models>`);
+  // Model routing config — read the real CCG config written by `ccg init`.
+  // A project-local .ccg/config.toml overrides the user-level one when present.
+  const routing = (() => {
+    const candidates = [
+      path.join(root, '.ccg', 'config.toml'),
+      path.join(require('os').homedir(), '.claude', '.ccg', 'config.toml'),
+    ];
+    for (const configPath of candidates) {
+      if (!fs.existsSync(configPath)) continue;
+      const raw = readFileSafe(configPath);
+      if (!raw) continue;
+      // [routing.frontend] / [routing.backend] each carry their own primary =
+      const primaryOf = (section) => {
+        const block = raw.split(`[routing.${section}]`)[1];
+        if (!block) return null;
+        const m = block.split('[')[0].match(/primary\s*=\s*"([\w-]+)"/);
+        return m ? m[1] : null;
+      };
+      const frontend = primaryOf('frontend');
+      const backend = primaryOf('backend');
+      if (frontend || backend) {
+        return `frontend=${frontend || 'antigravity'}, backend=${backend || 'codex'}`;
+      }
     }
-  } else {
-    sections.push('<models>Default (frontend=gemini, backend=codex)</models>');
-  }
+    return null;
+  })();
+  sections.push(`<models>${routing || 'Default (frontend=antigravity, backend=codex)'}</models>`);
 
   // Active task
   const task = getActiveTask(root);

@@ -32,7 +32,7 @@ description: '多模型调试：{{BACKEND_PRIMARY}} 后端诊断 + {{FRONTEND_PR
 
 **{{BACKEND_PRIMARY}} 后端诊断**：
 ```bash
-~/.claude/bin/codeagent-wrapper --progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}- "$(pwd)" <<'EOF'
+~/.claude/bin/codeagent-wrapper --progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}- "$(pwd)" <<'EOF'
 ROLE_FILE: ~/.claude/.ccg/prompts/{{BACKEND_PRIMARY}}/debugger.md
 <TASK>
 需求：<增强后的需求>
@@ -44,7 +44,7 @@ EOF
 
 **{{FRONTEND_PRIMARY}} 前端诊断**：
 ```bash
-~/.claude/bin/codeagent-wrapper --progress --backend {{FRONTEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}- "$(pwd)" <<'EOF'
+~/.claude/bin/codeagent-wrapper --progress --backend {{FRONTEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}- "$(pwd)" <<'EOF'
 ROLE_FILE: ~/.claude/.ccg/prompts/{{FRONTEND_PRIMARY}}/debugger.md
 <TASK>
 需求：<增强后的需求>

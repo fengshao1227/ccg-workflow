@@ -2,7 +2,7 @@
 export type SupportedLang = 'zh-CN' | 'en'
 
 // 模型类型
-export type ModelType = 'codex' | 'gemini' | 'claude' | 'antigravity' | 'grok'
+export type ModelType = 'codex' | 'gemini' | 'claude' | 'antigravity' | 'grok' | 'kimi'
 
 // 协作模式
 export type CollaborationMode = 'parallel' | 'smart' | 'sequential'
@@ -29,6 +29,7 @@ export interface ModelRouting {
   mode: CollaborationMode
   geminiModel?: string // Gemini 具体型号（默认 gemini-3.1-pro-preview）
   grokModel?: string // Grok 具体型号（默认 grok-4.5，代码任务可选 grok-composer-2.5-fast）
+  kimiModel?: string // Kimi 模型别名（空 = 用 kimi config.toml 的 default_model）
 }
 
 // CCG 配置

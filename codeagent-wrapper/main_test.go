@@ -39,10 +39,6 @@ func resetTestHooks() {
 	jsonMarshal = json.Marshal
 	forceKillDelay.Store(5)
 	closeLogger()
-	if globalWebServer != nil {
-		_ = globalWebServer.Stop()
-		globalWebServer = nil
-	}
 	executablePathFn = os.Executable
 	runTaskFn = runCodexTask
 	runCodexTaskFn = defaultRunCodexTaskFn
@@ -3056,7 +3052,7 @@ func TestVersionFlag(t *testing.T) {
 		}
 	})
 
-	want := "codeagent-wrapper version 5.12.0\n"
+	want := "codeagent-wrapper version 5.13.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)
@@ -3072,7 +3068,7 @@ func TestVersionShortFlag(t *testing.T) {
 		}
 	})
 
-	want := "codeagent-wrapper version 5.12.0\n"
+	want := "codeagent-wrapper version 5.13.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)
@@ -3088,7 +3084,7 @@ func TestVersionLegacyAlias(t *testing.T) {
 		}
 	})
 
-	want := "codex-wrapper version 5.12.0\n"
+	want := "codex-wrapper version 5.13.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)

@@ -122,10 +122,11 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
     message: i18n.t('init:selectFrontendModels'),
     choices: [
       { name: 'Antigravity', value: 'antigravity' as ModelType, checked: currentRouting?.frontend.models.includes('antigravity') ?? true },
-      { name: 'Gemini', value: 'gemini' as ModelType, checked: currentRouting?.frontend.models.includes('gemini') ?? false },
+      { name: 'Grok', value: 'grok' as ModelType, checked: currentRouting?.frontend.models.includes('grok') ?? false },
+      { name: 'Kimi', value: 'kimi' as ModelType, checked: currentRouting?.frontend.models.includes('kimi') ?? false },
       { name: 'Claude', value: 'claude' as ModelType, checked: currentRouting?.frontend.models.includes('claude') ?? false },
       { name: 'Codex', value: 'codex' as ModelType, checked: currentRouting?.frontend.models.includes('codex') ?? false },
-      { name: 'Grok', value: 'grok' as ModelType, checked: currentRouting?.frontend.models.includes('grok') ?? false },
+      { name: `Gemini (${i18n.t('init:model.deprecated')})`, value: 'gemini' as ModelType, checked: currentRouting?.frontend.models.includes('gemini') ?? false },
     ],
     validate: (answer: string[]) => answer.length > 0 || i18n.t('init:validation.selectAtLeastOne'),
   }])
@@ -137,10 +138,11 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
     message: i18n.t('init:selectBackendModels'),
     choices: [
       { name: 'Codex', value: 'codex' as ModelType, checked: currentRouting?.backend.models.includes('codex') ?? true },
-      { name: 'Antigravity', value: 'antigravity' as ModelType, checked: currentRouting?.backend.models.includes('antigravity') ?? false },
-      { name: 'Gemini', value: 'gemini' as ModelType, checked: currentRouting?.backend.models.includes('gemini') ?? false },
-      { name: 'Claude', value: 'claude' as ModelType, checked: currentRouting?.backend.models.includes('claude') ?? false },
       { name: 'Grok', value: 'grok' as ModelType, checked: currentRouting?.backend.models.includes('grok') ?? false },
+      { name: 'Kimi', value: 'kimi' as ModelType, checked: currentRouting?.backend.models.includes('kimi') ?? false },
+      { name: 'Antigravity', value: 'antigravity' as ModelType, checked: currentRouting?.backend.models.includes('antigravity') ?? false },
+      { name: 'Claude', value: 'claude' as ModelType, checked: currentRouting?.backend.models.includes('claude') ?? false },
+      { name: `Gemini (${i18n.t('init:model.deprecated')})`, value: 'gemini' as ModelType, checked: currentRouting?.backend.models.includes('gemini') ?? false },
     ],
     validate: (answer: string[]) => answer.length > 0 || i18n.t('init:validation.selectAtLeastOne'),
   }])
@@ -167,6 +169,7 @@ async function askReconfigureRouting(currentRouting?: ModelRouting): Promise<Mod
     mode: currentRouting?.mode || 'smart',
     geminiModel: currentRouting?.geminiModel,
     grokModel: currentRouting?.grokModel,
+    kimiModel: currentRouting?.kimiModel,
   }
 
   console.log()

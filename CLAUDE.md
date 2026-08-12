@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-07-12 (v3.2.0)
+**Last Updated**: 2026-08-12 (v3.3.0)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,17 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-12 (v3.3.0)
+- ⚡ **子代理调用提速 4 倍**：grok/kimi 自动发现 `~/.claude.json` 并连接其中所有 MCP server，实测一句 "hi" 墙钟 32–36 秒而 CPU 仅 6.5 秒。wrapper 现构造"影子 HOME"——真实 HOME 全项符号链接透传，只藏 `.claude.json` 和 `.claude/`，`.gitconfig`/`.npmrc` 不受影响。**32–36 秒 → 7.8 秒**。`--with-mcp` 恢复旧行为，Windows 无符号链接权限自动回退。
+- ✨ **Kimi Code CLI 后端**：第六个模型选项，8 角色提示词（含 builder）。`-p` 不可与 `--yolo`/`--auto` 同用（kimi 启动即拒绝），prompt 模式本身即 auto 权限；resume 用 `-S <id>`。
+- ✨ **`--kimi-model` + `{{KIMI_MODEL_FLAG}}`**：行级感知注入，留空沿用 kimi 自身 default_model。
+- 🔄 **Gemini 降级**：已停服，列表移至末位并标注「不推荐」，推荐位让给 Antigravity / Codex / Grok / Kimi。
+- 🐛 **每个会话都被告知 frontend=gemini**：`session-start.js` 硬编码该串且读的是不存在的项目级 config，永远走 fallback。改为读真实用户配置。
+- 🐛 **skill-router 前端角色写死 gemini**：改 `{{FRONTEND_PRIMARY}}`。
+- 🐛 **默认前端从未被自动放行**：权限白名单只枚举 gemini/codex，antigravity/grok/kimi 每次弹权限提示。改为单条前缀规则。
+- 🐛 **`prompts/grok/frontend.md` 自称 "powered by Grok (Gemini 3.5 Flash)"**：v3.2.0 复制残留。
+- 🔄 **Binary `5.12.0` → `5.13.0`**。
 
 ### 2026-07-12 (v3.2.0)
 - ✨ **Grok CLI 后端**：Grok (xAI) 成为第五个模型选项，init Step 2 / 菜单可选为前端或后端；型号可选 `grok-4.5`（500k 上下文）或 `grok-composer-2.5-fast`（Cursor 编码模型）。`/ccg:go` Builder 模式可让 Grok 全权写代码，Claude token 消耗极低。
@@ -392,6 +403,7 @@ npx ccg-workflow menu
 | 后端模型 | Codex | ✓ (v2.1.0+) | init Step 2/4 / 菜单 6，可选 gemini/antigravity/grok |
 | Gemini 型号 | gemini-3.1-pro-preview | ✓ (v2.1.0+) | 选 gemini 时可配 |
 | Grok 型号 | grok-4.5 | ✓ (v3.2.0+) | 选 grok 时可配，代码任务可选 grok-composer-2.5-fast |
+| Kimi 型号 | 空（用 kimi 默认） | ✓ (v3.3.0+) | 选 kimi 时可配 |
 | 协作模式 | smart | ✗ | 最佳实践 |
 | 命令数量 | 29 个 | ✗ | 全部安装 |
 

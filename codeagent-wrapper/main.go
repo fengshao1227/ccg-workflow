@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	version               = "5.12.0"
+	version               = "5.13.0"
 	defaultWorkdir        = "."
 	defaultTimeout        = 7200 // seconds (2 hours)
 	defaultCoverageTarget = 90.0
@@ -177,6 +177,7 @@ func run() (exitCode int) {
 		}
 	}()
 	defer runCleanupHook()
+	defer cleanupFastHome()
 
 	// Clean up stale logs from previous runs.
 	runStartupCleanup()
@@ -200,6 +201,7 @@ func run() (exitCode int) {
 
 			// Check for gemini-model in parallel mode
 			geminiModelInParallel := false
+			withMCPInParallel := false
 
 			for i := 0; i < len(args); i++ {
 				arg := args[i]
@@ -228,7 +230,10 @@ func run() (exitCode int) {
 						return 1
 					}
 					backendName = value
-				case arg == "--gemini-model", arg == "--grok-model":
+				case arg == "--with-mcp":
+					withMCPInParallel = true
+					continue
+				case arg == "--gemini-model", arg == "--grok-model", arg == "--kimi-model":
 					// Bare form carries its value in the next arg — consume it too,
 					// otherwise the value lands in extras and hard-fails the run.
 					geminiModelInParallel = true
@@ -236,7 +241,7 @@ func run() (exitCode int) {
 						i++
 					}
 					continue
-				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="):
+				case strings.HasPrefix(arg, "--gemini-model="), strings.HasPrefix(arg, "--grok-model="), strings.HasPrefix(arg, "--kimi-model="):
 					geminiModelInParallel = true
 					continue
 				default:
@@ -284,6 +289,7 @@ func run() (exitCode int) {
 					cfg.Tasks[i].Backend = backendName
 				}
 				cfg.Tasks[i].Progress = progressFlag
+				cfg.Tasks[i].WithMCP = withMCPInParallel
 				// Inject ROLE_FILE content if present
 				injectedTask, err := injectRoleFile(cfg.Tasks[i].Task)
 				if err != nil {
@@ -443,7 +449,7 @@ func run() (exitCode int) {
 	// Gemini/Antigravity/Grok CLI doesn't support "-" as stdin marker — pass text directly via -p.
 	// Keep in sync with runCodexTaskWithContext (executor.go): only gemini uses
 	// the Windows stdin pipe; antigravity (#146) and grok take -p everywhere.
-	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok")
+	promptDirect := useStdin && ((cfg.Backend == "gemini" && !isWindows()) || cfg.Backend == "antigravity" || cfg.Backend == "grok" || cfg.Backend == "kimi")
 	promptStdinPipe := useStdin && cfg.Backend == "gemini" && isWindows()
 	if useStdin && !promptDirect && !promptStdinPipe {
 		targetArg = "-"
@@ -506,6 +512,8 @@ func run() (exitCode int) {
 		Backend:     cfg.Backend,
 		GeminiModel: cfg.GeminiModel,
 		GrokModel:   cfg.GrokModel,
+		KimiModel:   cfg.KimiModel,
+		WithMCP:     cfg.WithMCP,
 	}
 
 	result := runTaskFn(taskSpec, false, cfg.Timeout)

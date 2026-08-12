@@ -22,7 +22,9 @@ type Config struct {
 	MaxParallelWorkers int
 	GeminiModel        string // Gemini model name (empty = use default)
 	GrokModel          string // Grok model name (empty = use default)
+	KimiModel          string // Kimi model alias (empty = use default)
 	Progress           bool   // Emit compact progress lines to stderr
+	WithMCP            bool   // Let the sub-agent load Claude's MCP servers (slow; off by default)
 }
 
 // ParallelConfig defines the JSON schema for parallel execution
@@ -44,6 +46,8 @@ type TaskSpec struct {
 	UseStdin     bool            `json:"-"`
 	GeminiModel  string          `json:"-"`
 	GrokModel    string          `json:"-"`
+	KimiModel    string          `json:"-"`
+	WithMCP      bool            `json:"-"`
 	Context      context.Context `json:"-"`
 }
 
@@ -73,6 +77,7 @@ var backendRegistry = map[string]Backend{
 	"antigravity": AntigravityBackend{},
 	"agy":         AntigravityBackend{},
 	"grok":        GrokBackend{},
+	"kimi":        KimiBackend{},
 }
 
 func selectBackend(name string) (Backend, error) {
@@ -209,6 +214,8 @@ func parseArgs() (*Config, error) {
 	// Read environment variables (lowest precedence)
 	geminiModel := strings.TrimSpace(os.Getenv("GEMINI_MODEL"))
 	grokModel := strings.TrimSpace(os.Getenv("GROK_MODEL"))
+	kimiModel := strings.TrimSpace(os.Getenv("KIMI_MODEL"))
+	withMCP := envFlagEnabled("CODEAGENT_WITH_MCP")
 
 	backendName := defaultBackendName
 	skipPermissions := envFlagEnabled("CODEAGENT_SKIP_PERMISSIONS")
@@ -263,6 +270,27 @@ func parseArgs() (*Config, error) {
 			grokModel = value
 			i++
 			continue
+		case arg == "--kimi-model":
+			if i+1 >= len(args) {
+				return nil, fmt.Errorf("--kimi-model flag requires a non-empty model name")
+			}
+			value := strings.TrimSpace(args[i+1])
+			if value == "" {
+				return nil, fmt.Errorf("--kimi-model flag requires a non-empty model name")
+			}
+			kimiModel = value
+			i++
+			continue
+		case strings.HasPrefix(arg, "--kimi-model="):
+			value := strings.TrimSpace(strings.TrimPrefix(arg, "--kimi-model="))
+			if value == "" {
+				return nil, fmt.Errorf("--kimi-model flag requires a non-empty model name")
+			}
+			kimiModel = value
+			continue
+		case arg == "--with-mcp":
+			withMCP = true
+			continue
 		case strings.HasPrefix(arg, "--grok-model="):
 			value := strings.TrimSpace(strings.TrimPrefix(arg, "--grok-model="))
 			if value == "" {
@@ -291,7 +319,7 @@ func parseArgs() (*Config, error) {
 	}
 	args = filtered
 
-	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, Progress: progress}
+	cfg := &Config{WorkDir: defaultWorkdir, Backend: backendName, SkipPermissions: skipPermissions, GeminiModel: geminiModel, GrokModel: grokModel, KimiModel: kimiModel, Progress: progress, WithMCP: withMCP}
 	cfg.MaxParallelWorkers = resolveMaxParallelWorkers()
 
 	if args[0] == "resume" {

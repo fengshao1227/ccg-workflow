@@ -202,6 +202,41 @@ func buildGrokArgs(cfg *Config, targetArg string) []string {
 	return args
 }
 
+type KimiBackend struct{}
+
+func (KimiBackend) Name() string    { return "kimi" }
+func (KimiBackend) Command() string { return "kimi" }
+
+func (KimiBackend) BuildArgs(cfg *Config, targetArg string) []string {
+	return buildKimiArgs(cfg, targetArg)
+}
+
+func buildKimiArgs(cfg *Config, targetArg string) []string {
+	if cfg == nil {
+		return nil
+	}
+
+	// Kimi Code CLI. stream-json gives one JSON object per stdout line.
+	args := []string{"--output-format", "stream-json"}
+
+	if model := strings.TrimSpace(cfg.KimiModel); model != "" {
+		args = append(args, "-m", model)
+	}
+
+	if cfg.Mode == "resume" && cfg.SessionID != "" {
+		args = append(args, "-S", cfg.SessionID)
+	}
+
+	// Working directory comes from cmd.Dir (executor.go); --add-dir only adds
+	// *extra* workspace roots, it does not relocate the primary one.
+	//
+	// ⚠ Do NOT add --yolo/--auto/--plan here: kimi rejects those combined with
+	// -p at startup. Prompt mode already runs under the `auto` permission
+	// policy, so it is autonomous by default.
+	args = append(args, "-p", targetArg)
+	return args
+}
+
 type GeminiBackend struct{}
 
 func (GeminiBackend) Name() string { return "gemini" }

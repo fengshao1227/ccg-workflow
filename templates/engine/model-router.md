@@ -11,10 +11,11 @@ Read ~/.claude/.ccg/config.toml
 ```
 
 从 `[routing]` 区块提取：
-- `frontend.primary` — 前端模型（默认 `antigravity`，可选 `gemini` / `codex` / `grok`）
-- `backend.primary` — 后端模型（默认 `codex`，可选 `gemini` / `antigravity` / `grok`）
+- `frontend.primary` — 前端模型（默认 `antigravity`，可选 `grok` / `kimi` / `codex`；`gemini` 已停服不推荐）
+- `backend.primary` — 后端模型（默认 `codex`，可选 `grok` / `kimi` / `antigravity`；`gemini` 已停服不推荐）
 - `geminiModel` — Gemini 型号（默认 `gemini-3.1-pro-preview`）
 - `grokModel` — Grok 型号（默认 `grok-4.5`，代码实施可选 `grok-composer-2.5-fast`）
+- `kimiModel` — Kimi 模型别名（留空 = 用 kimi 自身配置的 default_model）
 
 如果配置文件不存在或不可读，使用默认值直接继续。
 
@@ -53,7 +54,7 @@ Read ~/.claude/.ccg/config.toml
 
 **Builder 模式**（用户选择时，backend 模型全权写代码）：
 - backend 模型 + `$BACKEND/builder.md` — **有完整写权限**，直接写代码到文件系统
-- 支持任意已配置的 backend 模型（`codex` / `grok` / `gemini`），Claude token 消耗极低
+- 支持任意已配置的 backend 模型（`codex` / `grok` / `kimi` / `antigravity`），Claude token 消耗极低
 - Claude 监控进度，审查产出，必要时接管
 - 适用于 M-L 复杂度、低中风险的明确实施任务
 
@@ -70,7 +71,7 @@ WORKDIR=$(pwd)
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend $MODEL {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}- \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: ~/.claude/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend $MODEL {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}- \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: ~/.claude/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
   run_in_background: true,
   timeout: 3600000,
   description: "$SHORT_DESCRIPTION"
@@ -78,7 +79,7 @@ Bash({
 ```
 
 变量说明：
-- `$MODEL` — 选定的模型名（`codex` / `gemini` / `claude` / `antigravity` / `grok`）
+- `$MODEL` — 选定的模型名（`codex` / `grok` / `kimi` / `antigravity` / `claude` / `gemini`）
 - `$ROLE` — 角色文件名（`analyzer` / `architect` / `reviewer` / `debugger` / `optimizer` / `tester` / `builder`）
 - `$TASK_CONTENT` — 任务内容（需求 + 上下文）
 - `$OUTPUT_FORMAT` — 期望输出格式
@@ -88,7 +89,7 @@ Bash({
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend $MODEL {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}resume $SESSION_ID - \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: ~/.claude/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend $MODEL {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}resume $SESSION_ID - \"$WORKDIR\" <<'CODEAGENT_EOF'\nROLE_FILE: ~/.claude/.ccg/prompts/$MODEL/$ROLE.md\n<TASK>\n$TASK_CONTENT\n</TASK>\nOUTPUT: $OUTPUT_FORMAT\nCODEAGENT_EOF",
   run_in_background: true,
   timeout: 3600000,
   description: "$SHORT_DESCRIPTION"

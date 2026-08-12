@@ -37,7 +37,7 @@
 
 ## CCG 是什么？
 
-**CCG 是 Claude Code 的工作流引擎。** 它让 Claude 变成多模型编排器 —— Claude 保持主控地位，通过 Go 编译的 codeagent-wrapper 将专业任务分发给 Codex（OpenAI）、Gemini（Google）和 Grok（xAI）。
+**CCG 是 Claude Code 的工作流引擎。** 它让 Claude 变成多模型编排器 —— Claude 保持主控地位，通过 Go 编译的 codeagent-wrapper 将专业任务分发给 Codex（OpenAI）、Grok（xAI）、Kimi Code（Moonshot）和 Antigravity。
 
 一条命令，描述你要做什么，引擎自动处理一切。
 
@@ -179,7 +179,7 @@ npx ccg-workflow
 npx ccg-workflow init --skip-prompt
 ```
 
-需要 **Node.js 20+** 和 **Claude Code CLI**。Codex CLI、Gemini CLI 和 Grok CLI 为可选（启用多模型功能）。
+需要 **Node.js 20+** 和 **Claude Code CLI**。Codex CLI、Grok CLI、Kimi Code CLI 和 Antigravity 为可选（启用多模型功能）。
 
 ## CLI 命令大全
 
@@ -271,4 +271,4 @@ MIT
 
 ---
 
-v3.2.3 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.3.0 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
