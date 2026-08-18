@@ -278,7 +278,7 @@ npx ccg-workflow uninstall  # 彻底卸载
 
 ## Star 历史
 
-[![Star History Chart](https://api.star-history.com/svg?repos=fengshao1227/ccg-workflow&type=timeline&legend=top-left)](https://www.star-history.com/#fengshao1227/ccg-workflow&type=timeline&legend=top-left)
+[![Star History Chart](https://star-history.dera.page/svg?repos=fengshao1227/ccg-workflow&type=timeline&legend=top-left)](https://star-history.dera.page/#fengshao1227/ccg-workflow&type=timeline&legend=top-left)
 
 ## 许可证
 
