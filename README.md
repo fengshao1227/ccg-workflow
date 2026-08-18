@@ -35,6 +35,21 @@
 
 ---
 
+## 🧩 Also by the author
+
+**[DSH Marketplace](https://dshmarketplace.dev/)** — a directory of [DeepSeek Harness plugins](https://dshmarketplace.dev/plugins). 2,500+ indexed across 14 categories, bilingual EN / 中文.
+
+Not a sponsor — same author as CCG, built out of a plain annoyance: DSH plugins are multiplying fast, but figuring out what one does, whether it still installs, and what the command actually is meant opening one GitHub README after another. So the install commands here are put through a throwaway container first. **A plugin only gets a check mark if it really installs — and if it can't, the listing says why** (buried in a monorepo subdirectory, never published to npm, and so on). A verified index, not another awesome list.
+
+```bash
+dsh plugin --profile web add dshmarketplace-plugin   # browse the store from inside DSH
+npx dshmarketplace-cli add owner/repo                # install any plugin from your shell
+```
+
+There is also a [Python SDK](https://github.com/DshMarketPlace/dshmarketplace-py) and a [public API](https://dshmarketplace.dev/api-docs). Early days — bug reports and plugin submissions are very welcome on [GitHub](https://github.com/DshMarketPlace).
+
+---
+
 ## What is CCG?
 
 **CCG is a workflow engine for Claude Code.** It turns Claude into a multi-model orchestrator — Claude stays in control while dispatching specialized work to Codex (OpenAI), Grok (xAI), Kimi Code (Moonshot), and Antigravity through a Go binary bridge.

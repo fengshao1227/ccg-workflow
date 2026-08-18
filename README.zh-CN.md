@@ -35,6 +35,21 @@
 
 ---
 
+## 🧩 作者的另一个项目
+
+**[DSH Marketplace](https://dshmarketplace.dev/zh)** — [DeepSeek Harness 插件](https://dshmarketplace.dev/zh/plugins)目录，2500+ 插件、14 个分类，中英双语。
+
+不是广告位，和 CCG 同一个作者。做它的起因很朴素：DSH 插件涨得飞快，但想知道「这插件干什么的、现在还装不装得上、命令到底是哪一条」，还得一个个点进 GitHub README 里翻。所以这里的安装命令都会先扔进一次性容器里真跑一遍，**装得上才打勾；装不上的会直接写明原因**（埋在大仓库子目录里、压根没发 npm 包之类）。是验证过的索引，不是又一份 awesome 列表。
+
+```bash
+dsh plugin --profile web add dshmarketplace-plugin   # 装进 DSH，在 harness 里直接搜插件
+npx dshmarketplace-cli add owner/repo                # 命令行装任意插件
+```
+
+另有 [Python SDK](https://github.com/DshMarketPlace/dshmarketplace-py) 和[公开 API](https://dshmarketplace.dev/zh/api-docs)。站还很早期，欢迎去 [GitHub](https://github.com/DshMarketPlace) 提 issue 吐槽，插件作者也欢迎[自荐](https://dshmarketplace.dev/zh/submit)。
+
+---
+
 ## CCG 是什么？
 
 **CCG 是 Claude Code 的工作流引擎。** 它让 Claude 变成多模型编排器 —— Claude 保持主控地位，通过 Go 编译的 codeagent-wrapper 将专业任务分发给 Codex（OpenAI）、Grok（xAI）、Kimi Code（Moonshot）和 Antigravity。
