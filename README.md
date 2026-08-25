@@ -29,9 +29,6 @@
 
 ---
 
-[![302.AI](assets/sponsors/302.ai-en.jpg)](https://share.302.ai/oUDqQ6)
-
-[302.AI](https://share.302.ai/oUDqQ6) is a pay-as-you-go enterprise AI resource hub that offers the latest and most comprehensive AI models and APIs on the market, along with a variety of ready-to-use online AI applications.
 
 ---
 
