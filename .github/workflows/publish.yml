@@ -99,10 +99,21 @@ jobs:
           fi
           echo "No npm credentials configured; OIDC exchange will be used"
 
+      - name: Diagnose OIDC availability
+        run: |
+          echo "npm             : $(npm --version)"
+          echo "node            : $(node --version)"
+          echo "registry        : $(npm config get registry)"
+          echo "userconfig      : ${NPM_CONFIG_USERCONFIG:-<unset>}"
+          echo "OIDC req url set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "OIDC req tok set: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
+          echo "--- npm config (token lines stripped) ---"
+          npm config list 2>&1 | grep -viE 'token|password|auth' || true
+
       - name: Pack (dry run)
         if: inputs.dry_run
         run: npm pack --dry-run
 
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --loglevel verbose
