@@ -35,11 +35,15 @@ jobs:
 
       - uses: pnpm/action-setup@v4
 
+      # Deliberately NO `registry-url` here. Setting it makes setup-node write an
+      # .npmrc containing //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN},
+      # and with no such secret that expands to an empty token. npm then sees
+      # credentials already configured, skips the OIDC exchange entirely, and the
+      # registry rejects the anonymous PUT with a misleading 404.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
-          registry-url: https://registry.npmjs.org
 
       # Node 22 ships npm 10.x, which has no OIDC support. Trusted publishing
       # needs >= 11.5.1, so upgrade before anything touches the registry.
@@ -83,6 +87,17 @@ jobs:
             exit 1
           fi
           echo "$PKG is not yet published"
+
+      # Any configured credential silently disables the OIDC exchange, and the
+      # registry then answers the anonymous PUT with a 404 that explains nothing.
+      # Fail here instead, with a reason.
+      - name: Assert no npm credentials are configured
+        run: |
+          if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && grep -q '_authToken' "$NPM_CONFIG_USERCONFIG" 2>/dev/null; then
+            echo "::error::An npm auth token is configured ($NPM_CONFIG_USERCONFIG) — OIDC trusted publishing would be skipped. Remove registry-url from setup-node."
+            exit 1
+          fi
+          echo "No npm credentials configured; OIDC exchange will be used"
 
       - name: Pack (dry run)
         if: inputs.dry_run
