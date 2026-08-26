@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { i18n, initI18n } from '../i18n'
 import { createDefaultConfig, ensureCcgDir, getCcgDir, readCcgConfig, writeCcgConfig } from '../utils/config'
-import { getAllCommandIds, getCoreCommandIds, installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, installWorkflows, showBinaryDownloadWarning, syncMcpToCodex, syncMcpToGemini, writeFastContextPrompt } from '../utils/installer'
+import { configureApiMartForCodex, getAllCommandIds, getCoreCommandIds, installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, installWorkflows, showBinaryDownloadWarning, syncMcpToCodex, syncMcpToGemini, writeFastContextPrompt } from '../utils/installer'
 import { isWindows } from '../utils/platform'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 
@@ -281,6 +281,11 @@ export async function init(options: InitOptions = {}): Promise<void> {
   // Claude Code API configuration
   let apiUrl = ''
   let apiKey = ''
+  // APIMart also speaks the OpenAI wire protocol, so it can back Codex CLI too.
+  // Applied during the install phase, not mid-step — the step machine allows
+  // going back or cancelling, and side effects must not survive that.
+  let apimartWireCodex = false
+  let apimartActivateCodex = false
 
   // ═══════════════════════════════════════════════════════
   // Non-interactive mode (--skip-prompt): preserve existing settings
@@ -342,7 +347,7 @@ export async function init(options: InitOptions = {}): Promise<void> {
         choices: [
           { name: `${ansis.green('●')} ${i18n.t('init:api.officialOption')}`, value: 'official' },
           { name: `${ansis.cyan('●')} ${i18n.t('init:api.thirdPartyOption')}`, value: 'thirdparty' },
-          { name: `${ansis.yellow('★')} ${i18n.t('init:api.sponsor302AI')} ${ansis.gray('— https://share.302.ai/oUDqQ6')}`, value: '302ai' },
+          { name: `${ansis.yellow('★')} ${i18n.t('init:api.sponsorAPIMart')} ${ansis.gray('— https://go.apimart.ai/gh-ccg-workflow')}`, value: 'apimart' },
           { name: `${ansis.gray('○')} ${i18n.t('init:api.skipOption')}`, value: 'skip' },
           ...navSentinels(canGoBack),
         ],
@@ -356,20 +361,49 @@ export async function init(options: InitOptions = {}): Promise<void> {
       // Clear stale values before collecting fresh input
       apiUrl = ''
       apiKey = ''
+      apimartWireCodex = false
+      apimartActivateCodex = false
 
-      if (apiProvider === '302ai') {
-        apiUrl = 'https://api.302.ai/cc'
+      if (apiProvider === 'apimart') {
+        // APIMart serves the native Anthropic Messages protocol at POST /v1/messages,
+        // and Claude Code appends /v1/messages to ANTHROPIC_BASE_URL itself — so the
+        // base must NOT carry a /v1 suffix (that is the OpenAI-SDK base URL instead).
+        apiUrl = 'https://api.apimart.ai'
         console.log()
-        console.log(`    ${ansis.yellow('★')} ${i18n.t('init:api.sponsor302AIGetKey')}: ${ansis.cyan.underline('https://share.302.ai/oUDqQ6')}`)
+        console.log(`    ${ansis.yellow('★')} ${i18n.t('init:api.sponsorAPIMartGetKey')}: ${ansis.cyan.underline('https://go.apimart.ai/gh-ccg-workflow')}`)
         console.log()
         const { key } = await inquirer.prompt([{
           type: 'password',
           name: 'key',
-          message: `302.AI API Key ${ansis.gray(`(${i18n.t('init:api.keyRequired')})`)}`,
+          message: `APIMart API Key ${ansis.gray(`(${i18n.t('init:api.keyRequired')})`)}`,
           mask: '*',
           validate: (v: string) => v.trim() !== '' || i18n.t('init:api.enterKey'),
         }])
         apiKey = key?.trim() || ''
+
+        // The same account can also back Codex CLI, which speaks the OpenAI
+        // protocol — note its base_url KEEPS the /v1 suffix, unlike above.
+        const { wire } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'wire',
+          message: i18n.t('init:api.apimartCodexPrompt'),
+          default: true,
+        }])
+        apimartWireCodex = wire
+
+        if (apimartWireCodex) {
+          // Activation is asked separately and defaults to NO: flipping
+          // model_provider reroutes every Codex request off the user's existing
+          // subscription onto pay-as-you-go billing. That is not a decision an
+          // installer should make quietly on someone's behalf.
+          const { activate } = await inquirer.prompt([{
+            type: 'confirm',
+            name: 'activate',
+            message: i18n.t('init:api.apimartCodexActivatePrompt'),
+            default: false,
+          }])
+          apimartActivateCodex = activate
+        }
       }
       else if (apiProvider === 'thirdparty') {
         const apiAnswers = await inquirer.prompt([
@@ -1093,6 +1127,26 @@ export async function init(options: InitOptions = {}): Promise<void> {
       await fs.writeJSON(settingsPath, settings, { spaces: 2 })
       console.log()
       console.log(`    ${ansis.green('✓')} API ${ansis.gray(`→ ${settingsPath}`)}`)
+    }
+
+    // Register APIMart as a Codex model provider (~/.codex/config.toml).
+    // Separate from the block above because Codex speaks OpenAI, not Anthropic:
+    // its base_url keeps the /v1 suffix that ANTHROPIC_BASE_URL must omit.
+    if (apimartWireCodex) {
+      const codexApi = await configureApiMartForCodex(apimartActivateCodex)
+      console.log()
+      if (codexApi.success) {
+        console.log(`    ${ansis.green('✓')} Codex ${ansis.gray(`→ ${codexApi.configPath}`)}`)
+        // env_key auth: the key lives in the environment, never in config.toml,
+        // so we never clobber the user's existing ~/.codex/auth.json login.
+        console.log(`      ${ansis.gray(i18n.t('init:api.apimartCodexEnvHint'))}`)
+        console.log(`      ${ansis.cyan(`export APIMART_API_KEY="${apiKey.slice(0, 6)}..."`)}`)
+        if (!codexApi.activated)
+          console.log(`      ${ansis.gray(i18n.t('init:api.apimartCodexNotActive'))}`)
+      }
+      else {
+        console.log(`    ${ansis.yellow('!')} ${codexApi.message}`)
+      }
     }
 
     // Always install codeagent-wrapper auto-approve via permissions.allow

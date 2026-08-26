@@ -340,7 +340,7 @@ async function configApi(): Promise<void> {
     choices: [
       { name: `${ansis.green('●')} ${i18n.t('menu:api.officialOption')}`, value: 'official' },
       { name: `${ansis.cyan('●')} ${i18n.t('menu:api.thirdPartyOption')}`, value: 'thirdparty' },
-      { name: `${ansis.yellow('★')} ${i18n.t('menu:api.sponsor302AI')} ${ansis.gray('— https://share.302.ai/oUDqQ6')}`, value: '302ai' },
+      { name: `${ansis.yellow('★')} ${i18n.t('menu:api.sponsorAPIMart')} ${ansis.gray('— https://go.apimart.ai/gh-ccg-workflow')}`, value: 'apimart' },
     ],
   }])
 
@@ -352,21 +352,22 @@ async function configApi(): Promise<void> {
     delete settings.env.ANTHROPIC_AUTH_TOKEN
     delete settings.env.ANTHROPIC_API_KEY
   }
-  else if (apiProvider === '302ai') {
+  else if (apiProvider === 'apimart') {
     console.log()
-    console.log(`    ${ansis.yellow('★')} ${i18n.t('menu:api.sponsor302AIGetKey')}: ${ansis.cyan.underline('https://share.302.ai/oUDqQ6')}`)
+    console.log(`    ${ansis.yellow('★')} ${i18n.t('menu:api.sponsorAPIMartGetKey')}: ${ansis.cyan.underline('https://go.apimart.ai/gh-ccg-workflow')}`)
     console.log()
     const { key } = await inquirer.prompt([{
       type: 'password',
       name: 'key',
-      message: `302.AI API Key ${ansis.gray(`(${i18n.t('menu:api.keyRequired')})`)}`,
+      message: `APIMart API Key ${ansis.gray(`(${i18n.t('menu:api.keyRequired')})`)}`,
       mask: '*',
       validate: (v: string) => v.trim() !== '' || i18n.t('menu:api.enterKey'),
     }])
 
     if (!settings.env)
       settings.env = {}
-    settings.env.ANTHROPIC_BASE_URL = 'https://api.302.ai/cc'
+    // No /v1 suffix: Claude Code appends /v1/messages to ANTHROPIC_BASE_URL itself.
+    settings.env.ANTHROPIC_BASE_URL = 'https://api.apimart.ai'
     settings.env.ANTHROPIC_AUTH_TOKEN = key.trim()
     delete settings.env.ANTHROPIC_API_KEY
   }

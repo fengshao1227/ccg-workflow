@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.0] - 2026-08-26
+
+### ✨ Features
+
+- **APIMart 成为赞助商，并可直接用作 API 提供方** — 中英文 README 顶部新增 APIMart Banner + 介绍，位置在 Gamma Remover 之上。`init` Step 1 与菜单的 API 配置新增 APIMart 选项，选中后自动填入 Base URL，用户只需粘贴 Key。
+- **Codex CLI 也能走 APIMart** — 新增 `src/utils/installer-codex-api.ts`，把 APIMart 注册为 `~/.codex/config.toml` 里的 `[model_providers.apimart]`。`ccg codex-mode install` 会静默完成注册（保持非交互，CI 可用），`init` 选 APIMart 时则会额外询问是否接入 Codex。
+  **注册与启用是两个独立的问题，且启用默认为否**：翻动 `model_provider` 会把用户**全部** Codex 请求从现有订阅改道到按量计费的 APIMart，这种事安装器不该替人默默决定。注册本身不改变任何行为，日后想切只是一行改动。
+  合并沿用 `syncMcpToCodex()` 的做法（解析 → 只改一张表 → 临时文件 + rename 原子写），用户既有配置完整保留；卸载时会一并摘除该表以及可能悬空的 `model_provider`。
+
+### 🐛 Fixes
+
+- **两个 Base URL 极易写反，已分别锁死并加注释** — Claude Code 的 `ANTHROPIC_BASE_URL` 必须是 `https://api.apimart.ai`（**不带** `/v1`，因为 Claude Code 自己会拼 `/v1/messages`）；Codex 的 `base_url` 必须是 `https://api.apimart.ai/v1`（**带** `/v1`，OpenAI 协议约定）。写反的表现是静默 404。两处取值分处不同模块并各自注明理由。
+
+### 🔄 Changes
+
+- **302.AI 赞助结束** — README Banner、init/菜单选项、i18n 文案与 `assets/sponsors/302.ai*.jpg` 一并移除。
+
+### ✅ Tests
+
+- 新增 `installer-codex-api.test.ts`（9 例）：默认不激活、`/v1` 后缀正确、用户配置无损、显式激活、往返卸载零残留、不误伤用户自有 provider。生成的配置已用 `codex --strict-config`（codex-cli 0.149.0）实测通过。
+
+---
+
 ## [3.4.0] - 2026-08-12
 
 ### ✨ Features

@@ -85,7 +85,7 @@ export { getCurrentVersion, checkForUpdates, compareVersions } from './utils/ver
 
 ```
 Step 0: 语言选择（首次/已保存跳过）
-Step 1/4: API 提供方（官方 / 第三方 / 302.AI）
+Step 1/4: API 提供方（官方 / 第三方 / APIMart 赞助商 / 跳过）
 Step 2/4: 模型路由（Frontend: Gemini|Codex, Backend: Codex|Gemini, Gemini 型号）
 Step 3/4: MCP 工具多选（ace-tool ✓, context7 ✓, fast-context, grok-search, contextweaver）
 Step 4/4: 性能模式（standard|lite）+ Impeccable 可选安装
@@ -107,6 +107,7 @@ v1.7.83 将原 1878 行单文件拆分为 5 个聚焦模块，各自边界清晰
 | `installer-template.ts` | 模板变量替换，PACKAGE_ROOT 解析，MCP provider 注册表 | `injectConfigVariables()`, `replaceHomePathsInTemplate()`, `PACKAGE_ROOT` |
 | `installer-mcp.ts` | MCP 服务安装（ace-tool / fast-context / contextweaver / 通用） | `installAceTool()`, `installFastContext()`, `syncMcpToCodex()`, `syncMcpToGemini()` |
 | `installer-prompt.ts` | fast-context 搜索引导 Prompt 管理 | `writeFastContextPrompt()`, `removeFastContextPrompt()` |
+| `installer-codex-api.ts` | APIMart 作为 Codex 模型供应商写入 `~/.codex/config.toml` | `configureApiMartForCodex()`, `removeApiMartFromCodex()` |
 
 **`installWorkflows()` 执行链**（`src/utils/installer.ts:659`）：
 

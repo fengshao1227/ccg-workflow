@@ -13,12 +13,14 @@ export {
   getConfigPath,
 } from './utils/config'
 export {
+  configureApiMartForCodex,
   getWorkflowConfigs,
   getWorkflowById,
   installWorkflows,
   installAceTool,
   installAceToolRs,
   installCodexMode,
+  removeApiMartFromCodex,
   uninstallCodexMode,
   uninstallWorkflows,
   uninstallAceTool,

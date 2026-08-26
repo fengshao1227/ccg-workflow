@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-12 (v3.4.0)
+**Last Updated**: 2026-08-26 (v3.5.0)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,13 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-26 (v3.5.0)
+- ✨ **APIMart 赞助商集成**：中英 README 顶部 Banner（置于 Gamma Remover 之上），`init` Step 1 与菜单 API 配置新增 APIMart 选项，自动填 Base URL，用户只填 Key。
+- ✨ **Codex CLI 接入 APIMart**：新增 `src/utils/installer-codex-api.ts`，把 APIMart 写成 `~/.codex/config.toml` 的 `[model_providers.apimart]`。`codex-mode install` 静默注册（保持非交互），`init` 选 APIMart 时另问是否接 Codex。**注册与启用分离，启用默认否**——翻 `model_provider` 会把用户全部 Codex 请求从订阅改道到按量计费，安装器不该替人默认决定。合并沿用 `syncMcpToCodex()` 的原子写法，用户配置无损；卸载连带摘除该表与悬空 `model_provider`。
+- 🐛 **两个 Base URL 极易写反，已分处锁死**：Claude Code 的 `ANTHROPIC_BASE_URL` = `https://api.apimart.ai`（**不带** `/v1`，CC 自己拼 `/v1/messages`）；Codex 的 `base_url` = `https://api.apimart.ai/v1`（**带** `/v1`，OpenAI 协议）。写反表现为静默 404。
+- 🔄 **302.AI 赞助结束**：Banner、init/菜单选项、i18n 文案、`assets/sponsors/302.ai*.jpg` 全部移除。
+- ✅ **新增 9 例测试**（`installer-codex-api.test.ts`），生成的配置已过 `codex --strict-config`（codex-cli 0.149.0）实测。
 
 ### 2026-08-12 (v3.4.0)
 - ✨ **OpenCode CLI 后端**：第七个模型选项。`opencode run --format json`，`-m provider/model`，`-s <sessionID>` 恢复。parser 的 opencode 分支靠 `sessionID`（大写 D，与 Gemini 的 `sessionId` 不撞）+ 嵌套 `part` 识别。
