@@ -268,12 +268,14 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（130+ 用例）
+# 测试（148 用例）
 pnpm test
 
-# 发布
-npm publish
+# 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
+git tag -a vx.y.z -m "..." && git push origin vx.y.z
 ```
+
+发版完整规则与 OIDC 排查表见[根目录 CLAUDE.md 的「发版规则」](../CLAUDE.md#发版规则必须严格遵守)。
 
 **build.config.ts**：
 ```typescript

@@ -668,31 +668,64 @@ graph TD
 - 添加变更记录条目
 - 更新命令数量、接口表等受影响的章节
 
-### 5. 构建 + 发布 + 推送
+### 5. 本地验证
 
 ```bash
-# 类型检查（必须在 build 之前通过）
-pnpm typecheck
-
-# 构建
+pnpm typecheck   # tsc --noEmit，必须在 build 前通过
 pnpm build
-
-# 测试
 pnpm test
+```
 
-# 发布 npm 包
-npm publish
+### 6. 提交 + 打 tag 发布
 
-# 提交到 Git
+**⛔ 不要在本地跑 `npm publish`。** 自 v3.5.0 起，npm 发布由 GitHub Actions 通过
+**Trusted Publishing (OIDC)** 完成，本地和 CI 都不存任何 npm token（[publish.yml](.github/workflows/publish.yml)）。
+
+```bash
 git add -A
 git commit -m "chore: bump version to x.y.z"
 git push origin main
+
+# 推 tag 触发发布（tag 名必须是 v 前缀 + package.json 里的版本号）
+git tag -a vx.y.z -m "vx.y.z — 一句话说明"
+git push origin vx.y.z
 ```
+
+CI 会自动跑 typecheck → test → build → 校验 tag 与 `package.json` 一致 → 校验该版本未发布过 →
+`npm publish --provenance`。查看结果：
+
+```bash
+gh run list --workflow=publish.yml --limit 1
+npm view ccg-workflow version          # 确认线上版本
+```
+
+需要重跑而不想动 tag 时用 `gh workflow run publish.yml --ref main`。
+
+#### 发布失败排查（OIDC 的坑很隐蔽，报错全是误导）
+
+先用 `--loglevel verbose` 重跑，然后只看这一行：
+
+```
+npm http fetch POST <码> https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/ccg-workflow
+```
+
+| 现象 | 真实含义 | 处理 |
+|------|---------|------|
+| **没有这一行** | npm 压根没发起 OIDC 交换 | 查是否有残留凭据。**`actions/setup-node` 的 `registry-url` 是元凶**——它会写 `_authToken=${NODE_AUTH_TOKEN}`，无 secret 时展开成空 token，npm 便跳过 OIDC。workflow 里已刻意不设该参数，勿加回 |
+| `404` + `package not found` | npm 侧没有该**包**的 Trusted Publisher 记录 | 去 npmjs.com/package/ccg-workflow/access 配（注意是**包**的设置，不是账号设置） |
+| `201` | 交换成功 | 正常 |
+
+⚠ 普通日志级别看不到这行，这是区分「workflow 配错」和「npm 后台没配」的唯一依据。
+⚠ **provenance 签名成功 ≠ npm 认证成功** —— 那走 Sigstore，与 npm 认证是两条独立路径，极易误判。
+⚠ Node 22 自带 npm 10.x 无 OIDC 支持，workflow 里的 `npm install -g npm@latest`（需 ≥ 11.5.1）不可删。
+
+npm 网页的 README 有服务端渲染缓存，发布后要等一会儿才更新（无痕也绕不过）；
+想立刻确认内容用 `npm view ccg-workflow readme | head -20` 直接读 registry。
 
 ### 检查清单
 - [ ] package.json 版本号已更新
 - [ ] CHANGELOG.md 已添加新版本条目
-- [ ] README.md 已更新（命令表 + 使用说明 + 底部版本号）
+- [ ] README.md **和 README.zh-CN.md** 已更新（命令表 + 使用说明 + 底部版本号，两份都要）
 - [ ] CLAUDE.md 已更新（Last Updated + 变更记录 + 受影响章节）
 - [ ] **⚠ 若修改了 `codeagent-wrapper/` 下的 Go 代码，必须同步 bump 两处版本号：**
   - [ ] `codeagent-wrapper/main.go` → `version = "x.y.z"`
@@ -702,8 +735,9 @@ git push origin main
 - [ ] `pnpm typecheck` 通过（tsc --noEmit，不可跳过）
 - [ ] `pnpm build` 通过
 - [ ] `pnpm test` 通过
-- [ ] `npm publish` 成功
 - [ ] `git push origin main` 成功
+- [ ] `git push origin vx.y.z` 成功，且 publish.yml 跑绿
+- [ ] `npm view ccg-workflow version` 已是新版本
 
 ---
 
