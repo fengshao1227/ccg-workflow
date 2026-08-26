@@ -114,6 +114,11 @@ jobs:
         if: inputs.dry_run
         run: npm pack --dry-run
 
+      # If this ever fails with ENEEDAUTH, re-run with --loglevel verbose: npm
+      # only reveals the OIDC exchange result at that level. A 404 from
+      # /-/npm/v1/oidc/token/exchange/package/<name> means npm has no trusted
+      # publisher recorded for the package (check the package's Access page,
+      # not the account settings); 201 means the exchange succeeded.
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance --access public --loglevel verbose
+        run: npm publish --provenance --access public
