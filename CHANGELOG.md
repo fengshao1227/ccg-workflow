@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 🔄 Changes
 
 - **302.AI 赞助结束** — README Banner、init/菜单选项、i18n 文案与 `assets/sponsors/302.ai*.jpg` 一并移除。
+- **npm 发布改用 Trusted Publishing (OIDC)** — 新增 `.github/workflows/publish.yml`，推 `v*` tag 即发布，仓库和 CI 里都不再存放任何 npm token（长期 token 会过期，也会泄漏）。发布前强制跑 typecheck + test + build，并校验 tag 与 `package.json` 版本一致、该版本尚未发布过。附带生成 provenance 证明。
 
 ### ✅ Tests
 

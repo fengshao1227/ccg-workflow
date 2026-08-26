@@ -1,0 +1,93 @@
+name: Publish to npm
+
+# Publishes via npm Trusted Publishing (OIDC) — no NPM_TOKEN secret anywhere.
+# npm verifies the short-lived OIDC token GitHub mints for this exact
+# repo + workflow, so there is no long-lived credential to leak or expire.
+#
+# Requires a matching Trusted Publisher entry on npmjs.com:
+#   Publisher:          GitHub Actions
+#   Organization/user:  fengshao1227
+#   Repository:         ccg-workflow
+#   Workflow filename:  publish.yml
+#   Environment name:   npm-publish   (must equal `environment:` below)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Pack and validate without actually publishing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # mints the OIDC token npm authenticates against
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      # Node 22 ships npm 10.x, which has no OIDC support. Trusted publishing
+      # needs >= 11.5.1, so upgrade before anything touches the registry.
+      - name: Upgrade npm for OIDC support
+        run: |
+          npm install -g npm@latest
+          echo "npm $(npm --version)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # A tag that disagrees with package.json ships the wrong version number
+      # under the right name. Cheap to check here, impossible to undo on npm.
+      - name: Verify tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag v$TAG does not match package.json version $PKG"
+            exit 1
+          fi
+          echo "Tag and package.json agree on $PKG"
+
+      # Guard against re-running a tag whose version is already live — npm
+      # would reject it anyway, but this fails fast with a readable reason.
+      - name: Check version is not already published
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          if npm view "ccg-workflow@$PKG" version >/dev/null 2>&1; then
+            echo "::error::ccg-workflow@$PKG is already on npm"
+            exit 1
+          fi
+          echo "$PKG is not yet published"
+
+      - name: Pack (dry run)
+        if: inputs.dry_run
+        run: npm pack --dry-run
+
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --provenance --access public
