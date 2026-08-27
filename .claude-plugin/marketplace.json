@@ -1,0 +1,27 @@
+{
+  "name": "ccg",
+  "owner": {
+    "name": "fengshao1227",
+    "url": "https://github.com/fengshao1227"
+  },
+  "metadata": {
+    "description": "CCG multi-model collaboration system — install the skills natively via Claude Code plugins, or the full workflow (commands + hooks + binary) via `npx ccg-workflow`.",
+    "version": "3.5.1"
+  },
+  "plugins": [
+    {
+      "name": "ccg",
+      "source": ".",
+      "description": "All CCG skills in one install: bt-panel / seo-page-builder / adsense-site-auditor / scrapling, the verify-* quality gates + gen-docs, the Impeccable-fused frontend-design skill, and 60+ domain-knowledge references. Invoked as /ccg:<skill>.",
+      "version": "3.5.1",
+      "category": "workflow",
+      "keywords": [
+        "skills",
+        "deployment",
+        "seo",
+        "frontend-design",
+        "code-review"
+      ]
+    }
+  ]
+}

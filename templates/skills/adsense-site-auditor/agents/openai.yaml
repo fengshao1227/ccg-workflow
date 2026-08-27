@@ -1,0 +1,4 @@
+interface:
+  display_name: "AdSense Site Auditor"
+  short_description: "Audit websites before AdSense approval."
+  default_prompt: "Use $adsense-site-auditor to audit this website for AdSense application readiness."

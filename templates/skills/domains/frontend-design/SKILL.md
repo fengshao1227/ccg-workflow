@@ -24,7 +24,7 @@ Design skills produce generic output without project context. You MUST have conf
 **Gathering order:**
 1. **Check current instructions (instant)**: If your loaded instructions already contain a **Design Context** section, proceed immediately.
 2. **Check .impeccable.md (fast)**: If not in instructions, read `.impeccable.md` from the project root. If it exists and contains the required context, proceed.
-3. **Run /teach-impeccable (REQUIRED)**: If neither source has context, you MUST run `/teach-impeccable` NOW before doing anything else. Do NOT skip this step. Do NOT attempt to infer context from the codebase instead.
+3. **Gather it now (REQUIRED)**: If neither source has context, ask the user for the three items above before doing anything else. Do NOT skip this step and do NOT infer context from the codebase instead. Once gathered, offer to save it to `.impeccable.md` at the project root so future sessions skip straight to step 2. (The detailed intake playbook lives at `impeccable/teach-impeccable/SKILL.md`.)
 
 ---
 
@@ -166,54 +166,48 @@ Specific style variant specs with CSS tokens and component patterns:
 
 ---
 
-## Command System (20 Impeccable Commands)
+## Technique Playbooks (20 Impeccable modules)
 
-All commands are in `~/.claude/skills/ccg/impeccable/`. Each invokes this skill's guidelines first.
+These 20 techniques are **not** separate slash commands — they're this skill's toolbox. Each is a detailed step-by-step playbook at `impeccable/<name>/SKILL.md` (installed under `~/.claude/skills/ccg/impeccable/`). When a task calls for one, **read that file and apply it**; every playbook assumes the design principles above. Invoke `/ccg:frontend-design` once and pull in whichever techniques the work needs.
 
 ### Quality & Audit
-| Command | What it does |
-|---------|------------|
-| `/audit` | Technical quality checks (a11y, performance, responsive, theming, anti-patterns) — scored 0-20 |
-| `/critique` | UX design review with Nielsen heuristics scoring (0-40), persona testing, cognitive load |
-| `/teach-impeccable` | One-time setup: gather design context, save to .impeccable.md |
+| Technique | What it does |
+|-----------|------------|
+| `audit` | Technical quality checks (a11y, performance, responsive, theming, anti-patterns) — scored 0-20 |
+| `critique` | UX design review with Nielsen heuristics scoring (0-40), persona testing, cognitive load |
+| `teach-impeccable` | Intake playbook: gather design context, save to .impeccable.md |
 
 ### Fix & Align
-| Command | What it does |
-|---------|------------|
-| `/normalize` | Align with design system standards |
-| `/polish` | Final pass before shipping — 20-item checklist |
-| `/distill` | Strip to essence, remove unnecessary complexity |
-| `/clarify` | Improve unclear UX copy, error messages, labels |
-| `/optimize` | Performance improvements (CWV, bundle, rendering) |
-| `/harden` | Error handling, i18n, text overflow, edge cases |
+| Technique | What it does |
+|-----------|------------|
+| `normalize` | Align with design system standards |
+| `polish` | Final pass before shipping — 20-item checklist |
+| `distill` | Strip to essence, remove unnecessary complexity |
+| `clarify` | Improve unclear UX copy, error messages, labels |
+| `optimize` | Performance improvements (CWV, bundle, rendering) |
+| `harden` | Error handling, i18n, text overflow, edge cases |
 
 ### Style & Expression
-| Command | What it does |
-|---------|------------|
-| `/animate` | Add purposeful motion and micro-interactions |
-| `/colorize` | Introduce strategic color to monochromatic designs |
-| `/bolder` | Amplify boring designs with distinctive impact |
-| `/quieter` | Tone down overly bold designs to refined sophistication |
-| `/delight` | Add moments of joy, personality, and surprise |
+| Technique | What it does |
+|-----------|------------|
+| `animate` | Add purposeful motion and micro-interactions |
+| `colorize` | Introduce strategic color to monochromatic designs |
+| `bolder` | Amplify boring designs with distinctive impact |
+| `quieter` | Tone down overly bold designs to refined sophistication |
+| `delight` | Add moments of joy, personality, and surprise |
 
 ### Structure & Components
-| Command | What it does |
-|---------|------------|
-| `/extract` | Pull into reusable components and design tokens |
-| `/adapt` | Adapt for different devices and contexts |
-| `/onboard` | Design onboarding flows and empty states |
-| `/typeset` | Fix font choices, hierarchy, sizing, readability |
-| `/arrange` | Fix layout, spacing, visual rhythm |
-| `/overdrive` | Technically extraordinary effects (shaders, springs, scroll-driven) |
+| Technique | What it does |
+|-----------|------------|
+| `extract` | Pull into reusable components and design tokens |
+| `adapt` | Adapt for different devices and contexts |
+| `onboard` | Design onboarding flows and empty states |
+| `typeset` | Fix font choices, hierarchy, sizing, readability |
+| `arrange` | Fix layout, spacing, visual rhythm |
+| `overdrive` | Technically extraordinary effects (shaders, springs, scroll-driven) |
 
-### Combining Commands
-```
-/audit /normalize /polish blog       # Full workflow: audit -> fix -> polish
-/critique /harden checkout           # UX review + add error handling
-/audit                               # Find issues first
-/normalize                           # Then fix inconsistencies
-/polish                              # Final cleanup
-```
+### Combining techniques
+Chain playbooks in sequence for a full pass — e.g. `audit → normalize → polish` (find issues, fix inconsistencies, final cleanup), or `critique → harden` (UX review, then add error handling). Read each module's SKILL.md in turn and carry its output into the next.
 
 ---
 
@@ -229,14 +223,14 @@ Interpret creatively and make unexpected choices that feel genuinely designed fo
 
 - Design system establishment
 - Component library development
-- UI/UX audit and review (`/audit`, `/critique`)
+- UI/UX audit and review (`audit`, `critique` playbooks)
 - Accessibility improvement
-- Responsive layout design (`/adapt`)
-- Interaction and animation design (`/animate`, `/delight`)
+- Responsive layout design (`adapt` playbook)
+- Interaction and animation design (`animate`, `delight` playbooks)
 - Style variant selection (Claymorphism / Glassmorphism / Neubrutalism / Liquid Glass)
-- Performance optimization (`/optimize`)
-- Pre-launch polish (`/polish`)
-- Copy improvement (`/clarify`)
-- Production hardening (`/harden`)
-- Typography refinement (`/typeset`)
-- Layout improvement (`/arrange`)
+- Performance optimization (`optimize` playbook)
+- Pre-launch polish (`polish` playbook)
+- Copy improvement (`clarify` playbook)
+- Production hardening (`harden` playbook)
+- Typography refinement (`typeset` playbook)
+- Layout improvement (`arrange` playbook)

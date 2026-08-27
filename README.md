@@ -158,6 +158,18 @@ When your message mentions security, caching, RAG, Kubernetes, etc., the relevan
 
 `Security` · `Architecture` · `DevOps` · `AI/MLOps` · `Development` · `Frontend Design` · `Infrastructure` · `Mobile` · `Data Engineering` · `Orchestration`
 
+### Standalone Skills — battle-tested website workflows (v3.5.1)
+
+Self-contained skills, each usable on its own or auto-triggered by intent. Drawn from real site-building work and shipped with their scripts:
+
+| Skill | What it does |
+|-------|-------------|
+| `/ccg:bt-panel` | Drive a **BaoTa / aaPanel** server over its HTTP API — deploy a build, update a live site, read/write files, run shell, run MySQL. No SSH or rsync; just a panel URL + API key. Ships `bt_client.py` + one-shot `bt_deploy.py`. |
+| `/ccg:seo-page-builder` | Build, audit, or optimize **SEO tool pages** (AI generator / remover / enhancer / converter / editor). SERP-intent driven, with a runnable `onpage-audit.py` keyword-density meter. |
+| `/ccg:adsense-site-auditor` | Audit a site for **Google AdSense** readiness against the full official checklist — eligibility, ownership, content quality, ads.txt, privacy, Publisher Policies — before you apply or after a rejection. |
+
+> `bt-panel` reads credentials only from env vars / a git-ignored `sites.json`; nothing is hardcoded. `seo-page-builder` is adapted from yuzeiki's skill of the same name (see its SKILL.md).
+
 ## Commands
 
 ### Core (v3.0 default: 13 commands)
@@ -188,6 +200,8 @@ Includes `/ccg:workflow`, `/ccg:plan`, `/ccg:execute`, `/ccg:frontend`, `/ccg:ba
 
 ## Quick Start
 
+**Option A — full install (multi-model orchestration + commands + hooks + binary, recommended)**
+
 ```bash
 # Install (interactive 4-step wizard)
 npx ccg-workflow
@@ -197,6 +211,17 @@ npx ccg-workflow init --skip-prompt
 ```
 
 Requires **Node.js 20+** and **Claude Code CLI**. Codex CLI, Grok CLI, Kimi Code CLI, and Antigravity are optional (enable multi-model features).
+
+**Option B — native plugin (skills only, zero dependencies, v3.5.1+)**
+
+Want just the skills (web-ops toolkit, quality gates, frontend-design, domain knowledge) without the multi-model orchestration?
+
+```bash
+claude plugin marketplace add fengshao1227/ccg-workflow
+claude plugin install ccg@ccg
+```
+
+Skills are invoked as `/ccg:<skill>`. No npx, no binary. The multi-model commands ship only through Option A (their templates carry install-time placeholders that a native plugin can't resolve).
 
 ## CLI Commands
 
@@ -288,4 +313,4 @@ MIT
 
 ---
 
-v3.5.0 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.5.1 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)

@@ -268,7 +268,7 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（148 用例）
+# 测试（166 用例）
 pnpm test
 
 # 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
@@ -313,7 +313,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 6 个测试文件，130+ 用例：
+`src/utils/__tests__/` 下 9 个测试文件，166 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -323,6 +323,9 @@ defineBuildConfig({
 | `installer.test.ts` | `installWorkflows` 主流程，template 变量完整性检查 |
 | `installWorkflows.test.ts` | 安装结果验证，error 处理路径 |
 | `injectConfigVariables.test.ts` | 所有模板占位符替换正确性 |
+| `installer-codex-api.test.ts` | APIMart Codex provider 注册/移除、原子 TOML 合并 |
+| `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
+| `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
 
 ---
 

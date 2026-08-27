@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-26 (v3.5.0)
+**Last Updated**: 2026-08-27 (v3.5.1)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,13 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-27 (v3.5.1)
+- ✨ **原生 Claude Code 插件市场**：新增 `.claude-plugin/marketplace.json` + `plugin.json`。CCG 现可 `claude plugin marketplace add fengshao1227/ccg-workflow` → `claude plugin install ccg@ccg` 原生装入全部技能（`/ccg:<skill>`）。**关键设计**：plugin 的 `skills` 字段指向 `templates/skills`（该字段是「追加到默认扫描」语义），且**刻意不声明 `commands`**——`templates/commands` 带 `{{FRONTEND_PRIMARY}}` 占位符、依赖 npx 安装器注入，进原生 plugin 会暴露未解析的坏命令。仓库根无 `commands/`·`agents/`·`skills/` 目录，故默认扫描为空、零误载。`source: "."`（整个仓库即 plugin 根）已过 `claude plugin validate --strict`。多模型编排仍走 `npx`。
+- ✨ **三个实战建站独立技能**（脱敏随包发布）：`/ccg:bt-panel`（宝塔/aaPanel API 部署运维，自带 `bt_client.py`+`bt_deploy.py`）、`/ccg:seo-page-builder`（SERP 驱动 SEO 工具页 + `onpage-audit.py`，改编自 yuzeiki 并署名）、`/ccg:adsense-site-auditor`（AdSense 达标审计）。
+- 🔄 **impeccable 20 命令收敛为 1 入口**：`/ccg:polish`/`critique`/`animate` 等 20 个设计微调命令曾占可调用命令 65%，已被 `/ccg:frontend-design` 完整融合。现 impeccable 全部 `user-invocable: false`——**可调用命令 31 → 11**，20 个手法降为 frontend-design 的 playbook（文件保留、知识零丢失），frontend-design 内斜杠引用同步改 playbook 引用消除死链。
+- ✅ **两组防回归测试**：`skills-hygiene.test.ts`（10 例，扫 `templates/skills/` 全量文本拦截密钥/公网 IP/绝对路径泄漏）+ `plugin-manifest.test.ts`（8 例，校验 marketplace/plugin 版本与 `package.json` 同步、impeccable 收敛不回退、frontend-design 无死链）。
+- 🐛 **脱敏**：`bt-panel` 文档内真实宝塔 API 密钥、面板公网 IP、客户项目路径全部占位符化。
 
 ### 2026-08-26 (v3.5.0)
 - ✨ **APIMart 赞助商集成**：中英 README 顶部 Banner（置于 Gamma Remover 之上），`init` Step 1 与菜单 API 配置新增 APIMart 选项，自动填 Base URL，用户只填 Key。

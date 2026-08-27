@@ -158,6 +158,18 @@ CCG 引擎:
 
 `安全` · `架构` · `DevOps` · `AI/MLOps` · `开发语言` · `前端设计` · `基础设施` · `移动端` · `数据工程` · `编排`
 
+### 独立技能 — 实战建站工作流（v3.5.1 新增）
+
+自成体系的技能，可单独 `/ccg:` 调用，也会按意图自动触发。全部来自真实建站运维，脚本一并打包：
+
+| 技能 | 作用 |
+|------|------|
+| `/ccg:bt-panel` | 通过 **宝塔 / aaPanel** HTTP API 操控服务器 —— 部署构建、更新线上站点、读写文件、执行 shell、跑 MySQL。无需 SSH / rsync，只要面板地址 + API 密钥。自带 `bt_client.py` + 一键部署 `bt_deploy.py`。 |
+| `/ccg:seo-page-builder` | 创建 / 审计 / 优化 **SEO 工具页**（AI generator / remover / enhancer / converter / editor）。SERP 意图驱动，附可跑的 `onpage-audit.py` 关键词密度量具。 |
+| `/ccg:adsense-site-auditor` | 按官方完整清单审计站点的 **Google AdSense** 达标度 —— 资格、归属、内容质量、ads.txt、隐私、发布商政策 —— 申请前自查或被拒后排障。 |
+
+> `bt-panel` 的凭据只从环境变量 / git-ignored 的 `sites.json` 读取，无任何硬编码。`seo-page-builder` 改编自 yuzeiki 的同名技能（见其 SKILL.md）。
+
 ## 命令
 
 ### 核心命令（v3.0 默认安装 13 个）
@@ -188,6 +200,8 @@ CCG 引擎:
 
 ## 快速开始
 
+**方式 A：完整安装（多模型编排 + 命令 + hooks + binary，推荐）**
+
 ```bash
 # 安装（交互式 4 步向导）
 npx ccg-workflow
@@ -197,6 +211,17 @@ npx ccg-workflow init --skip-prompt
 ```
 
 需要 **Node.js 20+** 和 **Claude Code CLI**。Codex CLI、Grok CLI、Kimi Code CLI 和 Antigravity 为可选（启用多模型功能）。
+
+**方式 B：原生插件（仅技能，零依赖，v3.5.1+）**
+
+只想要 CCG 的技能（建站三件套、质量关卡、frontend-design、域知识），不需要多模型编排时：
+
+```bash
+claude plugin marketplace add fengshao1227/ccg-workflow
+claude plugin install ccg@ccg
+```
+
+技能以 `/ccg:<skill>` 形式调用。无需 npx、无需 binary。多模型命令因含模板占位符不随插件分发，需方式 A。
 
 ## CLI 命令大全
 
@@ -288,4 +313,4 @@ MIT
 
 ---
 
-v3.5.0 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.5.1 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)

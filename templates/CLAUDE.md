@@ -251,32 +251,11 @@
 | `data-engineering/` | SKILL.md 入口（详细知识文件待填充） |
 | `orchestration/` | `multi-agent.md` + SKILL.md（多智能体协作规范） |
 
-### impeccable/（20 个 UI/UX 精打磨工具）
+### impeccable/（20 个设计 playbook — v3.5.1 起收敛为 frontend-design 的知识模块，不再是独立命令）
 
-每个工具均为独立子目录，含 `SKILL.md`（部分含 `reference/` 参考资料）。
+每个 playbook 为独立子目录含 `SKILL.md`（部分含 `reference/`）。**v3.5.1 起全部 `user-invocable: false`**：曾经的 20 个 `/ccg:polish`/`critique`/… 平铺命令占了可调用命令的 65%，而它们已被 `/ccg:frontend-design` 完整融合。现统一由 `/ccg:frontend-design` 一个入口统领，各手法作为其 playbook 按需读取（`domains/frontend-design/SKILL.md` 的「Technique Playbooks」章节列出全部 20 个 + 读取路径）。文件保留、知识零丢失，仅不再各自生成 slash command。
 
-| 工具 | `/ccg:` 命令 | 定位 |
-|------|-------------|------|
-| `adapt/` | `adapt` | 跨屏幕尺寸适配 |
-| `animate/` | `animate` | 为功能增加有目的的动效 |
-| `arrange/` | `arrange` | 改善布局、间距和视觉节奏 |
-| `audit/` | `audit` | 可访问性、性能、技术质量全检 |
-| `bolder/` | `bolder` | 把保守/无聊的设计放大到引人注目 |
-| `clarify/` | `clarify` | 改善不清晰的 UX 文案和错误信息 |
-| `colorize/` | `colorize` | 为过于单调的功能增添战略性色彩 |
-| `critique/` | `critique` | 从 UX 视角评估设计，多维度打分 |
-| `delight/` | `delight` | 为交互增加惊喜感和个性时刻 |
-| `distill/` | `distill` | 剔除冗余，还原设计本质 |
-| `extract/` | `extract` | 提取并整合可复用组件/token/模式 |
-| `harden/` | `harden` | 改善界面健壮性（错误处理/边界态） |
-| `normalize/` | `normalize` | 审计并对齐到设计系统规范 |
-| `onboard/` | `onboard` | 设计改善引导流程和空态 |
-| `optimize/` | `optimize` | 优化前端性能（加载/渲染/交互） |
-| `overdrive/` | `overdrive` | 突破常规，将界面推向极致表达 |
-| `polish/` | `polish` | 最终质量打磨（对齐/间距/颜色一致性） |
-| `quieter/` | `quieter` | 降低视觉噪音，让主内容呼吸 |
-| `teach-impeccable/` | `teach-impeccable` | 一次性设置，收集设计上下文偏好 |
-| `typeset/` | `typeset` | 修复字体选择、大小、行高和层级 |
+`adapt` · `animate` · `arrange` · `audit` · `bolder` · `clarify` · `colorize` · `critique` · `delight` · `distill` · `extract` · `harden` · `normalize` · `onboard` · `optimize` · `overdrive` · `polish` · `quieter` · `teach-impeccable` · `typeset`
 
 ### scrapling/
 
@@ -378,7 +357,7 @@ templates/rules/                   # 目录整体
 
 2. **Skill Registry frontmatter 驱动**（v2.0.0）：新增技能只需写 SKILL.md 并设 `user-invocable: true`，无需改 TypeScript 代码即可自动生成 slash command。`scripted` 技能（有 `scripts/*.js`）和 `knowledge` 技能（纯 Markdown）生成内容不同。
 
-3. **commands/ vs skills/impeccable/**：`commands/` 是核心开发工作流命令，手动维护在 `installer-data.ts` 注册表中。`impeccable/` 是 UI/UX 精打磨工具，通过 Skill Registry 自动注册，两套机制互补，避免冲突（`installSkillGeneratedCommands()` 跳过已在注册表中的命令名）。
+3. **commands/ vs skills/impeccable/**：`commands/` 是核心开发工作流命令，手动维护在 `installer-data.ts` 注册表中。`impeccable/` 曾通过 Skill Registry 各自注册为 `/ccg:` 命令，**v3.5.1 起全部 `user-invocable: false`**——收敛为 `/ccg:frontend-design` 的 playbook，不再生成独立命令（避免 20 个平铺命令淹没命令列表）。Skill Registry 仍扫描它们，只是 `installSkillCommands()` 只为 `user-invocable: true` 者生成命令。
 
 4. **output-styles 独立安装路径**：与其他素材不同，output-styles 不经过主 `installWorkflows()` 管线，而是由菜单的 `installOutputStyle()` 按需安装到 `~/.claude/output-styles/`，允许用户按需切换风格而不重新全量安装。
 

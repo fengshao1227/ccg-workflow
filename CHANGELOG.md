@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.5.1] - 2026-08-27
+
+### ✨ Features
+
+- **原生 Claude Code 插件市场**：新增 `.claude-plugin/marketplace.json` + `plugin.json`，CCG 现可被 `claude plugin marketplace add fengshao1227/ccg-workflow` 一键接入、`claude plugin install ccg@ccg` 装入全部技能（namespaced 为 `/ccg:<skill>`）。plugin 只暴露纯静态 skills（`skills` 字段指向 `templates/skills`，不声明 commands —— 带 `{{FRONTEND_PRIMARY}}` 占位符的命令模板依赖 npx 安装器注入，进不了原生 plugin）。完整多模型编排（命令 + hooks + binary）仍走 `npx ccg-workflow`。已过 `claude plugin validate --strict`。
+- **三个实战建站独立技能**（脱敏后随包发布，Skill Registry 自动生成 `/ccg:` 命令）：
+  - `/ccg:bt-panel` — 通过宝塔 / aaPanel HTTP API 操控服务器：部署、更新线上、读写文件、执行 shell、跑 MySQL，无需 SSH/rsync。自带 `bt_client.py` + 一键部署 `bt_deploy.py`，凭据只从环境变量 / git-ignored `sites.json` 读取。
+  - `/ccg:seo-page-builder` — SERP 意图驱动的 SEO 工具页构建 / 审计 / 优化，附可跑的 `onpage-audit.py` 关键词密度量具。改编自 yuzeiki 的同名技能并大幅重写，已在 SKILL.md 顶部署名。
+  - `/ccg:adsense-site-auditor` — 按 Google AdSense 官方完整清单审计站点达标度（资格 / 归属 / 内容 / ads.txt / 隐私 / 发布商政策）。
+- **技能卫生 + plugin manifest 防回归测试**（`skills-hygiene.test.ts` 10 例 + `plugin-manifest.test.ts` 8 例）：每次 `pnpm test` 自动扫描 `templates/skills/` 全量文本文件拦截密钥/公网 IP/绝对路径泄漏，并校验 marketplace/plugin 版本与 `package.json` 同步、impeccable 收敛不回退。
+
+### 🔄 Changes
+
+- **impeccable 20 个平铺命令收敛为 1 个入口**：`/ccg:polish`、`/ccg:critique`、`/ccg:animate` 等 20 个设计微调命令曾占可调用命令的 65%，而它们已被 `/ccg:frontend-design` 完整融合。现将 impeccable 全部 `user-invocable` 设为 false —— **可调用命令从 31 → 11**，`/ccg:frontend-design` 一个入口统领全部设计能力，20 个手法作为其 playbook 按需读取（文件保留，知识零丢失）。frontend-design 内的斜杠引用同步改为 playbook 引用，消除死链。
+
+### 🐛 Fixes
+
+- **搬运时清除私有信息**：`bt-panel` 文档内一串真实宝塔 API 密钥、真实面板公网 IP、客户项目路径全部替换为占位符；`seo-page-builder` 内原作者本机路径改为署名标注。
+
 ## [3.5.0] - 2026-08-26
 
 ### ✨ Features

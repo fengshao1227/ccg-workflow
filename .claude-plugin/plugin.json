@@ -1,0 +1,25 @@
+{
+  "name": "ccg",
+  "description": "CCG skills bundle — website ops (BaoTa/aaPanel deploy, SEO tool-page builder, AdSense auditor, web scraping), built-in quality gates (security/quality/change/module + doc generation), and an Impeccable-fused frontend-design system. Skills only; the full multi-model orchestration (Claude+Codex+Gemini+Grok+Kimi) installs via `npx ccg-workflow`.",
+  "version": "3.5.1",
+  "author": {
+    "name": "fengshao1227",
+    "url": "https://github.com/fengshao1227"
+  },
+  "homepage": "https://github.com/fengshao1227/ccg-workflow",
+  "repository": "https://github.com/fengshao1227/ccg-workflow",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "deployment",
+    "baota",
+    "aapanel",
+    "seo",
+    "adsense",
+    "web-scraping",
+    "frontend-design",
+    "code-review",
+    "quality-gate"
+  ],
+  "skills": "./templates/skills"
+}

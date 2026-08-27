@@ -1,0 +1,24 @@
+{
+  "_comment": "Copy, edit, run: python3 onpage-audit.py --targets targets.json",
+  "_phrase": "the exact head keyword this page is trying to rank for, lowercase",
+  "_tokens": "single tokens whose density a '2%' brief can actually mean",
+  "_dist": "optional local build dir; omit to fetch the live site instead",
+  "_floors": "phrase_floor is an OCCURRENCE count, never a percentage",
+
+  "site": "https://example.com",
+  "dist": "dist",
+  "word_floor": 1200,
+  "phrase_floor": 8,
+  "faq_floor": 6,
+
+  "pages": {
+    "/": {
+      "phrase": "widget remover",
+      "tokens": ["widget", "remover"]
+    },
+    "/video/": {
+      "phrase": "video widget remover",
+      "tokens": ["widget", "video"]
+    }
+  }
+}
