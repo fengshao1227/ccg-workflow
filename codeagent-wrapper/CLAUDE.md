@@ -2,8 +2,8 @@
 
 > [根目录](../CLAUDE.md) > **codeagent-wrapper**
 
-**Last Updated**: 2026-08-27
-**Binary Version**: v5.14.0
+**Last Updated**: 2026-08-28
+**Binary Version**: v5.15.0
 **Go Version**: 1.21+（`go.mod:1`）
 
 ---
@@ -51,6 +51,7 @@ codeagent-wrapper --cleanup
 | `--backend <name>` | 指定后端：`codex`、`gemini`、`claude` | `codex` |
 | `--gemini-model <name>` | Gemini 型号（仅 gemini 后端有效） | 空（后端默认） |
 | `--progress` | 向 stderr 输出紧凑进度行 | 关 |
+| `--with-mcp` | 让子代理加载 MCP servers。默认跳过：grok/kimi 走影子 HOME（v3.3.0），codex 注入 `-c mcp_servers={}`、gemini 注入哨兵 allowlist（v5.15.0） | 关 |
 | `--lite` / `-L` | 精简模式：关闭 Web UI，加快响应 | 关 |
 | `--parallel` | 并行模式，从 stdin 读取多任务配置 | — |
 | `--full-output` | 并行模式输出完整消息（传统模式） | 关（默认摘要） |
@@ -278,8 +279,8 @@ bash build-all.sh
 
 | 文件 | 位置 | 当前值 |
 |------|------|--------|
-| `codeagent-wrapper/main.go` | `version = "5.10.0"` （`main.go:17`） | `5.10.0` |
-| `src/utils/installer.ts` | `EXPECTED_BINARY_VERSION = '5.10.0'` | `5.10.0` |
+| `codeagent-wrapper/main.go` | `version = "..."` （`main.go:17`） | `5.15.0` |
+| `src/utils/installer.ts` | `EXPECTED_BINARY_VERSION = '...'` | `5.15.0` |
 
 两边不一致的后果：用户运行 `npx ccg-workflow update` 时无法触发 binary 重新下载，继续使用旧版 binary。
 

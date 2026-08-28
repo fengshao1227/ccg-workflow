@@ -299,6 +299,14 @@ func buildGeminiArgs(cfg *Config, targetArg string) []string {
 	// Existing args
 	args = append(args, "-o", "stream-json", "-y")
 
+	// Same MCP skip as codex (~/.gemini/settings.json is mirrored by CCG's MCP
+	// sync too). Gemini has no clean disable switch and its PolicyEngine rejects
+	// an empty allowlist entry, so allow one name no real server uses — every
+	// configured server falls outside the allowlist and is never started.
+	if !cfg.WithMCP {
+		args = append(args, "--allowed-mcp-server-names", "__ccg_none__")
+	}
+
 	if cfg.Mode == "resume" {
 		if cfg.SessionID != "" {
 			args = append(args, "-r", cfg.SessionID)

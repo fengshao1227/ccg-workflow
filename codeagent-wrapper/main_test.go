@@ -1404,6 +1404,7 @@ func TestRunBuildCodexArgs_NewMode(t *testing.T) {
 		"e",
 		"--dangerously-bypass-approvals-and-sandbox",
 		"--skip-git-repo-check",
+		"-c", "mcp_servers={}",
 		"-C", "/test/dir",
 		"--json",
 		"my task",
@@ -1429,6 +1430,7 @@ func TestRunBuildCodexArgs_ResumeMode(t *testing.T) {
 		"e",
 		"--dangerously-bypass-approvals-and-sandbox",
 		"--skip-git-repo-check",
+		"-c", "mcp_servers={}",
 		"--json",
 		"resume",
 		"session-abc",
@@ -1451,7 +1453,7 @@ func TestRunBuildCodexArgs_ResumeMode_EmptySessionHandledGracefully(t *testing.T
 
 	cfg := &Config{Mode: "resume", SessionID: "   ", WorkDir: "/test/dir"}
 	args := buildCodexArgs(cfg, "task")
-	expected := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "/test/dir", "--json", "task"}
+	expected := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-c", "mcp_servers={}", "-C", "/test/dir", "--json", "task"}
 	if len(args) != len(expected) {
 		t.Fatalf("len mismatch")
 	}
@@ -1533,6 +1535,7 @@ func TestBackendBuildArgs_CodexBackend(t *testing.T) {
 		"e",
 		"--dangerously-bypass-approvals-and-sandbox",
 		"--skip-git-repo-check",
+		"-c", "mcp_servers={}",
 		"-C", "/test/dir",
 		"--json",
 		"task",
@@ -1587,7 +1590,7 @@ func TestBackendBuildArgs_GeminiBackend(t *testing.T) {
 	backend := GeminiBackend{}
 	cfg := &Config{Mode: "new"}
 	got := backend.BuildArgs(cfg, "task")
-	want := []string{"-o", "stream-json", "-y", "-p", "task"}
+	want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "-p", "task"}
 	if len(got) != len(want) {
 		t.Fatalf("length mismatch")
 	}
@@ -1608,7 +1611,7 @@ func TestGeminiBackendBuildArgs_OutputValidation(t *testing.T) {
 	target := "prompt-data"
 
 	args := backend.BuildArgs(cfg, target)
-	expected := []string{"-o", "stream-json", "-y", "-p"}
+	expected := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "-p"}
 
 	if len(args) != len(expected)+1 {
 		t.Fatalf("args length=%d, want %d", len(args), len(expected)+1)
@@ -3052,7 +3055,7 @@ func TestVersionFlag(t *testing.T) {
 		}
 	})
 
-	want := "codeagent-wrapper version 5.14.0\n"
+	want := "codeagent-wrapper version 5.15.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)
@@ -3068,7 +3071,7 @@ func TestVersionShortFlag(t *testing.T) {
 		}
 	})
 
-	want := "codeagent-wrapper version 5.14.0\n"
+	want := "codeagent-wrapper version 5.15.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)
@@ -3084,7 +3087,7 @@ func TestVersionLegacyAlias(t *testing.T) {
 		}
 	})
 
-	want := "codex-wrapper version 5.14.0\n"
+	want := "codex-wrapper version 5.15.0\n"
 
 	if output != want {
 		t.Fatalf("output = %q, want %q", output, want)

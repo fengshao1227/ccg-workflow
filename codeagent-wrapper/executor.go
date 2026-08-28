@@ -786,6 +786,15 @@ func buildCodexArgs(cfg *Config, targetArg string) []string {
 		args = append(args, "--skip-git-repo-check")
 	}
 
+	// Sub-agents have no use for MCP servers — Claude is the orchestrator
+	// holding MCP; the sub-agent only edits files and runs commands. Yet codex
+	// connects every server in ~/.codex/config.toml on startup, and CCG's MCP
+	// sync mirrors Claude's servers there, so that list is rarely empty.
+	// Emptying the table skips those connections; --with-mcp restores them.
+	if !cfg.WithMCP {
+		args = append(args, "-c", "mcp_servers={}")
+	}
+
 	if isResume {
 		return append(args,
 			"--json",

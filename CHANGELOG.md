@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.0] - 2026-08-28
+
+### ✨ 新功能
+
+- **codex / gemini 子代理免 MCP 冷启动**：wrapper 默认给 codex 注入 `-c mcp_servers={}`、给 gemini 注入 `--allowed-mcp-server-names __ccg_none__`（gemini 无干净的禁用开关，且 PolicyEngine 拒绝空 allowlist 项，故用无人使用的哨兵名——名单之外的 server 全部不启动）。子代理用不上 MCP——Claude 才是持有 MCP 的编排者，但 CCG 的 MCP 同步会把服务器镜像进 `~/.codex/config.toml` 与 `~/.gemini/settings.json`，此前每次子代理调用都在付全量连接开销（v3.3.0 同型实测：9 server ≈ 25s；本机 3 server 实测 codex "hi" 9.2s → 7.5s）。`--with-mcp` 恢复旧行为，与 grok/kimi 影子 HOME 同一开关，new / resume / parallel 全模式生效。
+
+### 🔄 变更
+
+- **Binary `5.14.0` → `5.15.0`**
+
+---
+
 ## [3.5.1] - 2026-08-27
 
 ### ✨ Features

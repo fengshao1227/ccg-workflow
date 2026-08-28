@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-27 (v3.5.1)
+**Last Updated**: 2026-08-28 (v3.6.0)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,11 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-28 (v3.6.0)
+- ⚡ **codex / gemini 子代理免 MCP 冷启动**：wrapper 默认给 codex 注入 `-c mcp_servers={}`、给 gemini 注入 `--allowed-mcp-server-names __ccg_none__`。子代理用不上 MCP（Claude 才是编排者），但 CCG 自己的 `syncMcpToCodex/Gemini` 会把服务器镜像进两家配置——等于自己制造的每次调用连接税（9 server ≈ 25s，v3.3.0 同型实测；本机 3 server 实测 codex "hi" 9.2s → 7.5s）。`--with-mcp` 恢复，与 grok/kimi 影子 HOME 同一开关，new/resume/parallel 全生效。E2E 验证三形状（新会话/resume/逃生门）。
+- 📌 **gemini 细节**：无干净禁用开关，空 allowlist 项被 PolicyEngine 拒（"mcpName cannot be empty"），故用哨兵名——名单外 server 全不启动（`--debug` 日志验证：MCP refresh 秒完、8 server 无一 spawn）。gemini 本机端到端因停服卡认证无法验证，与 MCP 无关。
+- 🔄 **Binary `5.14.0` → `5.15.0`**。
 
 ### 2026-08-27 (v3.5.1)
 - ✨ **原生 Claude Code 插件市场**：新增 `.claude-plugin/marketplace.json` + `plugin.json`。CCG 现可 `claude plugin marketplace add fengshao1227/ccg-workflow` → `claude plugin install ccg@ccg` 原生装入全部技能（`/ccg:<skill>`）。**关键设计**：plugin 的 `skills` 字段指向 `templates/skills`（该字段是「追加到默认扫描」语义），且**刻意不声明 `commands`**——`templates/commands` 带 `{{FRONTEND_PRIMARY}}` 占位符、依赖 npx 安装器注入，进原生 plugin 会暴露未解析的坏命令。仓库根无 `commands/`·`agents/`·`skills/` 目录，故默认扫描为空、零误载。`source: "."`（整个仓库即 plugin 根）已过 `claude plugin validate --strict`。多模型编排仍走 `npx`。

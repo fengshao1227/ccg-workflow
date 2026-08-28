@@ -69,7 +69,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := GeminiBackend{}
 		cfg := &Config{Mode: "new", WorkDir: "/workspace"}
 		got := backend.BuildArgs(cfg, "task")
-		want := []string{"-o", "stream-json", "-y", "--include-directories", "/workspace", "-p", "task"}
+		want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "--include-directories", "/workspace", "-p", "task"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -79,7 +79,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := GeminiBackend{}
 		cfg := &Config{Mode: "new"}
 		got := backend.BuildArgs(cfg, "task")
-		want := []string{"-o", "stream-json", "-y", "-p", "task"}
+		want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "-p", "task"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -89,7 +89,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := GeminiBackend{}
 		cfg := &Config{Mode: "resume", SessionID: "sid-999", WorkDir: "/workspace"}
 		got := backend.BuildArgs(cfg, "resume")
-		want := []string{"-o", "stream-json", "-y", "-r", "sid-999", "-p", "resume"}
+		want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "-r", "sid-999", "-p", "resume"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -99,7 +99,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := GeminiBackend{}
 		cfg := &Config{Mode: "resume"}
 		got := backend.BuildArgs(cfg, "resume")
-		want := []string{"-o", "stream-json", "-y", "-p", "resume"}
+		want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "-p", "resume"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -118,7 +118,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := CodexBackend{}
 		cfg := &Config{Mode: "new", WorkDir: "/tmp"}
 		got := backend.BuildArgs(cfg, "task")
-		want := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "/tmp", "--json", "task"}
+		want := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-c", "mcp_servers={}", "-C", "/tmp", "--json", "task"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -130,7 +130,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := CodexBackend{}
 		cfg := &Config{Mode: "new", WorkDir: "/tmp"}
 		got := backend.BuildArgs(cfg, "task")
-		want := []string{"e", "--skip-git-repo-check", "-C", "/tmp", "--json", "task"}
+		want := []string{"e", "--skip-git-repo-check", "-c", "mcp_servers={}", "-C", "/tmp", "--json", "task"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -140,7 +140,7 @@ func TestClaudeBuildArgs_GeminiAndCodexModes(t *testing.T) {
 		backend := CodexBackend{}
 		cfg := &Config{Mode: "new", WorkDir: "/tmp", Progress: true}
 		got := backend.BuildArgs(cfg, "task")
-		want := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-C", "/tmp", "--json", "task"}
+		want := []string{"e", "--dangerously-bypass-approvals-and-sandbox", "--skip-git-repo-check", "-c", "mcp_servers={}", "-C", "/tmp", "--json", "task"}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("got %v, want %v", got, want)
 		}
@@ -156,7 +156,7 @@ func TestGeminiBuildArgs_NeverReceivesDashAsPrompt(t *testing.T) {
 
 	// When called with actual task text (geminiDirect path in executor)
 	got := backend.BuildArgs(cfg, "Analyze the authentication module")
-	want := []string{"-o", "stream-json", "-y", "--include-directories", "/workspace", "-p", "Analyze the authentication module"}
+	want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "--include-directories", "/workspace", "-p", "Analyze the authentication module"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -186,7 +186,7 @@ func TestGeminiBuildArgs_OmitsPFlagWhenTargetEmpty(t *testing.T) {
 		}
 	}
 	// Should still contain other flags
-	want := []string{"-o", "stream-json", "-y", "--include-directories", "/workspace"}
+	want := []string{"-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "--include-directories", "/workspace"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -202,7 +202,7 @@ func TestGeminiBuildArgs_WithModel_OmitsPFlagWhenTargetEmpty(t *testing.T) {
 			t.Fatalf("expected no -p flag when targetArg is empty, but found -p at index %d: %v", i, got)
 		}
 	}
-	want := []string{"-m", "gemini-3.1-pro-preview", "-o", "stream-json", "-y", "--include-directories", "/workspace"}
+	want := []string{"-m", "gemini-3.1-pro-preview", "-o", "stream-json", "-y", "--allowed-mcp-server-names", "__ccg_none__", "--include-directories", "/workspace"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}
@@ -625,5 +625,57 @@ func TestParseJSONStream_OpencodeDoesNotCollideWithGemini(t *testing.T) {
 	}
 	if tid != "o1" {
 		t.Fatalf("opencode threadID = %q, want o1", tid)
+	}
+}
+
+func TestBuildArgs_WithMCPRestoresServers(t *testing.T) {
+	// --with-mcp is the escape hatch: sub-agents that genuinely need the
+	// user's MCP servers must not receive the skip flags.
+	const key = "CODEX_REQUIRE_APPROVAL"
+	t.Cleanup(func() { os.Unsetenv(key) })
+	os.Unsetenv(key)
+
+	codexArgs := CodexBackend{}.BuildArgs(&Config{Mode: "new", WorkDir: "/tmp", WithMCP: true}, "task")
+	for i, arg := range codexArgs {
+		if arg == "-c" && i+1 < len(codexArgs) && codexArgs[i+1] == "mcp_servers={}" {
+			t.Fatalf("codex args must not empty mcp_servers when WithMCP=true: %v", codexArgs)
+		}
+	}
+
+	geminiArgs := GeminiBackend{}.BuildArgs(&Config{Mode: "new", WorkDir: "/tmp", WithMCP: true}, "task")
+	for _, arg := range geminiArgs {
+		if arg == "--allowed-mcp-server-names" {
+			t.Fatalf("gemini args must not restrict MCP servers when WithMCP=true: %v", geminiArgs)
+		}
+	}
+}
+
+func TestBuildArgs_DefaultSkipsMCPServers(t *testing.T) {
+	// Default (no --with-mcp): both backends must skip MCP server startup —
+	// codex by emptying the config table, gemini via a sentinel allowlist.
+	const key = "CODEX_REQUIRE_APPROVAL"
+	t.Cleanup(func() { os.Unsetenv(key) })
+	os.Unsetenv(key)
+
+	codexArgs := CodexBackend{}.BuildArgs(&Config{Mode: "new", WorkDir: "/tmp"}, "task")
+	found := false
+	for i, arg := range codexArgs {
+		if arg == "-c" && i+1 < len(codexArgs) && codexArgs[i+1] == "mcp_servers={}" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("codex args missing -c mcp_servers={}: %v", codexArgs)
+	}
+
+	geminiArgs := GeminiBackend{}.BuildArgs(&Config{Mode: "new", WorkDir: "/tmp"}, "task")
+	found = false
+	for i, arg := range geminiArgs {
+		if arg == "--allowed-mcp-server-names" && i+1 < len(geminiArgs) && geminiArgs[i+1] == "__ccg_none__" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("gemini args missing sentinel MCP allowlist: %v", geminiArgs)
 	}
 }
