@@ -11,7 +11,7 @@ import { parse as parseTOML } from 'smol-toml'
 import { version } from '../../package.json'
 import { configMcp } from './config-mcp'
 import { i18n } from '../i18n'
-import { installCodexMode, uninstallCodexMode, uninstallWorkflows } from '../utils/installer'
+import { configureGeminiCliApi, installCodexMode, removeGeminiCliApi, uninstallCodexMode, uninstallWorkflows } from '../utils/installer'
 import { readCcgConfig, writeCcgConfig } from '../utils/config'
 import { init } from './init'
 import { update } from './update'
@@ -341,8 +341,72 @@ async function configApi(): Promise<void> {
       { name: `${ansis.green('●')} ${i18n.t('menu:api.officialOption')}`, value: 'official' },
       { name: `${ansis.cyan('●')} ${i18n.t('menu:api.thirdPartyOption')}`, value: 'thirdparty' },
       { name: `${ansis.yellow('★')} ${i18n.t('menu:api.sponsorAPIMart')} ${ansis.gray('— https://go.apimart.ai/gh-ccg-workflow')}`, value: 'apimart' },
+      { name: `${ansis.magenta('●')} ${i18n.t('init:api.geminiCliOption')}`, value: 'gemini-cli' },
     ],
   }])
+
+  // Gemini CLI gateway lives in ~/.gemini/.env, not Claude Code's
+  // settings.json — handle it as its own flow and return early so the
+  // ANTHROPIC_* writing below never runs for this choice.
+  if (apiProvider === 'gemini-cli') {
+    const { action } = await inquirer.prompt([{
+      type: 'list',
+      name: 'action',
+      message: i18n.t('init:api.geminiCliActionPrompt'),
+      choices: [
+        { name: `${ansis.green('●')} ${i18n.t('init:api.geminiCliConfigureOption')}`, value: 'configure' },
+        { name: `${ansis.gray('○')} ${i18n.t('init:api.geminiCliRemoveOption')}`, value: 'remove' },
+      ],
+    }])
+
+    if (action === 'remove') {
+      const removed = await removeGeminiCliApi()
+      console.log()
+      console.log(removed.success
+        ? ansis.green(`  ✓ ${i18n.t('init:api.geminiCliRemoved')}`)
+        : ansis.yellow(`  ! ${removed.message}`))
+      return
+    }
+
+    console.log(`    ${ansis.yellow('!')} ${i18n.t('init:api.geminiCliProtocolHint')}`)
+    const answers = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'url',
+        message: `${i18n.t('init:api.geminiCliUrlPrompt')} ${ansis.gray(`(${i18n.t('menu:api.urlRequired')})`)}`,
+        validate: (v: string) => v.trim() !== '' || i18n.t('menu:api.enterUrl'),
+      },
+      {
+        type: 'password',
+        name: 'key',
+        message: `Gemini API Key ${ansis.gray(`(${i18n.t('menu:api.keyRequired')})`)}`,
+        mask: '*',
+        validate: (v: string) => v.trim() !== '' || i18n.t('menu:api.enterKey'),
+      },
+      {
+        type: 'input',
+        name: 'model',
+        message: i18n.t('init:api.geminiCliModelPrompt'),
+      },
+    ])
+    const result = await configureGeminiCliApi({
+      baseUrl: answers.url.trim(),
+      apiKey: answers.key.trim(),
+      model: answers.model?.trim() || undefined,
+    })
+    console.log()
+    if (result.success) {
+      console.log(ansis.green(`  ✓ ${i18n.t('init:api.geminiCliSaved')}`))
+      if (result.rcPath)
+        console.log(ansis.gray(`    ${i18n.t('common:configFile')}: ${result.rcPath}`))
+      if (result.needsReload)
+        console.log(ansis.gray(`    ${i18n.t('init:api.geminiCliReloadHint')}`))
+    }
+    else {
+      console.log(ansis.yellow(`  ! ${result.message}`))
+    }
+    return
+  }
 
   if (apiProvider === 'official') {
     // Clear third-party config, let Claude Code use official auth

@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-28 (v3.6.0)
+**Last Updated**: 2026-08-28 (v3.6.1)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,11 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-28 (v3.6.1)
+- ✨ **帮配 Gemini CLI 第三方 API**（用户反馈：没 Google 账号想用中转但不会配）：init Step 1 末尾 confirm + 菜单 API 配置新选项。新模块 `src/utils/installer-gemini-api.ts` 把 `GOOGLE_GEMINI_BASE_URL`/`GEMINI_API_KEY`（+可选 `GEMINI_MODEL`）以受管块写入 shell rc（zsh/bash/fish 按 `$SHELL` 识别，Windows `setx`），幂等可清除。gemini 见 base URL 自动 `AuthType.GATEWAY`，免登录。
+- 📌 **实测硬约束**：gemini-cli 0.53.1 **已移除 .env 加载**（`~/.gemini/.env`、项目 `.env` 全不读，settings.json 无 env 字段，headless 缺配置报 "Invalid auth method selected"）——进程环境变量是唯一通路。网关必须 Gemini 原生协议（`/v1beta/`），OpenAI 中转 404。E2E：真实函数写 rc → zsh source → 真 gemini 请求命中本地假网关（path+key 全对）。
+- ✅ 新增 10 例测试（`installer-gemini-api.test.ts`），总 176。
 
 ### 2026-08-28 (v3.6.0)
 - ⚡ **codex / gemini 子代理免 MCP 冷启动**：wrapper 默认给 codex 注入 `-c mcp_servers={}`、给 gemini 注入 `--allowed-mcp-server-names __ccg_none__`。子代理用不上 MCP（Claude 才是编排者），但 CCG 自己的 `syncMcpToCodex/Gemini` 会把服务器镜像进两家配置——等于自己制造的每次调用连接税（9 server ≈ 25s，v3.3.0 同型实测；本机 3 server 实测 codex "hi" 9.2s → 7.5s）。`--with-mcp` 恢复，与 grok/kimi 影子 HOME 同一开关，new/resume/parallel 全生效。E2E 验证三形状（新会话/resume/逃生门）。

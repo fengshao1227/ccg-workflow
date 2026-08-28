@@ -108,6 +108,7 @@ v1.7.83 将原 1878 行单文件拆分为 5 个聚焦模块，各自边界清晰
 | `installer-mcp.ts` | MCP 服务安装（ace-tool / fast-context / contextweaver / 通用） | `installAceTool()`, `installFastContext()`, `syncMcpToCodex()`, `syncMcpToGemini()` |
 | `installer-prompt.ts` | fast-context 搜索引导 Prompt 管理 | `writeFastContextPrompt()`, `removeFastContextPrompt()` |
 | `installer-codex-api.ts` | APIMart 作为 Codex 模型供应商写入 `~/.codex/config.toml` | `configureApiMartForCodex()`, `removeApiMartFromCodex()` |
+| `installer-gemini-api.ts` | Gemini CLI 第三方网关：`GOOGLE_GEMINI_BASE_URL`/`GEMINI_API_KEY` 受管块写 shell rc（Windows `setx`）。0.53.1 不读 .env，环境变量是唯一通路 | `configureGeminiCliApi()`, `removeGeminiCliApi()` |
 
 **`installWorkflows()` 执行链**（`src/utils/installer.ts:659`）：
 
@@ -313,7 +314,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 9 个测试文件，166 用例：
+`src/utils/__tests__/` 下 10 个测试文件，176 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -324,6 +325,7 @@ defineBuildConfig({
 | `installWorkflows.test.ts` | 安装结果验证，error 处理路径 |
 | `injectConfigVariables.test.ts` | 所有模板占位符替换正确性 |
 | `installer-codex-api.test.ts` | APIMart Codex provider 注册/移除、原子 TOML 合并 |
+| `installer-gemini-api.test.ts` | Gemini CLI 网关 shell rc 受管块：写入/幂等替换/清除/fish 语法/shell 识别 |
 | `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
 | `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
 

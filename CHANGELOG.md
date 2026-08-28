@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.1] - 2026-08-28
+
+### ✨ 新功能
+
+- **帮配 Gemini CLI 第三方 API（无 Google 账号可用）**：`init` Step 1 末尾与菜单「API 配置」新增 Gemini CLI 网关选项。填网关 Base URL + Key（+可选模型名）即可，CCG 将 `GOOGLE_GEMINI_BASE_URL` / `GEMINI_API_KEY` 以受管块写入 shell 配置（zsh/bash/fish 自动识别；Windows 走 `setx`），gemini 见到该变量自动进入 gateway 认证，无需 Google 登录。菜单侧支持一键清除恢复。
+- ⚠ **两个实测得出的硬约束**：① 网关必须兼容 Gemini 原生协议（`/v1beta/models/...:streamGenerateContent`），OpenAI 协议中转会 404；② gemini-cli 0.53.1 已**不再读取任何 `.env` 文件**（`~/.gemini/.env` 与项目 `.env` 均失效，settings.json 也无相关字段）——环境变量是唯一通路，故落盘 shell 配置。旧版靠 `~/.gemini/.env` 配置过的用户升级后会静默失效，可用本功能重配。
+
+---
+
 ## [3.6.0] - 2026-08-28
 
 ### ✨ 新功能

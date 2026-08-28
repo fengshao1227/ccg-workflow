@@ -7,7 +7,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { i18n, initI18n } from '../i18n'
 import { createDefaultConfig, ensureCcgDir, getCcgDir, readCcgConfig, writeCcgConfig } from '../utils/config'
-import { configureApiMartForCodex, getAllCommandIds, getCoreCommandIds, installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, installWorkflows, showBinaryDownloadWarning, syncMcpToCodex, syncMcpToGemini, writeFastContextPrompt } from '../utils/installer'
+import { configureApiMartForCodex, configureGeminiCliApi, getAllCommandIds, getCoreCommandIds, installAceTool, installAceToolRs, installContextWeaver, installFastContext, installMcpServer, installWorkflows, showBinaryDownloadWarning, syncMcpToCodex, syncMcpToGemini, writeFastContextPrompt } from '../utils/installer'
 import { isWindows } from '../utils/platform'
 import { migrateToV1_4_0, needsMigration } from '../utils/migration'
 
@@ -286,6 +286,9 @@ export async function init(options: InitOptions = {}): Promise<void> {
   // going back or cancelling, and side effects must not survive that.
   let apimartWireCodex = false
   let apimartActivateCodex = false
+  let geminiCliBaseUrl = ''
+  let geminiCliKey = ''
+  let geminiCliModel = ''
 
   // ═══════════════════════════════════════════════════════
   // Non-interactive mode (--skip-prompt): preserve existing settings
@@ -363,6 +366,9 @@ export async function init(options: InitOptions = {}): Promise<void> {
       apiKey = ''
       apimartWireCodex = false
       apimartActivateCodex = false
+      geminiCliBaseUrl = ''
+      geminiCliKey = ''
+      geminiCliModel = ''
 
       if (apiProvider === 'apimart') {
         // APIMart serves the native Anthropic Messages protocol at POST /v1/messages,
@@ -429,6 +435,43 @@ export async function init(options: InitOptions = {}): Promise<void> {
         console.log(`    ${ansis.gray('○')} ${i18n.t('init:api.skipNoticeTitle')}`)
       }
       // 'official' leaves apiUrl/apiKey empty — will use OAuth login
+
+      // Independent of the Claude Code choice above: users without a Google
+      // account can point Gemini CLI at a third-party gateway. Two env vars in
+      // ~/.gemini/.env are all it takes — GOOGLE_GEMINI_BASE_URL flips the CLI
+      // into gateway auth by itself, no OAuth involved.
+      const { wireGeminiCli } = await inquirer.prompt([{
+        type: 'confirm',
+        name: 'wireGeminiCli',
+        message: i18n.t('init:api.geminiCliPrompt'),
+        default: false,
+      }])
+      if (wireGeminiCli) {
+        console.log(`    ${ansis.yellow('!')} ${i18n.t('init:api.geminiCliProtocolHint')}`)
+        const answers = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'url',
+            message: `${i18n.t('init:api.geminiCliUrlPrompt')} ${ansis.gray(`(${i18n.t('init:api.urlRequired')})`)}`,
+            validate: (v: string) => v.trim() !== '' || i18n.t('init:api.enterUrl'),
+          },
+          {
+            type: 'password',
+            name: 'key',
+            message: `Gemini API Key ${ansis.gray(`(${i18n.t('init:api.keyRequired')})`)}`,
+            mask: '*',
+            validate: (v: string) => v.trim() !== '' || i18n.t('init:api.enterKey'),
+          },
+          {
+            type: 'input',
+            name: 'model',
+            message: i18n.t('init:api.geminiCliModelPrompt'),
+          },
+        ])
+        geminiCliBaseUrl = answers.url?.trim() || ''
+        geminiCliKey = answers.key?.trim() || ''
+        geminiCliModel = answers.model?.trim() || ''
+      }
       return 'next'
     }
 
@@ -1146,6 +1189,23 @@ export async function init(options: InitOptions = {}): Promise<void> {
       }
       else {
         console.log(`    ${ansis.yellow('!')} ${codexApi.message}`)
+      }
+    }
+
+    // Gemini CLI third-party gateway — for users without a Google account.
+    // gemini auto-selects gateway auth on seeing GOOGLE_GEMINI_BASE_URL, but
+    // 0.53.1 only reads the process environment (its .env loading is gone),
+    // so the variables land in the user's shell profile.
+    if (geminiCliBaseUrl && geminiCliKey) {
+      const geminiApi = await configureGeminiCliApi({ baseUrl: geminiCliBaseUrl, apiKey: geminiCliKey, model: geminiCliModel || undefined })
+      console.log()
+      if (geminiApi.success) {
+        console.log(`    ${ansis.green('✓')} ${i18n.t('init:api.geminiCliSaved')}${geminiApi.rcPath ? ansis.gray(` → ${geminiApi.rcPath}`) : ''}`)
+        if (geminiApi.needsReload)
+          console.log(`      ${ansis.gray(i18n.t('init:api.geminiCliReloadHint'))}`)
+      }
+      else {
+        console.log(`    ${ansis.yellow('!')} ${geminiApi.message}`)
       }
     }
 

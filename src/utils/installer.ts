@@ -36,6 +36,12 @@ export {
 } from './installer-codex-api'
 
 export {
+  configureGeminiCliApi,
+  GEMINI_ENV_MANAGED_KEYS,
+  removeGeminiCliApi,
+} from './installer-gemini-api'
+
+export {
   installAceTool,
   installAceToolRs,
   installContextWeaver,
