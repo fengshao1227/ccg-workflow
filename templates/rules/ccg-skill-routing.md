@@ -84,6 +84,24 @@ When the user is working with a specific programming language, read the correspo
 |------------------|-----------|
 | SEO, CTR, impressions, GSC, Search Console, keywords, seoTitle, meta description, internal linking, content strategy, blog translation, watermark removal SEO, 曝光, 点击率, 踩词, 优化标题, 搜索排名 | `~/.claude/skills/ccg/domains/seo/seo-growth.md` |
 
+## Data Engineering Domain (`domains/data-engineering/`)
+
+| Trigger Keywords | Skill File |
+|------------------|-----------|
+| data pipeline, ETL, Airflow, Dagster, Prefect, Kafka Streams, Flink, Spark Streaming, dbt, data quality, Great Expectations, 数据管道, 流处理, 数据质量 | `~/.claude/skills/ccg/domains/data-engineering/SKILL.md` |
+
+## Infrastructure Domain (`domains/infrastructure/`)
+
+| Trigger Keywords | Skill File |
+|------------------|-----------|
+| Helm, Kustomize, Operator, CRD, GitOps, ArgoCD, Flux, IaC, Terraform, Pulumi, CDK, infrastructure as code, 基础设施即代码 | `~/.claude/skills/ccg/domains/infrastructure/SKILL.md` |
+
+## Mobile Domain (`domains/mobile/`)
+
+| Trigger Keywords | Skill File |
+|------------------|-----------|
+| iOS, Android, SwiftUI, UIKit, Jetpack Compose, Kotlin mobile, React Native, Flutter, mobile app, 移动开发, 跨平台开发 | `~/.claude/skills/ccg/domains/mobile/SKILL.md` |
+
 ## Routing Rules
 
 1. **Keyword match is fuzzy** — match on intent, not exact string. "How to do SQL injection testing" triggers `pentest.md`.
