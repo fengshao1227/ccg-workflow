@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **codeagent-wrapper**
 
-**Last Updated**: 2026-08-28
+**Last Updated**: 2026-08-29
 **Binary Version**: v5.15.0
 **Go Version**: 1.21+（`go.mod:1`）
 
@@ -51,7 +51,7 @@ codeagent-wrapper --cleanup
 | `--backend <name>` | 指定后端：`codex`、`gemini`、`claude` | `codex` |
 | `--gemini-model <name>` | Gemini 型号（仅 gemini 后端有效） | 空（后端默认） |
 | `--progress` | 向 stderr 输出紧凑进度行 | 关 |
-| `--with-mcp` | 让子代理加载 MCP servers。默认跳过：grok/kimi 走影子 HOME（v3.3.0），codex 注入 `-c mcp_servers={}`、gemini 注入哨兵 allowlist（v5.15.0） | 关 |
+| `--with-mcp` | 让子代理加载 MCP servers。默认跳过：grok/kimi 走影子 HOME（v3.3.0），codex 注入 `-c mcp_servers={}`、gemini 注入哨兵 allowlist（v5.15.0）。⚠ **见下方「谁必须开这个 flag」** | 关 |
 | `--lite` / `-L` | 精简模式：关闭 Web UI，加快响应 | 关 |
 | `--parallel` | 并行模式，从 stdin 读取多任务配置 | — |
 | `--full-output` | 并行模式输出完整消息（传统模式） | 关（默认摘要） |
@@ -59,6 +59,24 @@ codeagent-wrapper --cleanup
 | `--version` / `-v` | 打印版本 | — |
 | `--help` / `-h` | 打印帮助 | — |
 | `--cleanup` | 清理过期日志文件 | — |
+
+### ⚠ 谁必须开 `--with-mcp`（v3.6.3 教训）
+
+默认不给子代理 MCP 是对的 —— 子代理通常只读写文件、跑命令，连一堆用不上的 MCP
+server 纯属白等（9 个 server ≈ 25s）。**但有例外，而且这个例外是无声失败的。**
+
+`templates/commands-legacy/codex-exec.md` 的整个设计前提恰恰相反：
+「Claude 不调用 MCP、不做代码检索，MCP 搜索全由 {{BACKEND_PRIMARY}} 完成」，
+它的载荷里点名要求子代理调 ace-tool / context7 / grok-search。
+v3.6.0 改了默认值而没人给它传 flag，于是它连续两天在要求子代理使用一批
+**它根本看不到的工具** —— 不报错，检索不到就照样往下写代码。
+
+**改 wrapper 默认行为前，先 `grep -rn "MCP" templates/` 看有没有载荷依赖旧默认。**
+wrapper 的默认值住在 Go 里，依赖它的假设住在 Markdown 里，除了
+`src/utils/__tests__/subagent-mcp.test.ts` 没有任何东西能把两半连起来。
+
+目前需要开的只有 codex-exec 的**三处执行者调用**；同文件的审核调用（只读 git
+diff、明令禁改文件）与修正调用（按 file:line 改）**不开**，开了纯属白付开销。
 
 ### 环境变量
 

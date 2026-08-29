@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-29 (v3.6.2)
+**Last Updated**: 2026-08-29 (v3.6.3)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,10 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-29 (v3.6.3)
+- 🐛 **`/ccg:codex-exec` 被 v3.6.0 自己的性能优化打断**（魔尊追问「codex 实施模式没 MCP 怎么搞」查出）：该命令的全部前提是「Claude 不做检索，{{BACKEND_PRIMARY}} 全权执行含 MCP 搜索」，载荷里点名 ace-tool / context7 / grok-search；而 v3.6.0 让 wrapper 默认禁用子代理 MCP（`-c mcp_servers={}`），**全仓库没有任何模板传 `--with-mcp`**。结果：子代理被要求用它看不到的工具，**且不报错** —— 检索不到就照样往下写。现三处**执行者**调用加 flag；**审核**（只读 diff、禁改文件）与**修正**（按 file:line）不加，不白付启动开销。
+- ✅ **3 例回归测试** `subagent-mcp.test.ts`（188 → 191），删掉 flag 会红（已验证）。⚠ **通用教训：改 wrapper 默认行为前，先 grep 模板里有没有依赖旧默认的载荷** —— 两半分别住在 Go 和 Markdown 里，除了测试没东西连得起来。
 
 ### 2026-08-29 (v3.6.2)
 - ✨ **CCG 落地 DeepSeek Harness**：`dsh-ccg/` 进仓库并**随主包一起发**（`files` 加 7 条白名单，不含 test/）。七个角色委派工具各跑各的模型；一个角色挂多模型即成**模型群**（同一简报、独立作答、**答案在对话流里并排渲染**，不投票不平均）；`ccg_team` 把角色雇成**常驻队友**（跨轮次存活、独占文件、撞车直接拒绝、每次雇人先走 harness 原生 `userQuestions` 请用户批准）。另有持久所有权（存储域）+ 项目记忆（`.ccg/memory.md`）+ 四档分诊。全程 provider API，无外部 CLI。插件自身 112 单测。

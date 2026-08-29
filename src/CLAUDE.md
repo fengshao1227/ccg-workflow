@@ -271,7 +271,7 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（188 用例）
+# 测试（191 用例）
 pnpm test
 
 # 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
@@ -316,7 +316,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 11 个测试文件，188 用例：
+`src/utils/__tests__/` 下 12 个测试文件，191 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -330,6 +330,7 @@ defineBuildConfig({
 | `installer-gemini-api.test.ts` | Gemini CLI 网关 shell rc 受管块：写入/幂等替换/清除/fish 语法/shell 识别 |
 | `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
 | `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
+| `subagent-mcp.test.ts` | 被告知要用 MCP 的子代理必须真拿到 MCP：codex-exec 三处执行者调用带 `--with-mcp`、审核/修正调用不带、载荷仍点名 MCP、execute.md 的 MCP 仍在 Claude 侧 |
 | `installer-dsh.test.ts` | DSH 配置档发现（跳过 node_modules / 无 bundles / 解析失败的 manifest）、两半都写、幂等、bundles 追加不插入、卸载只动自己那两条、链接失败降级为 warning |
 
 ---
