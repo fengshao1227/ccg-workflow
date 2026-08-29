@@ -1,0 +1,145 @@
+name: Publish dsh-ccg to npm
+
+# Second package from this repo. `dsh-ccg/` is the DeepSeek Harness plugin;
+# the repo root is the Claude Code CLI. One repo so every star, issue and
+# commit lands on CCG; two packages because a dsh user finds a plugin through
+# `pnpm add` and the `dsh-plugin` keyword, not through a Claude Code installer.
+#
+# Tags are namespaced so the two never fire each other:
+#   v3.6.1            -> publish.yml            -> ccg-workflow
+#   dsh-ccg-v0.4.6    -> this workflow          -> dsh-ccg
+#
+# Requires its OWN Trusted Publisher entry on npmjs.com, on the dsh-ccg
+# package's Access page (not the account page, and not the one ccg-workflow
+# already has):
+#   Publisher:          GitHub Actions
+#   Organization/user:  fengshao1227
+#   Repository:         ccg-workflow
+#   Workflow filename:  publish-dsh-ccg.yml
+#   Environment name:   npm-publish
+#
+# NOTE ON THE FIRST RELEASE: a trusted publisher is configured on a package
+# that already exists, so version 0.4.6 has to be pushed once by hand from a
+# logged-in shell (`cd dsh-ccg && npm login && npm publish --access public`).
+# Every release after that goes through this workflow with no credential
+# stored anywhere.
+
+# DORMANT. The plugin currently ships INSIDE the ccg-workflow package (see its
+# `files` list) and is installed with `ccg dsh install`, so nothing publishes
+# dsh-ccg separately today. This workflow is kept, and deliberately reduced to
+# manual dispatch only, so that decision stays one line away from reversing:
+# restore `push: { tags: ['dsh-ccg-v*'] }` below and the standalone package is
+# back. Left on a tag trigger it would only wait to fail, since no Trusted
+# Publisher exists for a package that was never published.
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Pack and validate without actually publishing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write # mints the OIDC token npm authenticates against
+
+defaults:
+  run:
+    working-directory: dsh-ccg
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Deliberately NO `registry-url`. It makes setup-node write an .npmrc
+      # containing //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}; with no
+      # such secret that expands to an empty token, npm sees credentials as
+      # already configured, skips the OIDC exchange, and the registry answers
+      # the anonymous PUT with a 404 that explains nothing.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Node 22 ships npm 10.x, which has no OIDC support. Trusted publishing
+      # needs >= 11.5.1, so upgrade before anything touches the registry.
+      - name: Upgrade npm for OIDC support
+        run: |
+          npm install -g npm@latest
+          echo "npm $(npm --version)"
+
+      # The plugin has no dependencies of its own — its peers come from the
+      # harness that hosts it — so there is nothing to install, and a syntax
+      # error is the one failure that would break every consumer at load time.
+      # The 112 runtime tests need a real harness tree and run locally.
+      - name: Syntax check
+        run: npm run lint
+
+      # A tag that disagrees with package.json ships the wrong version number
+      # under the right name. Cheap here, impossible to undo on npm.
+      - name: Verify tag matches package.json
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#dsh-ccg-v}"
+          PKG="$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag dsh-ccg-v$TAG does not match package.json version $PKG"
+            exit 1
+          fi
+          echo "Tag and package.json agree on $PKG"
+
+      - name: Check version is not already published
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          if npm view "dsh-ccg@$PKG" version >/dev/null 2>&1; then
+            echo "::error::dsh-ccg@$PKG is already on npm"
+            exit 1
+          fi
+          echo "$PKG is not yet published"
+
+      # Any configured credential silently disables the OIDC exchange, and the
+      # registry then answers with a 404 that explains nothing. Fail here, with
+      # a reason.
+      - name: Assert no npm credentials are configured
+        run: |
+          if [ -n "${NPM_CONFIG_USERCONFIG:-}" ] && grep -q '_authToken' "$NPM_CONFIG_USERCONFIG" 2>/dev/null; then
+            echo "::error::An npm auth token is configured ($NPM_CONFIG_USERCONFIG) — OIDC trusted publishing would be skipped."
+            exit 1
+          fi
+          echo "No npm credentials configured; OIDC exchange will be used"
+
+      # The tarball is the product: `files` must carry src, skills, the patch
+      # and the licence, and must NOT carry the tests or a stray node_modules
+      # symlink from local development.
+      - name: Verify tarball contents
+        run: |
+          npm pack --dry-run --json > /tmp/pack.json
+          node -e "
+            const files = require('/tmp/pack.json')[0].files.map((f) => f.path);
+            const need = ['package.json', 'cordis.patch.yml', 'LICENSE', 'src/index.js', 'src/client.js'];
+            const missing = need.filter((f) => !files.includes(f));
+            const leaked = files.filter((f) => f.startsWith('test/') || f.startsWith('node_modules/'));
+            if (missing.length) { console.error('missing from tarball:', missing); process.exit(1) }
+            if (leaked.length) { console.error('should not ship:', leaked); process.exit(1) }
+            console.log(files.length + ' files, nothing missing, nothing leaked');
+          "
+
+      - name: Diagnose OIDC availability
+        run: |
+          echo "npm             : $(npm --version)"
+          echo "registry        : $(npm config get registry)"
+          echo "userconfig      : ${NPM_CONFIG_USERCONFIG:-<unset>}"
+          echo "OIDC req url set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "OIDC req tok set: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+yes}"
+
+      # If this fails with ENEEDAUTH, re-run with --loglevel verbose: npm only
+      # reveals the OIDC exchange at that level. A 404 from
+      # /-/npm/v1/oidc/token/exchange/package/dsh-ccg means npm has no trusted
+      # publisher recorded for THIS package — check the dsh-ccg package's own
+      # Access page, not the account settings and not ccg-workflow's.
+      - name: Publish
+        if: ${{ !inputs.dry_run }}
+        run: npm publish --provenance --access public

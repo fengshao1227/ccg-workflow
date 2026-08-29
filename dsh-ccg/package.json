@@ -1,0 +1,82 @@
+{
+  "name": "dsh-ccg",
+  "version": "0.4.6",
+  "type": "module",
+  "description": "CCG's multi-model role matrix for DeepSeek Harness: seven role-pinned delegation tools (analyze / design / build / debug / optimize / review / test), each on its own model with its own expert persona. Any role can hold several models and answer as a panel, or be hired as a live teammate with its own files. Durable ownership and project memory. Pure provider API — no external CLI.",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "cordis",
+    "subagent",
+    "multi-model",
+    "model-routing",
+    "ccg",
+    "code-review",
+    "agent"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "fengshao1227",
+    "url": "https://github.com/fengshao1227"
+  },
+  "homepage": "https://github.com/fengshao1227/ccg-workflow#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fengshao1227/ccg-workflow.git",
+    "directory": "dsh-ccg"
+  },
+  "bugs": {
+    "url": "https://github.com/fengshao1227/ccg-workflow/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./client": "./src/client.js",
+    "./roles": "./src/roles.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "skills",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-settings-plugins",
+        "@deepseek-ai/dsh-client-ui-tool",
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-settings": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-skill-filesystem": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-subagent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tool-subagent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6",
+    "@deepseek-ai/schemastery": "^3.0.0",
+    "@deepseek-ai/dsh-storage-domain": "^0.1.0-rc.6",
+    "zod": "^4.0.0"
+  },
+  "scripts": {
+    "lint": "node --check src/index.js && node --check src/roles.js && node --check src/crosscheck.js && node --check src/team.js && node --check src/modes.js && node --check src/memory.js && node --check src/knowledge.js && node --check src/api.js && node --check src/client.js",
+    "test": "node --test test/*.test.mjs"
+  }
+}

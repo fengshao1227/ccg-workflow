@@ -1,0 +1,17 @@
+# Development overlay — load the plugin straight from source, no install.
+#
+#   dsh --profile headless --patch ./cordis.dev.yml "your task"
+#
+# The loader needs an absolute POSIX path (on Windows, a file:/// URL).
+# Adjust the path below to wherever this repository sits, and set the two
+# tiers to routes your $DSH_HOME/settings.yaml actually declares.
+- insert:
+    - id: ccg-dev
+      name: '/Users/li/Developer/my_proce/codex_gemini_skills/dsh-ccg/src/index.js'
+      config:
+        strong:
+          provider: anthropic
+          model: deepseek-v4-pro
+        worker:
+          provider: anthropic
+          model: deepseek-v4-flash

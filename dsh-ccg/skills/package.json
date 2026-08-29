@@ -1,0 +1,6 @@
+{
+  "//": "Scopes this subtree back to CommonJS. The bundled quality gates are CCG's original scripts, which are CommonJS; the plugin package itself is ESM (\"type\": \"module\"), and without this file Node would load them as ES modules and they would fail on `require`. Keeping this one file lets the scripts stay byte-identical to their CCG upstream.",
+  "name": "dsh-ccg-skills",
+  "private": true,
+  "type": "commonjs"
+}

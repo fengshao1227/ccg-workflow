@@ -1,0 +1,7 @@
+# No trailing slash: locally this is a SYMLINK to ~/.dsh/profiles/node_modules
+# (the harness packages this plugin is a peer of), and `node_modules/` with a
+# slash matches only real directories — the symlink would be committed, broken
+# for everyone else and leaking a local path.
+node_modules
+*.tgz
+.DS_Store

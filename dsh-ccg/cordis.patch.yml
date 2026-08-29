@@ -1,0 +1,21 @@
+# dsh-ccg — the CCG role matrix layer.
+#
+# Mounted as-is this registers all seven role tools with their CCG personas,
+# every child running on the deployment's default model. Give it two tiers and
+# the roles split across models — the point of the matrix:
+#
+#   - id: ccg
+#     name: dsh-ccg
+#     config:
+#       strong: { provider: my-gateway, model: a-reasoning-model }
+#       worker: { provider: my-gateway, model: a-fast-model }
+#
+# `provider` names a route you declared under `llm-pi-ai.providers` in
+# $DSH_HOME/settings.yaml. Per-role overrides, renaming a tool, or switching
+# one role off all live under `config.roles.<role>` — see README.md.
+#
+# Note for anyone editing this: a patch replaces a row's config wholesale, so
+# restate every key you want to keep when you override this row downstream.
+- insert:
+    - id: ccg
+      name: dsh-ccg
