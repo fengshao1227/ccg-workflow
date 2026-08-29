@@ -48,9 +48,17 @@ $ARGUMENTS
 
 **{{BACKEND_PRIMARY}} 执行调用语法**：
 
+> ⚠️ **执行者的三处调用必须带 `--with-mcp`，不要删。** 自 v3.6.0 起 wrapper 默认
+> 让子代理跳过 MCP（子代理通常只读写文件跑命令，连 MCP 纯属白等）。但这条命令的
+> 全部前提恰恰相反 —— 下面 Step 1 明确要求 {{BACKEND_PRIMARY}} 自己调 ace-tool /
+> context7 / grok-search，「Claude 不做代码检索」正是它省 token 的原因。
+> 少了这个 flag，子代理会被要求使用一批它根本看不到的工具。
+> 审核调用（REVIEW_EOF）与修正调用（FIXEOF）**不加** —— 它们只读 diff、只按
+> file:line 改，加了纯粹是白付启动开销。
+
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EXEC_EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --with-mcp --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EXEC_EOF'
 <TASK>
 <指令内容>
 </TASK>
@@ -65,7 +73,7 @@ EXEC_EOF",
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}resume <SESSION_ID> - \"{{WORKDIR}}\" <<'EXEC_EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --with-mcp --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}resume <SESSION_ID> - \"{{WORKDIR}}\" <<'EXEC_EOF'
 <TASK>
 <指令内容>
 </TASK>
@@ -167,7 +175,7 @@ TaskOutput({ task_id: "<task_id>", block: true, timeout: 600000 })
 
 ```
 Bash({
-  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}resume <CODEX_SESSION> - \"{{WORKDIR}}\" <<'EXEC_EOF'
+  command: "~/.claude/bin/codeagent-wrapper {{LITE_MODE_FLAG}}--progress --with-mcp --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}resume <CODEX_SESSION> - \"{{WORKDIR}}\" <<'EXEC_EOF'
 <TASK>
 You are a full-stack execution agent. Implement the following plan end-to-end.
 

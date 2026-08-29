@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.3] - 2026-08-29
+
+### 🐛 修复
+
+- **`/ccg:codex-exec` 自 v3.6.0 起被自己的性能优化打断**：该命令的全部前提是「Claude 不做代码检索，{{BACKEND_PRIMARY}} 全权执行 —— MCP 搜索、文档查询、代码检索、实现、测试」，它的载荷里明确要求子代理调用 ace-tool / context7 / grok-search。而 v3.6.0 让 wrapper 默认给子代理禁用 MCP（codex 注入 `-c mcp_servers={}`），**没有任何模板传 `--with-mcp`** —— 于是子代理被要求去用一批它根本看不到的工具，而且**不报错**，只会检索不到然后照样往下写。
+  现在该命令的三处**执行者**调用带上 `--with-mcp`；**审核**调用（只读 git diff、明令不改文件）与**修正**调用（按 file:line 改）保持不带，不白付启动开销。
+- **新增 3 例回归测试**（`subagent-mcp.test.ts`，总 188 → 191）。两半分别住在 Go wrapper 和 Markdown 模板里，除了测试没有任何东西能把它们连起来 —— 默认值在一个文件里改了，另一个文件里的假设无声失效。
+
 ## [3.6.2] - 2026-08-29
 
 ### ✨ 新功能
