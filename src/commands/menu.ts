@@ -12,6 +12,7 @@ import { version } from '../../package.json'
 import { configMcp } from './config-mcp'
 import { i18n } from '../i18n'
 import { configureGeminiCliApi, installCodexMode, removeGeminiCliApi, uninstallCodexMode, uninstallWorkflows } from '../utils/installer'
+import { findDshProfiles, installDshPlugin, uninstallDshPlugin } from '../utils/installer-dsh'
 import { readCcgConfig, writeCcgConfig } from '../utils/config'
 import { init } from './init'
 import { update } from './update'
@@ -170,6 +171,7 @@ export async function showMainMenu(): Promise<void> {
 
         groupSep(isZh ? '其他工具' : 'Tools'),
         item('X', isZh ? 'Codex 模式' : 'Codex Mode', isZh ? '安装 Codex 主导的多模型编排' : 'Install Codex-led multi-model orchestration'),
+        item('D', isZh ? 'DeepSeek Harness' : 'DeepSeek Harness', isZh ? '把 CCG 角色矩阵装进 dsh' : 'Install the CCG role matrix into dsh'),
         item('T', i18n.t('menu:options.tools'), 'ccusage, CCometixLine'),
         item('C', i18n.t('menu:options.installClaude'), isZh ? '安装/重装 CLI' : 'Install/reinstall CLI'),
 
@@ -203,6 +205,9 @@ export async function showMainMenu(): Promise<void> {
         break
       case 'X':
         await handleCodexMode()
+        break
+      case 'D':
+        await handleDshPlugin()
         break
       case 'T':
         await handleTools()
@@ -745,6 +750,96 @@ async function configOutputStyle(): Promise<void> {
 // ═══════════════════════════════════════════════════════
 // Install Claude Code
 // ═══════════════════════════════════════════════════════
+
+/**
+ * Install the CCG role matrix into a DeepSeek Harness profile.
+ *
+ * The plugin ships inside this package, so there is nothing to download and no
+ * second version number: whatever CCG you ran is the plugin you get.
+ */
+async function handleDshPlugin(): Promise<void> {
+  const isZh = i18n.language === 'zh-CN'
+  console.log()
+  console.log(ansis.cyan.bold(isZh ? '  CCG for DeepSeek Harness' : '  CCG for DeepSeek Harness'))
+  console.log()
+  console.log(isZh
+    ? '  七个角色委派工具，各跑各的模型；任一角色可挂多个模型并排作答，\n  也能被雇成有自己文件的常驻队友。不依赖任何外部 CLI。'
+    : '  Seven role-pinned delegation tools, each on its own model. Any role can\n  answer as a panel of models, or be hired as a live teammate with its own\n  files. No external CLI.')
+  console.log()
+
+  const profiles = await findDshProfiles()
+  if (profiles.length === 0) {
+    console.log(ansis.yellow(isZh
+      ? '  没有找到 DeepSeek Harness 配置档（~/.dsh/profiles/）。'
+      : '  No DeepSeek Harness profile found (~/.dsh/profiles/).'))
+    console.log(ansis.gray(isZh
+      ? '  先跑一次 `dsh web` 生成配置档，再回来安装。'
+      : '  Run `dsh web` once to create one, then come back.'))
+    console.log()
+    return
+  }
+
+  for (const profile of profiles) {
+    const mark = profile.installed ? ansis.green('✓') : ansis.gray('○')
+    const note = profile.installed ? ansis.gray(isZh ? '已安装' : 'installed') : ''
+    console.log(`  ${mark} ${profile.name} ${note}`)
+  }
+  console.log()
+
+  const { action } = await inquirer.prompt([{
+    type: 'list',
+    name: 'action',
+    message: isZh ? '选择操作' : 'Select action',
+    choices: [
+      { name: isZh ? '安装 / 更新到全部配置档' : 'Install / update in every profile', value: 'install' },
+      { name: isZh ? '选择配置档安装' : 'Pick which profiles', value: 'pick' },
+      { name: isZh ? '卸载（从全部配置档移除）' : 'Uninstall (remove from every profile)', value: 'uninstall' },
+      { name: isZh ? '返回' : 'Back', value: 'back' },
+    ],
+  }])
+
+  if (action === 'back') return
+
+  let chosen: string[] | undefined
+  if (action === 'pick') {
+    const { picked } = await inquirer.prompt([{
+      type: 'checkbox',
+      name: 'picked',
+      message: isZh ? '装到哪些配置档' : 'Install into which profiles',
+      choices: profiles.map(profile => ({ name: profile.name, value: profile.name, checked: profile.installed })),
+    }])
+    if (!picked || picked.length === 0) return
+    chosen = picked
+  }
+
+  const uninstalling = action === 'uninstall'
+  const spinner = ora(uninstalling
+    ? (isZh ? '移除 dsh-ccg...' : 'Removing dsh-ccg...')
+    : (isZh ? '安装 dsh-ccg...' : 'Installing dsh-ccg...')).start()
+
+  const result = uninstalling
+    ? await uninstallDshPlugin()
+    : await installDshPlugin({ profiles: chosen })
+
+  if (result.success) {
+    spinner.succeed(uninstalling
+      ? (isZh ? `已移除：${result.profiles.join(', ') || '（没有配置档装过）'}` : `Removed from: ${result.profiles.join(', ') || '(no profile had it)'}`)
+      : (isZh ? `已安装到：${result.profiles.join(', ')}` : `Installed into: ${result.profiles.join(', ')}`))
+    if (!uninstalling) {
+      console.log()
+      console.log(ansis.gray(isZh
+        ? '  重启 dsh 生效，然后在 设置 › 插件 › CCG 角色矩阵 里设好两个模型档位。'
+        : '  Restart dsh to load it, then set the two model tiers in Settings › Plugins › CCG.'))
+    }
+  }
+  else {
+    spinner.fail(isZh ? '失败' : 'Failed')
+    if (result.message) console.log(ansis.red(`  ${result.message}`))
+  }
+
+  for (const warning of result.warnings) console.log(ansis.yellow(`  ! ${warning}`))
+  console.log()
+}
 
 async function handleCodexMode(): Promise<void> {
   const isZh = i18n.language === 'zh-CN'

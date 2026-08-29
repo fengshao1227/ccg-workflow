@@ -26,6 +26,14 @@ export {
   uninstallAceTool,
 } from './utils/installer'
 export {
+  DSH_PLUGIN_NAME,
+  dshPluginDir,
+  findDshProfiles,
+  hasDshHome,
+  installDshPlugin,
+  uninstallDshPlugin,
+} from './utils/installer-dsh'
+export {
   migrateToV1_4_0,
   needsMigration,
 } from './utils/migration'

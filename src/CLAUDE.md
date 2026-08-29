@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **src**
 
-**Last Updated**: 2026-04-10
+**Last Updated**: 2026-08-29
 
 ---
 
@@ -39,6 +39,7 @@
 | `ccg diagnose-mcp` | — | 诊断 MCP 配置问题 | `commands/diagnose-mcp.ts:diagnoseMcp()` |
 | `ccg fix-mcp` | — | 修复 Windows MCP 配置 | `commands/diagnose-mcp.ts:fixMcp()` |
 | `ccg config mcp` | — | 配置 MCP Token | `commands/config-mcp.ts:configMcp()` |
+| `ccg dsh <action>` | — | 把 CCG 装进 DeepSeek Harness 配置档 | `utils/installer-dsh.ts` |
 
 **全局选项**：`--lang/-l`（覆盖语言）、`--force/-f`（强制覆盖）、`--skip-prompt/-s`（非交互模式）、`--frontend/-F`、`--backend/-B`、`--mode/-m`、`--install-dir/-d`
 
@@ -108,6 +109,7 @@ v1.7.83 将原 1878 行单文件拆分为 5 个聚焦模块，各自边界清晰
 | `installer-mcp.ts` | MCP 服务安装（ace-tool / fast-context / contextweaver / 通用） | `installAceTool()`, `installFastContext()`, `syncMcpToCodex()`, `syncMcpToGemini()` |
 | `installer-prompt.ts` | fast-context 搜索引导 Prompt 管理 | `writeFastContextPrompt()`, `removeFastContextPrompt()` |
 | `installer-codex-api.ts` | APIMart 作为 Codex 模型供应商写入 `~/.codex/config.toml` | `configureApiMartForCodex()`, `removeApiMartFromCodex()` |
+| `installer-dsh.ts` | 把 `dsh-ccg/` 装进 DeepSeek Harness 配置档：拷到 `~/.dsh/ccg/` + 写 `dependencies` 和 `dsh.profile.bundles` 两半 + 调用宿主包管理器 | `installDshPlugin()`, `uninstallDshPlugin()`, `findDshProfiles()` |
 | `installer-gemini-api.ts` | Gemini CLI 第三方网关：`GOOGLE_GEMINI_BASE_URL`/`GEMINI_API_KEY` 受管块写 shell rc（Windows `setx`）。0.53.1 不读 .env，环境变量是唯一通路 | `configureGeminiCliApi()`, `removeGeminiCliApi()` |
 
 **`installWorkflows()` 执行链**（`src/utils/installer.ts:659`）：
@@ -269,7 +271,7 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（166 用例）
+# 测试（188 用例）
 pnpm test
 
 # 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
@@ -314,7 +316,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 10 个测试文件，176 用例：
+`src/utils/__tests__/` 下 11 个测试文件，188 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -328,6 +330,7 @@ defineBuildConfig({
 | `installer-gemini-api.test.ts` | Gemini CLI 网关 shell rc 受管块：写入/幂等替换/清除/fish 语法/shell 识别 |
 | `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
 | `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
+| `installer-dsh.test.ts` | DSH 配置档发现（跳过 node_modules / 无 bundles / 解析失败的 manifest）、两半都写、幂等、bundles 追加不插入、卸载只动自己那两条、链接失败降级为 warning |
 
 ---
 
@@ -342,3 +345,5 @@ defineBuildConfig({
 4. **permissions.allow 替代 Hook**（v1.7.89+）：早期用 PreToolUse Hook + jq 实现 codeagent-wrapper 自动授权，依赖 jq 可用性。改为 `permissions.allow: ["Bash(*codeagent-wrapper*)"]` 后跨平台统一，无外部依赖，且可幂等写入。
 
 5. **`pathe` 替代 Node `path`**：统一路径分隔符为 `/`，避免 Windows `\` 导致的路径字符串比较/替换 bug，对模板路径注入尤为重要。
+
+6. **DSH 插件必须拷贝而非引用**（v3.6.2）：harness 配置档把插件声明为普通依赖。若指向 `PACKAGE_ROOT`，在 `npx` 场景下**只能活到缓存被清**——之后配置档会解析不到一个「本来在那儿」的插件，且报错发生在 harness 启动时而非安装时，极难归因。所以 `installer-dsh.ts` 把插件拷到 `~/.dsh/ccg/dsh-ccg`（安装器自己拥有的路径，卸载连带删）。⚠ 另一个同类陷阱：一个 dsh 插件要 `dependencies` **和** `dsh.profile.bundles` 两半才加载，而 `pnpm add` 只写前者 —— 只写一半的结果是「装了但永不加载，且不报错」。

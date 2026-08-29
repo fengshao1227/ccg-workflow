@@ -1,6 +1,6 @@
 {
   "name": "ccg-workflow",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "Claude + Codex + Gemini multi-model collaboration system - smart routing development workflow",
   "type": "module",
   "packageManager": "pnpm@10.17.1",
@@ -59,7 +59,14 @@
     "templates/prompts/opencode/",
     "templates/output-styles/",
     "templates/skills/",
-    "templates/rules/"
+    "templates/rules/",
+    "dsh-ccg/src/",
+    "dsh-ccg/skills/",
+    "dsh-ccg/package.json",
+    "dsh-ccg/cordis.patch.yml",
+    "dsh-ccg/README.md",
+    "dsh-ccg/README.zh-CN.md",
+    "dsh-ccg/LICENSE"
   ],
   "scripts": {
     "dev": "tsx src/cli.ts",

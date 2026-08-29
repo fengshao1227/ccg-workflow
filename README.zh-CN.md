@@ -37,6 +37,24 @@
 
 ---
 
+## 🐳 CCG 的 DeepSeek Harness 形态 —— `dsh-ccg`
+
+同一套角色矩阵，原生跑在 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 里。它**随本包一起发**，不用装第二个东西，也没有第二个版本号要对。
+
+```bash
+npx ccg-workflow dsh install    # 装进找到的所有 profile；--profile <name> 只装一个
+npx ccg-workflow dsh list       # 看哪些 profile 装了
+```
+
+或者跑 `npx ccg-workflow` 选 **`D. DeepSeek Harness`**。
+
+七个角色委派工具，各自跑在自己的模型上、带着自己的专家人设 —— 外加两件 Claude Code 那边做不了这么干净的事：
+
+- **模型群。** 给一个角色挂多个模型，它们拿同一份简报各自独立作答，答案**在对话流里并排渲染**。不投票、不取平均 —— 分歧处才是结论。
+- **常驻队友。** `ccg_team` 把角色雇成跨轮次存活的同事，独占自己的文件（撞车的雇佣是**直接拒绝**，不是警告一下），干完自己报回来。每次雇人都会先请你确认。
+
+不依赖任何外部 CLI、没有二进制桥接、没有冷启动税 —— 每一跳都是 provider API 请求。源码在 [`dsh-ccg/`](./dsh-ccg)，[完整说明 →](./dsh-ccg/README.zh-CN.md)
+
 ## 🧩 作者的另一个项目
 
 **[DSH Marketplace](https://dshmarketplace.dev/zh)** — [DeepSeek Harness 插件](https://dshmarketplace.dev/zh/plugins)目录，2500+ 插件、14 个分类，中英双语。
@@ -232,6 +250,9 @@ npx ccg-workflow doctor                   # 环境健康检查
 npx ccg-workflow status                   # 安装概况
 npx ccg-workflow codex-mode install       # 安装 Codex 主导模式
 npx ccg-workflow codex-mode uninstall     # 卸载 Codex 主导模式
+npx ccg-workflow dsh install              # 装进 DeepSeek Harness
+npx ccg-workflow dsh list                 # 看哪些 dsh 配置档装了
+npx ccg-workflow dsh uninstall            # 从全部配置档移除
 npx ccg-workflow uninstall                # 卸载 CCG
 npx ccg-workflow config mcp               # 配置 MCP Token
 npx ccg-workflow diagnose-mcp             # 诊断 MCP 问题
@@ -313,4 +334,4 @@ MIT
 
 ---
 
-v3.6.1 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.6.2 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)

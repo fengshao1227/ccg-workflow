@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.2] - 2026-08-29
+
+### ✨ 新功能
+
+- **CCG 现在也跑在 DeepSeek Harness 上** —— `dsh-ccg/` 随包一起发，
+  `ccg dsh install` 一条命令装进 harness profile，菜单里也加了 `D. DeepSeek Harness`。
+  七个角色委派工具各跑各的模型；任一角色挂多个模型就成为**模型群**（同一份简报、
+  独立作答、答案在对话流里并排渲染）；`ccg_team` 可把角色雇成**常驻队友**
+  （独占自己的文件、撞车直接拒绝、每次雇人先请用户确认）。不依赖任何外部 CLI，
+  每一跳都是 provider API 请求。
+- **`ccg dsh <install|uninstall|list>`**：非交互命令，`--profile <name>` 可指定单个
+  配置档，不加则装进找到的全部。
+
+### 🔄 变更
+
+- `package.json` 的 `files` 新增 7 条 `dsh-ccg/` 白名单（不含 `test/`），
+  npm 包多 27 个文件。
+- `src/utils/installer-dsh.ts` 新模块 + 12 个单测（总数 176 → 188）。
+
 ## [3.6.1] - 2026-08-28
 
 ### ✨ 新功能

@@ -12,6 +12,7 @@ import { showMainMenu } from './commands/menu'
 import { i18n, initI18n } from './i18n'
 import { readCcgConfig } from './utils/config'
 import { installCodexMode, uninstallCodexMode, uninstallWorkflows } from './utils/installer'
+import { findDshProfiles, installDshPlugin, uninstallDshPlugin } from './utils/installer-dsh'
 
 function customizeHelp(sections: any[]): any[] {
   sections.unshift({
@@ -30,6 +31,7 @@ function customizeHelp(sections: any[]): any[] {
       `  ${ansis.cyan('ccg doctor')}       Check installation health`,
       `  ${ansis.cyan('ccg status')}       Show installation overview`,
       `  ${ansis.cyan('ccg codex-mode')}   Install/uninstall Codex-Led mode`,
+      `  ${ansis.cyan('ccg dsh')}          Install CCG into a DeepSeek Harness profile`,
       `  ${ansis.cyan('ccg uninstall')}    Uninstall CCG (non-interactive)`,
       '',
       ansis.gray(`  ${i18n.t('cli:help.shortcuts')}`),
@@ -186,6 +188,54 @@ export async function setupCommands(cli: CAC): Promise<void> {
         console.log(ansis.gray('Usage: ccg codex-mode <install|uninstall>'))
         process.exitCode = 1
       }
+    })
+
+  // DSH plugin: install CCG's role matrix into a DeepSeek Harness profile.
+  // The plugin ships inside this package, so there is nothing to fetch and
+  // nothing whose version could drift from the CLI that installed it.
+  cli
+    .command('dsh [action]', 'Install/uninstall CCG for DeepSeek Harness (default: install)')
+    .option('--profile <name>', 'Only this profile (repeatable); default is every profile found')
+    .action(async (action = 'install', options: { profile?: string | string[] }) => {
+      const profiles = options.profile === undefined
+        ? undefined
+        : (Array.isArray(options.profile) ? options.profile : [options.profile])
+
+      if (action === 'list') {
+        const found = await findDshProfiles()
+        if (found.length === 0) {
+          console.log(ansis.yellow('No DeepSeek Harness profile found under ~/.dsh/profiles'))
+          return
+        }
+        for (const profile of found) {
+          console.log(`  ${profile.installed ? ansis.green('✓') : ansis.gray('○')} ${profile.name} ${ansis.gray(profile.dir)}`)
+        }
+        return
+      }
+
+      if (action === 'install' || action === 'uninstall') {
+        const result = action === 'install'
+          ? await installDshPlugin({ profiles })
+          : await uninstallDshPlugin()
+
+        if (result.success) {
+          const verb = action === 'install' ? 'installed into' : 'removed from'
+          console.log(ansis.green(`✓ dsh-ccg ${verb}: ${result.profiles.join(', ') || '(no profile carried it)'}`))
+          if (action === 'install') {
+            console.log(ansis.gray('  Restart dsh to load it, then set the two model tiers in Settings › Plugins › CCG.'))
+          }
+        }
+        else {
+          console.error(ansis.red(`✗ ${result.message ?? 'failed'}`))
+          process.exitCode = 1
+        }
+        for (const warning of result.warnings) console.warn(ansis.yellow(`  ! ${warning}`))
+        return
+      }
+
+      console.error(ansis.red(`Unknown action: ${action}`))
+      console.log(ansis.gray('Usage: ccg dsh <install|uninstall|list> [--profile <name>]'))
+      process.exitCode = 1
     })
 
   // Uninstall CCG (Claude Code mode): non-interactive

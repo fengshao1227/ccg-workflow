@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-28 (v3.6.1)
+**Last Updated**: 2026-08-29 (v3.6.2)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,12 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-08-29 (v3.6.2)
+- ✨ **CCG 落地 DeepSeek Harness**：`dsh-ccg/` 进仓库并**随主包一起发**（`files` 加 7 条白名单，不含 test/）。七个角色委派工具各跑各的模型；一个角色挂多模型即成**模型群**（同一简报、独立作答、**答案在对话流里并排渲染**，不投票不平均）；`ccg_team` 把角色雇成**常驻队友**（跨轮次存活、独占文件、撞车直接拒绝、每次雇人先走 harness 原生 `userQuestions` 请用户批准）。另有持久所有权（存储域）+ 项目记忆（`.ccg/memory.md`）+ 四档分诊。全程 provider API，无外部 CLI。插件自身 112 单测。
+- ✨ **入口两个**：菜单「其他工具」组新增 `D. DeepSeek Harness`；命令 `ccg dsh <install|uninstall|list> [--profile x]`。
+- 🔄 **新模块 `src/utils/installer-dsh.ts`** + 12 单测（总 176 → 188）。⚠ 两个易错点已在代码注释里锁死：**必须把插件拷到 `~/.dsh/ccg/dsh-ccg`**（指 PACKAGE_ROOT 会在 npx 缓存被清后失效）；**profile 要 `dependencies` 和 `dsh.profile.bundles` 两半**才加载，而 `pnpm add` 只写前者，且 bundles 只能追加不能插入（顺序即 patch 分层）。
+- 📌 **不单独发 npm**：`publish-dsh-ccg.yml` 完整可用但只留手动触发，反悔改一行，步骤见下方专章。
 
 ### 2026-08-28 (v3.6.1)
 - ✨ **帮配 Gemini CLI 第三方 API**（用户反馈：没 Google 账号想用中转但不会配）：init Step 1 末尾 confirm + 菜单 API 配置新选项。新模块 `src/utils/installer-gemini-api.ts` 把 `GOOGLE_GEMINI_BASE_URL`/`GEMINI_API_KEY`（+可选 `GEMINI_MODEL`）以受管块写入 shell rc（zsh/bash/fish 按 `$SHELL` 识别，Windows `setx`），幂等可清除。gemini 见 base URL 自动 `AuthType.GATEWAY`，免登录。
@@ -311,6 +317,7 @@
 8. **MCP 集成**：fast-context（推荐）/ ace-tool / ContextWeaver + context7（自动安装）+ Codex & Gemini MCP 同步
 9. **Agent Teams 并行实施**：Team 系列 5 个命令（含统一工作流），spawn Builder teammates 并行写代码
 10. **8 种输出风格**：默认 + 专业工程师 + 猫娘 + 老王 + 大小姐 + 邪修 + 冷刃简报 + 铁律军令 + 祭仪长卷
+11. **DeepSeek Harness 形态**（v3.6.2+）：`dsh-ccg/` 随包发布，`ccg dsh install` 装进 harness 配置档 —— 角色路由 + 模型群并排渲染 + 常驻队友，纯 provider API
 
 ---
 
@@ -321,6 +328,7 @@
 | TypeScript CLI 源码 | [src/CLAUDE.md](./src/CLAUDE.md) | CLI 主入口、命令实现、安装器、i18n、工具链 |
 | 模板文件 | [templates/CLAUDE.md](./templates/CLAUDE.md) | 斜杠命令、提示词、子智能体、技能、规则模板 |
 | codeagent-wrapper | [codeagent-wrapper/CLAUDE.md](./codeagent-wrapper/CLAUDE.md) | Go 二进制包装器，多模型调用桥接，v5.10.0 |
+| DSH 插件 | [dsh-ccg/CLAUDE.md](./dsh-ccg/CLAUDE.md) | CCG 角色矩阵的 DeepSeek Harness 形态，随主包发布，v0.4.6 |
 
 ---
 
@@ -370,6 +378,7 @@ npx ccg-workflow menu
 | `npx ccg-workflow menu` | 交互式菜单 |
 | `npx ccg-workflow update` | 更新到最新版本 |
 | `npx ccg-workflow diagnose-mcp` | 诊断 MCP 配置 |
+| `npx ccg-workflow dsh <install\|uninstall\|list>` | 把 CCG 装进 DeepSeek Harness 配置档（`--profile <name>` 指定单个）|
 
 ### Slash Commands 接口（29 个）
 
@@ -755,6 +764,55 @@ npm 网页的 README 有服务端渲染缓存，发布后要等一会儿才更�
 - [ ] `git push origin main` 成功
 - [ ] `git push origin vx.y.z` 成功，且 publish.yml 跑绿
 - [ ] `npm view ccg-workflow version` 已是新版本
+
+---
+
+## `dsh-ccg` —— DeepSeek Harness 插件（随本包一起发，不单独发 npm）
+
+`dsh-ccg/` 是 CCG 角色矩阵的 DSH 形态。它**打进 ccg-workflow 的 tarball**
+（见 `files` 里那 7 条 `dsh-ccg/` 白名单），由 `ccg dsh install` 装进用户的
+harness profile。**一个仓库、一个 npm 包、一个版本号。**
+
+### 安装链路（`src/utils/installer-dsh.ts`）
+
+```
+ccg dsh install
+  → stagePlugin()   把 <PACKAGE_ROOT>/dsh-ccg 拷到 ~/.dsh/ccg/dsh-ccg
+  → wireProfile()   写 profile 的 dependencies["dsh-ccg"]="file:<上面那个路径>"
+                    + 追加 dsh.profile.bundles 里的 "dsh-ccg"
+  → linkProfile()   dsh plugin --profile <n> install → pnpm install → npm install（依次回退）
+```
+
+**⚠ 为什么一定要拷贝而不是直接指 PACKAGE_ROOT**：`npx` 把包解到可被随时清理的
+缓存目录，profile 依赖指过去的话，下次 npx 之后就解析不到一个「本来在那儿」的插件。
+
+**⚠ 一个插件要两半才加载**：`dependencies` 和 `dsh.profile.bundles` 缺一不可，
+而 `pnpm add` 只写前者。两半都由 `wireProfile()` 写。bundles 是**追加**不是插入 ——
+bundle 顺序就是 patch 顺序，挪动别人的条目等于悄悄改了别人的配置分层。
+
+**入口**：菜单 `D. DeepSeek Harness` / 命令 `ccg dsh <install|uninstall|list> [--profile x]`。
+`ccg uninstall`（Claude Code 那套）**不会**连带卸载它，两者独立。
+
+### 单独发 npm 的开关（当前关闭）
+
+`.github/workflows/publish-dsh-ccg.yml` 完整可用但**只留了手动触发**。
+魔尊 2026-08-29 决定先不单独发。要反悔的话改一行 —— 把
+`push: { tags: ['dsh-ccg-v*'] }` 加回 `on:`，然后：
+
+1. 先手工推一次首发（npm Trusted Publisher 只能配在**已存在的包**上）：
+   `cd dsh-ccg && npm login && npm publish --access public`
+2. 去 **dsh-ccg 包自己的 Access 页**（不是账号设置、不是 ccg-workflow 那条）加
+   trusted publisher：GitHub Actions / `fengshao1227` / `ccg-workflow` /
+   `publish-dsh-ccg.yml` / `npm-publish`
+3. 把 `files` 里那 7 条 `dsh-ccg/` 去掉，避免同一份代码发两遍
+
+### 工具链隔离（已实测）
+
+`vitest.config.ts` 和 `tsconfig.json` 都只 include `src/**`，扫不到 `dsh-ccg/`；
+插件自己那 112 个测试用 `node --test` 跑：`cd dsh-ccg && npm test`。
+仓库里的 `dsh-ccg/node_modules` 是指向 `~/.dsh/profiles/node_modules` 的**软链**
+（peer 依赖来自宿主 harness），⚠ `.gitignore` 里必须写 `node_modules` **不带斜杠** ——
+带斜杠只匹配真目录，软链会被提交进去。
 
 ---
 

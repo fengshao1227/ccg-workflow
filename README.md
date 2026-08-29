@@ -37,6 +37,24 @@ Thanks to [APIMart](https://go.apimart.ai/gh-ccg-workflow) for sponsoring this p
 
 ---
 
+## 🐳 CCG on DeepSeek Harness — `dsh-ccg`
+
+The same role matrix, running natively inside [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). It ships **inside this package** — no second install, no second version to track.
+
+```bash
+npx ccg-workflow dsh install    # every profile found; --profile <name> for one
+npx ccg-workflow dsh list       # which profiles have it
+```
+
+Or pick **`D. DeepSeek Harness`** from `npx ccg-workflow`.
+
+Seven role-pinned delegation tools, each on its own model with its own expert persona — and two things the Claude Code side cannot do as cleanly:
+
+- **Model panels.** Give one role several models and they all answer the same brief independently, rendered **side by side in the conversation**. Nothing votes, nothing is averaged — disagreement is the finding.
+- **Live teammates.** `ccg_team` hires a role as a colleague that stays alive across turns, owns its own files (a colliding hire is *refused*, not warned about), and reports back on its own. Every hire asks you to approve it first.
+
+No external CLI, no binary bridge, no cold-start tax — every hop is a provider API request. Source lives in [`dsh-ccg/`](./dsh-ccg); [full README →](./dsh-ccg/README.md)
+
 ## 🧩 Also by the author
 
 **[DSH Marketplace](https://dshmarketplace.dev/)** — a directory of [DeepSeek Harness plugins](https://dshmarketplace.dev/plugins). 2,500+ indexed across 14 categories, bilingual EN / 中文.
@@ -232,6 +250,9 @@ npx ccg-workflow doctor                   # Environment health check
 npx ccg-workflow status                   # Installation overview
 npx ccg-workflow codex-mode install       # Install Codex-Led mode
 npx ccg-workflow codex-mode uninstall     # Uninstall Codex-Led mode
+npx ccg-workflow dsh install              # Install CCG into DeepSeek Harness
+npx ccg-workflow dsh list                 # Which dsh profiles have it
+npx ccg-workflow dsh uninstall            # Remove it from every profile
 npx ccg-workflow uninstall                # Uninstall CCG
 npx ccg-workflow config mcp               # Configure MCP tokens
 npx ccg-workflow diagnose-mcp             # Diagnose MCP issues
@@ -313,4 +334,4 @@ MIT
 
 ---
 
-v3.6.1 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.6.2 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
