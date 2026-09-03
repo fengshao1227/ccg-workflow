@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-08-29 (v3.6.3)
+**Last Updated**: 2026-09-03 (v3.6.4)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,12 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-09-03 (v3.6.4)
+- 🐛 **dsh-ccg 让新版 harness 的整个 Web UI 打不开**（#162）：插件配置页把 `settings.plugin.item` 从 `list` 改声明为 `keyed`（按卡片编辑的 settings 命名空间派发）。**插槽注册缺了它那个 kind 要求的选项会抛异常，而异常吃掉的是整条 loader entry** —— 不是少个卡片，是设置卡片 + 面板视图 + 团队条一起没，页面只剩 `Failed to load plugins`。修法是一份注册**同时带 `key` 和 `id`**：两种 kind 各读各的、忽略对方的。⚠ 新版 harness 已把**全部** settings 命名空间发给浏览器（`settings.describe({redactSecrets:true})` 不再过白名单）——这正是插槽改 keyed 的动机，也意味着第三方插件的卡片终于能被派发到。
+- 🐛 **`ccg doctor` 永远报 `✗ Binary Not found`**（#161，报告人已完整定位）：`dist/cli.mjs` 是 ESM 且无 `createRequire` shim，而 `execSafe()` 里是 CommonJS `require('node:child_process')` → `ReferenceError` 被 `catch` 吞掉 → 返回 `null` → 调用方读作「没装」。**全平台、重装无用**。实际影响 6 处调用（binary / opencode / kimi / grok 检测 + `status` 的版本检查），比 issue 描述的更广。
+- 🐛 **`ccg dsh install` 无视 `DSH_HOME`**（自测发现）：harness 自己就靠这个变量换 home，安装器却写死 `~/.dsh` —— 设了该变量的用户会拿到一次「安装成功」，插件却躺在一个没人启动的 home 里。
+- ✅ **3 组回归测试**（主包 191 → 197，插件 112 → 116）。其中 `esm-only.test.ts` 扫 `src/**` 拦 CommonJS 全局；插件侧 `client-slots.test.mjs` **用真实 slots 运行时**验证同一份注册在两种 kind 声明下都成立、拆掉任一半都会抛。修复已在独立 `DSH_HOME` + dsh `0.1.1-rc.2` 下**实机复现并验证**。
 
 ### 2026-08-29 (v3.6.3)
 - 🐛 **`/ccg:codex-exec` 被 v3.6.0 自己的性能优化打断**（魔尊追问「codex 实施模式没 MCP 怎么搞」查出）：该命令的全部前提是「Claude 不做检索，{{BACKEND_PRIMARY}} 全权执行含 MCP 搜索」，载荷里点名 ace-tool / context7 / grok-search；而 v3.6.0 让 wrapper 默认禁用子代理 MCP（`-c mcp_servers={}`），**全仓库没有任何模板传 `--with-mcp`**。结果：子代理被要求用它看不到的工具，**且不报错** —— 检索不到就照样往下写。现三处**执行者**调用加 flag；**审核**（只读 diff、禁改文件）与**修正**（按 file:line）不加，不白付启动开销。
@@ -813,7 +819,7 @@ bundle 顺序就是 patch 顺序，挪动别人的条目等于悄悄改了别人
 ### 工具链隔离（已实测）
 
 `vitest.config.ts` 和 `tsconfig.json` 都只 include `src/**`，扫不到 `dsh-ccg/`；
-插件自己那 112 个测试用 `node --test` 跑：`cd dsh-ccg && npm test`。
+插件自己那 116 个测试用 `node --test` 跑：`cd dsh-ccg && npm test`。
 仓库里的 `dsh-ccg/node_modules` 是指向 `~/.dsh/profiles/node_modules` 的**软链**
 （peer 依赖来自宿主 harness），⚠ `.gitignore` 里必须写 `node_modules` **不带斜杠** ——
 带斜杠只匹配真目录，软链会被提交进去。

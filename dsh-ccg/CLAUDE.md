@@ -15,7 +15,7 @@ COPIED (a profile pointing at an npx cache directory breaks on the next run),
 and a profile needs BOTH a dependency and a `dsh.profile.bundles` entry — `pnpm
 add` writes only the first.
 
-**Version**: 0.4.6 · **Tests**: 112 · **Runtime deps**: none · **Build step**: none
+**Version**: 0.4.7 · **Tests**: 116 · **Runtime deps**: none · **Build step**: none
 
 ---
 
@@ -53,7 +53,7 @@ src/api.js         /api/ccg/config (card) + /api/ccg/team (the strip) data seams
 src/client.js      browser half: settings card + panel view + team strip (hand-written, no build;
                    borrows dsh-client-ui-primitives when the shell lends it, falls back when not)
 skills/            ccg-workflow playbook + the 5 CCG quality gates + gen-docs
-test/              112 unit tests over the pure functions and the tool definitions
+test/              116 unit tests over the pure functions, the tool definitions, and the slots
 ```
 
 ## Two kinds of memory, deliberately different media
@@ -107,10 +107,13 @@ test/              112 unit tests over the pure functions and the tool definitio
 - A tool's `enum` is enforced by the framework **before** `execute` runs, and
   its error names the valid values. That is a better message than anything
   thrown inside, so the in-`execute` guard is only for direct calls.
-- Third-party settings namespaces are **not served to the browser**
-  (`dsh-host-apiproxy` builds its allowlist from constants plus configurable
-  model providers). A plugin that wants a settings card must serve its own
-  route — writes are refused off-loopback.
+- Whether third-party settings namespaces reach the browser **depends on the
+  harness generation**, so this plugin serves its own route either way. Through
+  `0.1.0-rc.x`, `dsh-host-apiproxy` built an allowlist from constants plus
+  configurable model providers and refused everything else
+  (`settings-not-exposed`). From `0.1.1-rc.x` the describe handler is just
+  `settings.describe({redactSecrets: true})` — every registered namespace,
+  unfiltered. Writes are refused off-loopback in both.
 - The Plugins tab renders **only hand-written cards** from plugins shipping a
   browser half (`exports["./client"]` + `dsh.client` in package.json). It never
   auto-generates a form from a schema.
@@ -155,9 +158,11 @@ test/              112 unit tests over the pure functions and the tool definitio
 - `startContinuable()` resolves at **inbox acceptance**, not at an answer. The
   return value is a durable child id and nothing else.
 - The child→parent channel is `report` (from `dsh-tool-subagent-report`),
-  installed only for continuable in-process children. Delivery defaults to
-  `wakeup`, which starts a new parent turn — so **ending a turn is how a
-  coordinator waits**; sleeping or polling is pure waste.
+  installed only for continuable in-process children. The waking delivery mode
+  starts a new parent turn — so **ending a turn is how a coordinator waits**;
+  sleeping or polling is pure waste. It is the default, which is the only
+  reason the rename from `wakeup` to `next-step` in `0.1.1-rc.x` costs this
+  plugin nothing: no call site here names a delivery.
 - `agent/inbox/spliced` with `inserted` is a **delivery**, not a discard;
   `removedCount` is the removal case. Easy to misread when debugging.
 - Commands (`ctx.commands.register`) run host-side and cannot start a model
@@ -230,6 +235,44 @@ Three faults that only a live run surfaces, each now pinned by a test:
 
 None currently open. The two that were are closed in 0.4.3 (below); anything
 new will be found the same way the rest were — by running it.
+
+## Fixed in 0.4.7 — a slot that changed kind under it (issue #162)
+
+On a current harness the whole browser UI was a `Failed to load plugins /
+dsh-ccg` page. The plugin tab had redeclared `settings.plugin.item` from a
+`list` (ordered by `id`) to a `keyed` one (dispatched by the settings namespace
+the card edits), and `SlotCore.register` **throws** when the option its slot's
+kind requires is absent.
+
+- **The blast radius is the reason this is worth a section.** The throw fails
+  the entire loader entry, not the registration: the settings card, the panel
+  view and the team strip go together, and the app renders nothing but the
+  banner. Three surfaces and a whole UI behind one missing property.
+- **The fix carries both options**, `key` and `id`. Each kind reads the one it
+  requires and ignores the other's, so one registration satisfies either
+  declaration — no version sniffing, and nothing to revisit when the older line
+  disappears.
+- **Why the tab changed at all**: from `0.1.1-rc.x` the Host serves *every*
+  settings namespace to the browser instead of an allowlist, so a plugin
+  distributed outside the harness repo can finally have its card dispatched —
+  keyed by a namespace it registers itself. The card now appears on both
+  generations, and on the newer one it appears *because* the key matches.
+- **Audited the rest of the seams rather than fixing only what threw**, since
+  the first throw hides everything after it. Diffed every package this plugin
+  touches between the two generations: `dsh-tool-subagent`, `dsh-storage-domain`,
+  `dsh-settings` and `dsh-user-questions` are byte-identical; `tool.call.toolview`
+  and `conversation.input.dock` are unchanged; the rest is additive. The two
+  narrowings found — `SubagentReportDelivery` `'wakeup'` → `'next-step'` and
+  `openFile` returning a promise — touch nothing here, because this plugin names
+  no delivery and never calls `openFile`.
+- **Verified by reproducing it**, in a separate `DSH_HOME` on dsh `0.1.1-rc.2`:
+  the reported error page exactly, then a clean boot with the card rendered
+  among the built-in ones and an empty console after the swap.
+- `test/client-slots.test.mjs` pins all three registrations, ties the card's key
+  to the host half's `SETTINGS_NAMESPACE` (a browser module cannot import it,
+  so nothing else connects them), and drives **the real slot runtime** under
+  both declarations — including the two assertions that removing either option
+  throws.
 
 ## Added in 0.4.6 — borrowing the app's own component kit
 

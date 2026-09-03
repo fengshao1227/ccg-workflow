@@ -11,13 +11,14 @@
  * matters is everything decided before it runs.
  */
 
-import { tmpdir } from 'node:os'
+import { homedir, tmpdir } from 'node:os'
 import { mkdtemp, rm } from 'node:fs/promises'
 import fs from 'fs-extra'
 import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   DSH_PLUGIN_NAME,
+  defaultDshHome,
   dshPluginDir,
   findDshProfiles,
   hasDshHome,
@@ -198,5 +199,38 @@ describe('uninstallDshPlugin', () => {
     expect(result.success).toBe(true)
     expect(result.profiles).toEqual([])
     expect(await fs.readFile(join(dir, 'package.json'), 'utf-8')).toBe(before)
+  })
+})
+
+/**
+ * Which home gets installed into when the caller names none.
+ *
+ * `DSH_HOME` is the harness's own way of being pointed somewhere else, and a
+ * user who sets it has no `~/.dsh` for this to quietly fall back to: the
+ * install would report success into a home nothing boots from, and the plugin
+ * would simply never appear.
+ */
+describe('the harness home it defaults to', () => {
+  const saved = process.env.DSH_HOME
+
+  afterEach(() => {
+    if (saved === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = saved
+  })
+
+  it('follows DSH_HOME when the harness has been pointed elsewhere', () => {
+    process.env.DSH_HOME = join(tmpdir(), 'somewhere-else')
+    expect(defaultDshHome()).toBe(join(tmpdir(), 'somewhere-else'))
+    expect(dshPluginDir()).toBe(join(tmpdir(), 'somewhere-else', 'ccg', DSH_PLUGIN_NAME))
+  })
+
+  it('falls back to ~/.dsh when it is unset or blank', () => {
+    delete process.env.DSH_HOME
+    expect(defaultDshHome()).toBe(join(homedir(), '.dsh'))
+
+    // An exported-but-empty variable is not a home; treating it as one would
+    // resolve the plugin directory against the filesystem root.
+    process.env.DSH_HOME = '   '
+    expect(defaultDshHome()).toBe(join(homedir(), '.dsh'))
   })
 })

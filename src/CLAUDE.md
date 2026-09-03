@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **src**
 
-**Last Updated**: 2026-08-29
+**Last Updated**: 2026-09-03
 
 ---
 
@@ -271,7 +271,7 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（191 用例）
+# 测试（197 用例）
 pnpm test
 
 # 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
@@ -316,7 +316,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 12 个测试文件，191 用例：
+`src/utils/__tests__/` 下 13 个测试文件，197 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -331,7 +331,8 @@ defineBuildConfig({
 | `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
 | `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
 | `subagent-mcp.test.ts` | 被告知要用 MCP 的子代理必须真拿到 MCP：codex-exec 三处执行者调用带 `--with-mcp`、审核/修正调用不带、载荷仍点名 MCP、execute.md 的 MCP 仍在 Claude 侧 |
-| `installer-dsh.test.ts` | DSH 配置档发现（跳过 node_modules / 无 bundles / 解析失败的 manifest）、两半都写、幂等、bundles 追加不插入、卸载只动自己那两条、链接失败降级为 warning |
+| `installer-dsh.test.ts` | DSH 配置档发现（跳过 node_modules / 无 bundles / 解析失败的 manifest）、两半都写、幂等、bundles 追加不插入、卸载只动自己那两条、链接失败降级为 warning、**默认 home 跟随 `DSH_HOME`**（v3.6.4）|
+| `esm-only.test.ts` | 打包产物是 ESM，故 `src/**` 不得出现 CommonJS 全局：`require()` / `module.exports` / 未自行从 `import.meta.url` 推导的 `__dirname`。扫描前先剥注释与字符串，避免解释性文字被当成调用 |
 
 ---
 
@@ -348,3 +349,7 @@ defineBuildConfig({
 5. **`pathe` 替代 Node `path`**：统一路径分隔符为 `/`，避免 Windows `\` 导致的路径字符串比较/替换 bug，对模板路径注入尤为重要。
 
 6. **DSH 插件必须拷贝而非引用**（v3.6.2）：harness 配置档把插件声明为普通依赖。若指向 `PACKAGE_ROOT`，在 `npx` 场景下**只能活到缓存被清**——之后配置档会解析不到一个「本来在那儿」的插件，且报错发生在 harness 启动时而非安装时，极难归因。所以 `installer-dsh.ts` 把插件拷到 `~/.dsh/ccg/dsh-ccg`（安装器自己拥有的路径，卸载连带删）。⚠ 另一个同类陷阱：一个 dsh 插件要 `dependencies` **和** `dsh.profile.bundles` 两半才加载，而 `pnpm add` 只写前者 —— 只写一半的结果是「装了但永不加载，且不报错」。
+
+7. **⚠ `require()` 在这个包里是运行时炸弹，且 TypeScript 不会拦**（v3.6.4，#161）：`dist/cli.mjs` 是 ESM（`emitCJS: false`）且没有 `createRequire` shim，但 `@types/node` 无论模块制式都声明了 `require`，所以 `tsc` 全绿、unbuild 原样透传，`ReferenceError` 留到运行时。`doctor` 的 `execSafe()` 正是把它包在 `try/catch` 里 —— **被吞掉的 ReferenceError 和「程序没装」长得一模一样**，于是一个装好的 binary 被报成 Not found，全平台，重装无解。现由 `esm-only.test.ts` 静态拦截。同理，`__dirname`/`__filename` 只能自己从 `import.meta.url` 推导（本仓库三处都是对的）。
+
+8. **`DSH_HOME` 必须被安装器读取**（v3.6.4）：harness 自己就是靠这个环境变量指向别的 home。安装器若只认 `~/.dsh`，对设了该变量的用户就会**报告成功却装错地方** —— 没有任何报错，只是插件永远不出现。`defaultDshHome()` 是唯一入口，四处默认值全走它。

@@ -10,9 +10,10 @@
  *    instead of as one blob of text in a generic card.
  *
  * Both read this plugin's own `/api/ccg/config` route rather than the client
- * settings scope, because the harness serves settings namespaces to the browser
- * from a fixed allowlist and a third-party namespace is deliberately not on it.
- * The Host still owns every write — see src/api.js.
+ * settings scope. Older harnesses served the browser only an allowlist of
+ * settings namespaces, which no third-party namespace was on; newer ones serve
+ * every registered namespace. The route works on both and is therefore what
+ * this file keeps reading. The Host still owns every write — see src/api.js.
  *
  * Written as a plain module rather than a bundled one: the loader hands the
  * factory its own `require`, so hand-written `React.createElement` needs no
@@ -51,6 +52,17 @@ window.__ModuleLoader__.load({
 
     /** Dictionary namespace owned by this plugin. */
     const NS = 'ccg'
+
+    /**
+     * The settings namespace this card edits — `SETTINGS_NAMESPACE` in
+     * src/index.js, repeated here because a browser module cannot import from
+     * the host half. `test/client-slots.test.mjs` pins the two together.
+     *
+     * It is what the plugin tab keys the card by, and it happens to be spelled
+     * the same as the locale namespace above; they are separate ideas and one
+     * changing does not change the other.
+     */
+    const SETTINGS_NS = 'ccg'
 
     /** Required browser services (cordis fiber inject). */
     const inject = ['slots', 'locale']
@@ -1216,8 +1228,16 @@ window.__ModuleLoader__.load({
       ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'ccg: card dictionaries')
       ctx.effect(() => mountStyles(), 'ccg: card styles')
 
+      // Both `key` and `id`, on purpose. The plugin tab redeclared this slot
+      // from a `list` (ordered by `id`) to a `keyed` one (dispatched by the
+      // settings namespace the card edits) — and a registration missing the
+      // option its slot's kind requires THROWS, which fails the whole loader
+      // entry and takes the panel view and the team strip down with the card.
+      // The two options are read by different kinds and ignored by the other,
+      // so carrying both is what makes one registration work on either.
       ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
         name: 'settings.plugin.item',
+        key: SETTINGS_NS,
         id: 'ccg',
         order: 50,
         locale: NS,

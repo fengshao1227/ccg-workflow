@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.4] - 2026-09-03
+
+### 🐛 修复
+
+- **dsh-ccg 在新版 DeepSeek Harness 上整个 Web UI 打不开**（[#162](https://github.com/fengshao1227/ccg-workflow/issues/162)）：
+  插件配置页把 `settings.plugin.item` 插槽从 `list`（按 `id` 排序）**改声明为 `keyed`**
+  （按卡片所编辑的 settings 命名空间派发），而插槽注册缺了它那个 kind 要求的选项就会
+  **抛异常**——异常不是「少个卡片」，是整条 loader entry 失败，浏览器停在
+  `Failed to load plugins / dsh-ccg`，**面板视图和团队条一起没了，整个界面是死的**。
+  现在注册同时带 `key` 和 `id`：两种 kind 各读各的、互相忽略对方的，一份注册两边都活。
+  ⚠ 顺带一提，新版 harness 已经把**全部** settings 命名空间发给浏览器（旧版是白名单，
+  第三方命名空间不在其中）——这正是插槽改为 keyed 的原因。
+- **`ccg doctor` 永远报告 `✗ Binary Not found`**（[#161](https://github.com/fengshao1227/ccg-workflow/issues/161)，
+  感谢 @MjiaAndy 的完整定位）：`dist/cli.mjs` 是 ES module 且没有 `createRequire` shim，
+  而 `execSafe()` 里用的是 CommonJS `require('node:child_process')` —— ESM 作用域里
+  `require` 根本不存在，抛出的 `ReferenceError` 被 `try/catch` 吞掉后返回 `null`，
+  调用方一律读作「没装」。**全平台复现，重装无用**。影响面比报告的更大：binary、
+  opencode、kimi、grok 四项检测，加上 `ccg status` 的版本检查，**6 处调用全废**。
+- **`ccg dsh install` 不认 `DSH_HOME`**（自测时发现）：harness 自己就是靠这个环境变量
+  指向别处的 home，而安装器只认 `~/.dsh`。设了该变量的用户会得到一次「成功」，
+  插件却装进了一个没有任何东西会去启动的 home。
+
+### ✅ 测试
+
+- 新增 **3 组回归测试**（主包 191 → 197，插件 112 → 116）：
+  `esm-only.test.ts` 扫描 `src/**` 拦截 CommonJS 全局（`require` / `module.exports` /
+  未自行推导的 `__dirname`）；`installer-dsh.test.ts` 补 `DSH_HOME` 两例；
+  插件侧 `client-slots.test.mjs` 把三个插槽注册钉死，并**用真实的 slots 运行时**
+  验证同一份注册在 `keyed` 与 `list` 两种声明下都能注册、且拆掉任一半都会抛。
+- 修复经**实机验证**：在独立 `DSH_HOME` 下用 dsh `0.1.1-rc.2` 复现出与报告一模一样的
+  报错页，换上修复版后界面正常启动、CCG 卡片正常渲染、console 零报错。
+
 ## [3.6.3] - 2026-08-29
 
 ### 🐛 修复

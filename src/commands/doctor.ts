@@ -1,5 +1,6 @@
 import ansis from 'ansis'
 import fs from 'fs-extra'
+import { execSync } from 'node:child_process'
 import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { readCcgConfig } from '../utils/config'
@@ -18,9 +19,13 @@ async function dirFiles(p: string): Promise<string[]> {
   return (await fs.readdir(p)).filter(f => !f.startsWith('.'))
 }
 
+// `execSync` is imported at the top, not required here. `dist/cli.mjs` is an ES
+// module built without a `createRequire` shim, so a `require()` in this scope
+// throws ReferenceError — and this catch would swallow it and answer `null`,
+// which every caller reads as "not installed". A working binary reported as
+// missing (#161), on every platform, with reinstalling unable to help.
 function execSafe(cmd: string): string | null {
   try {
-    const { execSync } = require('node:child_process') as typeof import('node:child_process')
     return execSync(cmd, { stdio: 'pipe', timeout: 10000 }).toString().trim()
   }
   catch { return null }

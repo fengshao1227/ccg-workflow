@@ -26,8 +26,21 @@ import { PACKAGE_ROOT } from './installer-template'
 /** Package name the profile depends on and lists in its bundles. */
 export const DSH_PLUGIN_NAME = 'dsh-ccg'
 
+/**
+ * The harness home to install into.
+ *
+ * `DSH_HOME` is how the harness itself is pointed at another home, and a user
+ * who sets it has no second home at `~/.dsh` for this to fall back to: writing
+ * there would report success while the profile that actually boots never gains
+ * the plugin. Reading the same variable is the only way the two agree.
+ */
+export function defaultDshHome(): string {
+  const configured = process.env.DSH_HOME?.trim()
+  return configured !== undefined && configured !== '' ? configured : join(homedir(), '.dsh')
+}
+
 /** Where the plugin is copied to, so the profile has a path that outlives npx. */
-export function dshPluginDir(dshHome = join(homedir(), '.dsh')): string {
+export function dshPluginDir(dshHome = defaultDshHome()): string {
   return join(dshHome, 'ccg', DSH_PLUGIN_NAME)
 }
 
@@ -68,7 +81,7 @@ export type DshInstallResult = {
  * Used to decide whether to offer the option rather than to gate the install:
  * a user who has not run dsh yet has no profile to install into.
  */
-export async function hasDshHome(dshHome = join(homedir(), '.dsh')): Promise<boolean> {
+export async function hasDshHome(dshHome = defaultDshHome()): Promise<boolean> {
   return fs.pathExists(join(dshHome, 'profiles'))
 }
 
@@ -83,7 +96,7 @@ export async function hasDshHome(dshHome = join(homedir(), '.dsh')): Promise<boo
  * @param dshHome - the harness home; defaults to `~/.dsh`.
  * @returns one entry per profile, in directory order.
  */
-export async function findDshProfiles(dshHome = join(homedir(), '.dsh')): Promise<DshProfile[]> {
+export async function findDshProfiles(dshHome = defaultDshHome()): Promise<DshProfile[]> {
   const profilesDir = join(dshHome, 'profiles')
   if (!await fs.pathExists(profilesDir)) return []
 
@@ -213,7 +226,7 @@ export async function installDshPlugin(options: {
   dshHome?: string
   link?: ProfileLinker
 } = {}): Promise<DshInstallResult> {
-  const dshHome = options.dshHome ?? join(homedir(), '.dsh')
+  const dshHome = options.dshHome ?? defaultDshHome()
   const link = options.link ?? linkProfile
   const warnings: string[] = []
 
@@ -274,7 +287,7 @@ export async function uninstallDshPlugin(options: {
   dshHome?: string
   link?: ProfileLinker
 } = {}): Promise<DshInstallResult> {
-  const dshHome = options.dshHome ?? join(homedir(), '.dsh')
+  const dshHome = options.dshHome ?? defaultDshHome()
   const link = options.link ?? linkProfile
   const warnings: string[] = []
 

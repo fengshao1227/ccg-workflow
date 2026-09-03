@@ -1,6 +1,6 @@
 {
   "name": "dsh-ccg",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "type": "module",
   "description": "CCG's multi-model role matrix for DeepSeek Harness: seven role-pinned delegation tools (analyze / design / build / debug / optimize / review / test), each on its own model with its own expert persona. Any role can hold several models and answer as a panel, or be hired as a live teammate with its own files. Durable ownership and project memory. Pure provider API — no external CLI.",
   "keywords": [
