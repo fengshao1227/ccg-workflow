@@ -1,3 +1,4 @@
+import { execSync } from 'node:child_process'
 import fs from 'fs-extra'
 import { join } from 'pathe'
 import { describe, expect, it } from 'vitest'
@@ -43,6 +44,33 @@ describe('plugin manifests — native marketplace install', () => {
     expect(plugin.version).toBe(pkg.version)
     expect(marketplace.metadata.version).toBe(pkg.version)
     expect(marketplace.plugins[0].version).toBe(pkg.version)
+  })
+})
+
+describe('npm tarball does not ship red-team notes', () => {
+  it('files whitelist never includes domains/security (npm scanner hold)', () => {
+    // 3.6.5 / 3.6.6 PUT succeeded then never became GET-able. The installer
+    // already strips this dir after copy; shipping it in the tarball is the
+    // remaining dual-use surface. Keep the files in git, not in npm.
+    // `.npmignore` does NOT override a directory already listed in `files`.
+    const files: string[] = pkg.files
+    expect(files.some(f => f === 'templates/skills/' || f.endsWith('domains/security') || f.includes('domains/security/'))).toBe(false)
+    expect(files).toContain('templates/skills/domains/ai/')
+    expect(files).toContain('templates/skills/tools/')
+  })
+
+  it('npm pack actually omits domains/security', { timeout: 60_000 }, () => {
+    const out = execSync('npm pack --dry-run --json --ignore-scripts', {
+      cwd: ROOT,
+      encoding: 'utf8',
+      maxBuffer: 20 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    })
+    const packed: string[] = JSON.parse(out)[0].files.map((f: { path: string }) => f.path)
+    expect(packed.some(p => p.includes('templates/skills/domains/security'))).toBe(false)
+    expect(packed.some(p => p.endsWith('red-team.md') || p.endsWith('pentest.md') || p.endsWith('vuln-research.md'))).toBe(false)
+    expect(packed).toContain('templates/skills/domains/ai/SKILL.md')
+    expect(packed).toContain('templates/skills/tools/verify-security/SKILL.md')
   })
 })
 

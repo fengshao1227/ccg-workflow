@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.7] - 2026-09-15
+
+### 🐛 修复
+
+- **npm 扫描 hold：tarball 不再含红队/渗透笔记。** 3.6.5 / 3.6.6 的 PUT 都成功（`+ ccg-workflow@…`，OIDC 201），随后 `npm view` 对 owner 也 404，再 PUT 同一版本 409 `previously staged`。安装器本来就不把 `domains/security/` 装进用户目录（杀软误报），但 `package.json` 的 `files` 写了整棵 `templates/skills/`，`.npmignore` 挡不住已经在 `files` 里的目录。现改成按子目录白名单，`domains/security/` 不进包。文件仍在 git。需要的人从 GitHub 拷。
+
 ## [3.6.6] - 2026-09-15
+
+> ⚠ 此版本 **同样从未出现在 npm registry**。PUT 202 后扫描未放行，号作废。不要再发 3.6.6。
 
 ### 🔄 变更
 
@@ -15,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.6.5] - 2026-09-15
 
-> ⚠ 此版本 **从未出现在 npm registry**。CI 收下暂存后扫描未放行，号作废。功能以 3.6.6 为准。
+> ⚠ 此版本 **从未出现在 npm registry**。CI 收下暂存后扫描未放行，号作废。功能以 3.6.7 为准。
 
 ### ✨ 新功能
 

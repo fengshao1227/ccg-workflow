@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-09-15 (v3.6.6)
+**Last Updated**: 2026-09-15 (v3.6.7)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -12,8 +12,11 @@
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
 
+### 2026-09-15 (v3.6.7)
+- 🐛 **npm 扫描 hold：** tarball 不再含 `templates/skills/domains/security/`（红队/渗透笔记）。3.6.5/3.6.6 的 PUT 成功但永不 GET。文件仍在 git。
+
 ### 2026-09-15 (v3.6.6)
-- 🔄 **重发 3.6.5。** 3.6.5 被 npm 暂存后从未 GET 得到（PUT 409 previously staged，owner 也 404）。功能与 3.6.5 相同。
+- 🔄 **重发 3.6.5。** 3.6.5 被 npm 暂存后从未 GET 得到（PUT 409 previously staged，owner 也 404）。功能与 3.6.5 相同。**此号同样未上线。**
 
 ### 2026-09-15 (v3.6.5)
 - ✨ **PackyCode 赞助商**：README Banner（置于 APIMart 之上）+ `init` Step 1 / 菜单 API 配置新选项。自动填 `ANTHROPIC_BASE_URL=https://cf.api.fan`（**不带** `/v1`），用户只填 Key。注册链接 `https://www.packyapi.ai/register?aff=m21P`。

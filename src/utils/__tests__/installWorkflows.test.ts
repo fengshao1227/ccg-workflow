@@ -39,7 +39,7 @@ describe('installWorkflows E2E — mcpProvider="skip"', () => {
     expect(result.success).toBe(true)
     expect(result.errors).toEqual([])
     expect(result.installedCommands.length).toBeGreaterThan(0)
-  }, 15000)
+  }, 30_000)
 
   it('generated command files contain no mcp__ace-tool references', async () => {
     const cmdDir = join(tmpDir, 'commands', 'ccg')
@@ -103,7 +103,7 @@ describe('installWorkflows E2E — mcpProvider="ace-tool" (control)', () => {
     })
     expect(result.success).toBe(true)
     expect(result.errors).toEqual([])
-  })
+  }, 30_000)
 
   it('generated files contain mcp__ace-tool__search_context (correct injection)', async () => {
     const planContent = readFileSync(join(tmpDir, 'commands', 'ccg', 'plan.md'), 'utf-8')

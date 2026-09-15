@@ -13,6 +13,13 @@ templates/schemas/
 templates/commands/execute.md
 templates/commands/plan.md
 
+# Red-team / pentest reference notes. The installer already strips this
+# directory after copy (antivirus false positives). Shipping it in the
+# tarball is what npm's 2026-07-28 publish-time scanner holds as dual-use
+# malware — 3.6.5 and 3.6.6 both PUT 202 then never became GET-able.
+# The files stay in git; users who want them copy from the GitHub repo.
+templates/skills/domains/security/
+
 # 开发文件
 *.log
 *.swp

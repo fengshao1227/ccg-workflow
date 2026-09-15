@@ -7,8 +7,10 @@ When the user's request matches trigger keywords below, automatically READ the c
 ## Security Domain (`domains/security/`) — NOT installed by default
 
 > Security domain files contain red team/pentest reference content that may trigger antivirus false positives.
-> They are NOT installed by default. To enable, manually copy from the npm package:
-> `cp -r $(npm root -g)/ccg-workflow/templates/skills/domains/security/ ~/.claude/skills/ccg/domains/security/`
+> They are NOT installed by default, and they are **not in the npm tarball**
+> (npm's publish-time scanner holds packages that ship them). To enable, copy
+> from the GitHub repo:
+> `git clone --depth 1 https://github.com/fengshao1227/ccg-workflow.git /tmp/ccg && cp -r /tmp/ccg/templates/skills/domains/security ~/.claude/skills/ccg/domains/security`
 
 | Trigger Keywords | Skill File | Description |
 |------------------|-----------|-------------|

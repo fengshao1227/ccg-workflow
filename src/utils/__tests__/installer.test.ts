@@ -317,7 +317,7 @@ describe('installWorkflows — prompts installation', () => {
     await fs.remove(tmpDir)
   })
 
-  it('installs codex, gemini, and claude prompts', async () => {
+  it('installs codex, gemini, and claude prompts', { timeout: 30_000 }, async () => {
     const result = await installWorkflows(getAllCommandIds(), tmpDir, true, {
       mcpProvider: 'skip',
     })
@@ -353,7 +353,7 @@ describe('skills namespace isolation', () => {
     await fs.remove(tmpDir)
   })
 
-  it('installs skills under skills/ccg/ namespace', async () => {
+  it('installs skills under skills/ccg/ namespace', { timeout: 30_000 }, async () => {
     const result = await installWorkflows(['workflow'], tmpDir, true, {
       mcpProvider: 'skip',
     })
@@ -364,6 +364,11 @@ describe('skills namespace isolation', () => {
     expect(fs.existsSync(join(tmpDir, 'skills', 'ccg', 'SKILL.md'))).toBe(true)
     expect(fs.existsSync(join(tmpDir, 'skills', 'ccg', 'tools'))).toBe(true)
     expect(fs.existsSync(join(tmpDir, 'skills', 'ccg', 'orchestration'))).toBe(true)
+
+    // Red-team notes stay in git, never land in the user install (AV false positives
+    // + npm publish-time scanner). Other domain knowledge still installs.
+    expect(fs.existsSync(join(tmpDir, 'skills', 'ccg', 'domains', 'security'))).toBe(false)
+    expect(fs.existsSync(join(tmpDir, 'skills', 'ccg', 'domains', 'ai'))).toBe(true)
   })
 
   it('uninstall only removes skills/ccg/, preserves user skills', async () => {

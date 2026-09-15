@@ -428,9 +428,11 @@ async function installSkillFiles(ctx: InstallContext): Promise<void> {
       errorOnExist: false,
     })
 
-    // Remove security domain files — contains red team/pentest reference content
-    // that triggers antivirus/corporate security tool false positives.
-    // Users who need it can manually copy from templates/skills/domains/security/.
+    // Drop red-team / pentest notes even when installing from a git checkout.
+    // They are also excluded from the npm tarball (v3.6.7) — npm's publish-time
+    // scanner holds packages that ship them. Copy from GitHub if you need them:
+    //   git clone --depth 1 https://github.com/fengshao1227/ccg-workflow.git /tmp/ccg
+    //   cp -r /tmp/ccg/templates/skills/domains/security ~/.claude/skills/ccg/domains/security
     const securityDir = join(skillsDestDir, 'domains', 'security')
     if (await fs.pathExists(securityDir)) {
       await fs.remove(securityDir)
