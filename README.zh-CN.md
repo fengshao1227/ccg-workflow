@@ -23,6 +23,14 @@
 
 ## ♥️ Sponsor
 
+[![PackyCode](assets/sponsors/packycode.png)](https://www.packyapi.ai/register?aff=m21P)
+
+感谢 [PackyCode](https://www.packyapi.ai/register?aff=m21P) 赞助了本项目！PackyCode 是稳定、高效的 API 中转服务商，一句话接入主流大模型。统一域名、统一密钥、智能容灾切换，97% 可用性。人民币 1:1 充值，无汇率无手续费坑；新用户首充立享折扣 + $1 免费体验额度，多分组折扣低至 2 折起，提供专属 Codex / Claude Code 高速通道。通过[此注册链接](https://www.packyapi.ai/register?aff=m21P)注册即可开用。
+
+> 💡 PackyCode 同时提供 Anthropic 原生兼容端点，可直接作为 Claude Code 的 API 提供方 —— 运行 `npx ccg-workflow` 在 Step 1 选择 PackyCode，填入 Key 即可。
+
+---
+
 [![APIMart](assets/sponsors/apimart.jpg)](https://go.apimart.ai/gh-ccg-workflow)
 
 感谢 [APIMart](https://go.apimart.ai/gh-ccg-workflow) 赞助了本项目！APIMart 是专注 AI 图片/视频生成的低价 API 平台，GPT-Image-2 低至 $0.006/张，1 美元可出图 160+ 张。图片、视频一套异步 API 通吃，提交任务拿 ID、回调取结果，跑批万张不超时、换模型不改代码。按量付费、无月费，通过[此注册链接](https://go.apimart.ai/gh-ccg-workflow)注册即可开用。
@@ -334,4 +342,4 @@ MIT
 
 ---
 
-v3.6.4 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)
+v3.6.5 | [Issues](https://github.com/fengshao1227/ccg-workflow/issues) | [Contributing](./CONTRIBUTING.md)

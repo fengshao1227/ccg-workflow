@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **skills-v2**
 
-**Last Updated**: 2026-09-03 (v3.6.4)
+**Last Updated**: 2026-09-15 (v3.6.5)
 
 > ⚠ 本文档主体仍停留在 v2.1.16 架构描述（v3.0 引擎重构后未全量同步）。下方变更记录保留 v3.x 修复轨迹，完整历史见 [CHANGELOG.md](./CHANGELOG.md)。
 
@@ -11,6 +11,12 @@
 ## 变更记录 (Changelog)
 
 > 完整变更历史请查看 [CHANGELOG.md](./CHANGELOG.md)
+
+### 2026-09-15 (v3.6.5)
+- ✨ **PackyCode 赞助商**：README Banner（置于 APIMart 之上）+ `init` Step 1 / 菜单 API 配置新选项。自动填 `ANTHROPIC_BASE_URL=https://cf.api.fan`（**不带** `/v1`），用户只填 Key。注册链接 `https://www.packyapi.ai/register?aff=m21P`。
+- ✨ **Codex CLI 接入 PackyCode**：`[model_providers.packycode]`，`base_url=https://cf.api.fan/v1`（**带** `/v1`），`env_key=PACKYCODE_API_KEY`。注册与启用分离，启用默认否。`codex-mode install` 静默注册；卸载只摘自己那张表，不误伤 APIMart。
+- ✨ **赞助商表 `src/utils/sponsors.ts`**：一家一个对象。init / 菜单 / Codex 注册 / 卸载全遍历它，再加一家只改这一处 + README Banner。
+- ✅ `installer-codex-api.test.ts` 改测注册表 + 通用 API。
 
 ### 2026-09-03 (v3.6.4)
 - 🐛 **dsh-ccg 让新版 harness 的整个 Web UI 打不开**（#162）：插件配置页把 `settings.plugin.item` 从 `list` 改声明为 `keyed`（按卡片编辑的 settings 命名空间派发）。**插槽注册缺了它那个 kind 要求的选项会抛异常，而异常吃掉的是整条 loader entry** —— 不是少个卡片，是设置卡片 + 面板视图 + 团队条一起没，页面只剩 `Failed to load plugins`。修法是一份注册**同时带 `key` 和 `id`**：两种 kind 各读各的、忽略对方的。⚠ 新版 harness 已把**全部** settings 命名空间发给浏览器（`settings.describe({redactSecrets:true})` 不再过白名单）——这正是插槽改 keyed 的动机，也意味着第三方插件的卡片终于能被派发到。

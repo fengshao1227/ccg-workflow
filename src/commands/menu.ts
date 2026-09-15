@@ -11,7 +11,7 @@ import { parse as parseTOML } from 'smol-toml'
 import { version } from '../../package.json'
 import { configMcp } from './config-mcp'
 import { i18n } from '../i18n'
-import { configureGeminiCliApi, installCodexMode, removeGeminiCliApi, uninstallCodexMode, uninstallWorkflows } from '../utils/installer'
+import { configureGeminiCliApi, getSponsor, installCodexMode, promptSponsorMenuKey, removeGeminiCliApi, sponsorInquirerChoices, uninstallCodexMode, uninstallWorkflows } from '../utils/installer'
 import { findDshProfiles, installDshPlugin, uninstallDshPlugin } from '../utils/installer-dsh'
 import { readCcgConfig, writeCcgConfig } from '../utils/config'
 import { init } from './init'
@@ -345,7 +345,7 @@ async function configApi(): Promise<void> {
     choices: [
       { name: `${ansis.green('●')} ${i18n.t('menu:api.officialOption')}`, value: 'official' },
       { name: `${ansis.cyan('●')} ${i18n.t('menu:api.thirdPartyOption')}`, value: 'thirdparty' },
-      { name: `${ansis.yellow('★')} ${i18n.t('menu:api.sponsorAPIMart')} ${ansis.gray('— https://go.apimart.ai/gh-ccg-workflow')}`, value: 'apimart' },
+      ...sponsorInquirerChoices(),
       { name: `${ansis.magenta('●')} ${i18n.t('init:api.geminiCliOption')}`, value: 'gemini-cli' },
     ],
   }])
@@ -413,6 +413,7 @@ async function configApi(): Promise<void> {
     return
   }
 
+  const sponsor = getSponsor(apiProvider)
   if (apiProvider === 'official') {
     // Clear third-party config, let Claude Code use official auth
     if (!settings.env)
@@ -421,23 +422,13 @@ async function configApi(): Promise<void> {
     delete settings.env.ANTHROPIC_AUTH_TOKEN
     delete settings.env.ANTHROPIC_API_KEY
   }
-  else if (apiProvider === 'apimart') {
-    console.log()
-    console.log(`    ${ansis.yellow('★')} ${i18n.t('menu:api.sponsorAPIMartGetKey')}: ${ansis.cyan.underline('https://go.apimart.ai/gh-ccg-workflow')}`)
-    console.log()
-    const { key } = await inquirer.prompt([{
-      type: 'password',
-      name: 'key',
-      message: `APIMart API Key ${ansis.gray(`(${i18n.t('menu:api.keyRequired')})`)}`,
-      mask: '*',
-      validate: (v: string) => v.trim() !== '' || i18n.t('menu:api.enterKey'),
-    }])
-
+  else if (sponsor) {
+    const key = await promptSponsorMenuKey(sponsor)
     if (!settings.env)
       settings.env = {}
     // No /v1 suffix: Claude Code appends /v1/messages to ANTHROPIC_BASE_URL itself.
-    settings.env.ANTHROPIC_BASE_URL = 'https://api.apimart.ai'
-    settings.env.ANTHROPIC_AUTH_TOKEN = key.trim()
+    settings.env.ANTHROPIC_BASE_URL = sponsor.anthropicBaseUrl
+    settings.env.ANTHROPIC_AUTH_TOKEN = key
     delete settings.env.ANTHROPIC_API_KEY
   }
   else {

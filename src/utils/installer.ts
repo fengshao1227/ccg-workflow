@@ -4,7 +4,7 @@ import ansis from 'ansis'
 import fs from 'fs-extra'
 import { basename, join } from 'pathe'
 import { getLegacyCommandIds, getWorkflowById } from './installer-data'
-import { configureApiMartForCodex, removeApiMartFromCodex } from './installer-codex-api'
+import { configureAllSponsorsForCodex, removeAllSponsorsFromCodex } from './installer-codex-api'
 import { PACKAGE_ROOT, injectConfigVariables, replaceHomePathsInTemplate } from './installer-template'
 import { readCcgConfig } from './config'
 import { installSkillCommands } from './skill-registry'
@@ -29,11 +29,24 @@ export type { WorkflowPreset } from './installer-data'
 export { injectConfigVariables } from './installer-template'
 
 export {
-  APIMART_CODEX_PROVIDER,
-  APIMART_CODEX_PROVIDER_ID,
+  configureAllSponsorsForCodex,
   configureApiMartForCodex,
+  configurePackyCodeForCodex,
+  configureSponsorForCodex,
+  removeAllSponsorsFromCodex,
   removeApiMartFromCodex,
+  removePackyCodeFromCodex,
+  removeSponsorFromCodex,
 } from './installer-codex-api'
+
+export {
+  SPONSORS,
+  getSponsor,
+  promptSponsorInit,
+  promptSponsorMenuKey,
+  sponsorInquirerChoices,
+} from './sponsors'
+export type { CodexProviderSpec, SponsorGateway } from './sponsors'
 
 export {
   configureGeminiCliApi,
@@ -540,12 +553,13 @@ export async function installCodexMode(): Promise<{ success: boolean, message: s
       await fs.copy(configSrc, configDest)
     }
 
-    // Make APIMart available as a Codex model provider. Registration only —
-    // `model_provider` is left alone, so this changes no behaviour and switching
-    // later is a one-line edit. Unconditional and silent by design: this function
-    // is also the non-interactive `ccg codex-mode install` entry point used by
-    // CI and scripts, so it must never grow a prompt.
-    await configureApiMartForCodex(false)
+    // Make sponsored gateways available as Codex model providers. Registration
+    // only — `model_provider` is left alone, so this changes no behaviour and
+    // switching later is a one-line edit. Unconditional and silent by design:
+    // this function is also the non-interactive `ccg codex-mode install` entry
+    // point used by CI and scripts, so it must never grow a prompt.
+    // Walks SPONSORS — adding a gateway does not require a change here.
+    await configureAllSponsorsForCodex()
 
     const agentsSrc = join(codexTemplateDir, 'agents')
     if (await fs.pathExists(agentsSrc)) {
@@ -647,11 +661,11 @@ export async function uninstallCodexMode(): Promise<{ success: boolean, removed:
     }
 
     // config.toml — never delete (user may have custom settings), but do take
-    // back the one table CCG added. Leaving a dangling [model_providers.apimart]
-    // behind is exactly the uninstall residue fixed in v3.1.3.
-    const apimartCleanup = await removeApiMartFromCodex()
-    if (apimartCleanup.success && apimartCleanup.configPath)
-      removed.push('~/.codex/config.toml [model_providers.apimart]')
+    // back the tables CCG added. Leaving a dangling [model_providers.*] behind
+    // is exactly the uninstall residue fixed in v3.1.3.
+    const sponsorCleanup = await removeAllSponsorsFromCodex()
+    for (const id of sponsorCleanup.removed)
+      removed.push(`~/.codex/config.toml [model_providers.${id}]`)
     skipped.push('~/.codex/config.toml (preserved — may contain user settings)')
 
     // Clean up empty dirs

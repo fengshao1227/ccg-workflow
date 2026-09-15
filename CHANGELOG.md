@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.5] - 2026-09-15
+
+### ✨ 新功能
+
+- **PackyCode 成为赞助商，并可直接用作 API 提供方** — 中英文 README 顶部新增 PackyCode Banner + 介绍，位置在 APIMart 之上。`init` Step 1 与菜单的 API 配置新增 PackyCode 选项，选中后自动填入 Base URL（`https://cf.api.fan`，**不带** `/v1`），用户只需粘贴 Key。注册链接带联盟参数 `aff=m21P`。
+- **Codex CLI 也能走 PackyCode** — 同一份 `installer-codex-api.ts` 新增 `[model_providers.packycode]`（`base_url = https://cf.api.fan/v1`，**带** `/v1`，`wire_api = responses`，`env_key = PACKYCODE_API_KEY`）。`ccg codex-mode install` 静默注册（保持非交互），`init` 选 PackyCode 时另问是否接 Codex。**注册与启用分离，启用默认否**——翻 `model_provider` 会把用户全部 Codex 请求从订阅改道到按量计费，安装器不该替人默默决定。卸载连带摘除该表与悬空 `model_provider`，且不误伤 APIMart。
+- **赞助商表抽成 `src/utils/sponsors.ts`** — 一家赞助商 = 列表里一个对象。`init` Step 1、菜单 API 配置、Codex 静默注册、卸载全部遍历这张表；i18n 只留一套 `sponsorOption` / `sponsorGetKey` / `sponsorCodex*` 模板。再加一家只改这一处 + README Banner，不再复制 init/menu/i18n 分支。
+
+### 🐛 修复
+
+- **两个 Base URL 极易写反，已分别锁死** — 与 APIMart 同一条铁律：Claude Code 的 `ANTHROPIC_BASE_URL` = `https://cf.api.fan`（不带 `/v1`）；Codex 的 `base_url` = `https://cf.api.fan/v1`（带 `/v1`）。取值来自 [PackyAPI 官方文档](https://docs.packyapi.com/docs/cli/2-claude.html)。写反表现为静默 404。
+
+### ✅ 测试
+
+- `installer-codex-api.test.ts` 改测注册表 + 通用 API：每家 Claude 基址无 `/v1`、Codex 带 `/v1`、默认不激活、用户配置无损、摘一家不误伤另一家、`configureAll` / `removeAll` 往返零残留。旧的 `configureApiMartForCodex` 包装仍有一例防回归。
+
 ## [3.6.4] - 2026-09-03
 
 ### 🐛 修复

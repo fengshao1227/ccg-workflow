@@ -2,7 +2,7 @@
 
 > [根目录](../CLAUDE.md) > **src**
 
-**Last Updated**: 2026-09-03
+**Last Updated**: 2026-09-15
 
 ---
 
@@ -86,7 +86,7 @@ export { getCurrentVersion, checkForUpdates, compareVersions } from './utils/ver
 
 ```
 Step 0: 语言选择（首次/已保存跳过）
-Step 1/4: API 提供方（官方 / 第三方 / APIMart 赞助商 / 跳过）
+Step 1/4: API 提供方（官方 / 第三方 / APIMart 赞助商 / PackyCode 赞助商 / 跳过）
 Step 2/4: 模型路由（Frontend: Gemini|Codex, Backend: Codex|Gemini, Gemini 型号）
 Step 3/4: MCP 工具多选（ace-tool ✓, context7 ✓, fast-context, grok-search, contextweaver）
 Step 4/4: 性能模式（standard|lite）+ Impeccable 可选安装
@@ -108,7 +108,8 @@ v1.7.83 将原 1878 行单文件拆分为 5 个聚焦模块，各自边界清晰
 | `installer-template.ts` | 模板变量替换，PACKAGE_ROOT 解析，MCP provider 注册表 | `injectConfigVariables()`, `replaceHomePathsInTemplate()`, `PACKAGE_ROOT` |
 | `installer-mcp.ts` | MCP 服务安装（ace-tool / fast-context / contextweaver / 通用） | `installAceTool()`, `installFastContext()`, `syncMcpToCodex()`, `syncMcpToGemini()` |
 | `installer-prompt.ts` | fast-context 搜索引导 Prompt 管理 | `writeFastContextPrompt()`, `removeFastContextPrompt()` |
-| `installer-codex-api.ts` | APIMart 作为 Codex 模型供应商写入 `~/.codex/config.toml` | `configureApiMartForCodex()`, `removeApiMartFromCodex()` |
+| `sponsors.ts` | 赞助商网关唯一真相源。一家一个对象：id / signupUrl / anthropicBaseUrl（无 `/v1`）/ Codex 表（带 `/v1`）/ 中英文案 | `SPONSORS`, `getSponsor()`, `sponsorInquirerChoices()`, `promptSponsorInit()` |
+| `installer-codex-api.ts` | 把 `SPONSORS` 写成 `~/.codex/config.toml` 的 `[model_providers.*]`；注册与启用分离 | `configureSponsorForCodex()`, `configureAllSponsorsForCodex()`, `removeAllSponsorsFromCodex()` |
 | `installer-dsh.ts` | 把 `dsh-ccg/` 装进 DeepSeek Harness 配置档：拷到 `~/.dsh/ccg/` + 写 `dependencies` 和 `dsh.profile.bundles` 两半 + 调用宿主包管理器 | `installDshPlugin()`, `uninstallDshPlugin()`, `findDshProfiles()` |
 | `installer-gemini-api.ts` | Gemini CLI 第三方网关：`GOOGLE_GEMINI_BASE_URL`/`GEMINI_API_KEY` 受管块写 shell rc（Windows `setx`）。0.53.1 不读 .env，环境变量是唯一通路 | `configureGeminiCliApi()`, `removeGeminiCliApi()` |
 
@@ -271,7 +272,7 @@ pnpm typecheck
 # 构建（unbuild → dist/cli.mjs + dist/index.mjs，inline 所有依赖）
 pnpm build
 
-# 测试（197 用例）
+# 测试（204 用例）
 pnpm test
 
 # 发布 —— 不要本地 npm publish；推 tag 由 GitHub Actions 经 OIDC 发布
@@ -316,7 +317,7 @@ defineBuildConfig({
 
 ## 测试覆盖
 
-`src/utils/__tests__/` 下 13 个测试文件，197 用例：
+`src/utils/__tests__/` 下 13 个测试文件，204 用例：
 
 | 测试文件 | 覆盖内容 |
 |----------|----------|
@@ -326,7 +327,7 @@ defineBuildConfig({
 | `installer.test.ts` | `installWorkflows` 主流程，template 变量完整性检查 |
 | `installWorkflows.test.ts` | 安装结果验证，error 处理路径 |
 | `injectConfigVariables.test.ts` | 所有模板占位符替换正确性 |
-| `installer-codex-api.test.ts` | APIMart Codex provider 注册/移除、原子 TOML 合并 |
+| `installer-codex-api.test.ts` | 赞助商注册表约束（无 `/v1` vs 带 `/v1`）+ Codex provider 注册/移除、原子 TOML 合并、两表并存、互不误伤 |
 | `installer-gemini-api.test.ts` | Gemini CLI 网关 shell rc 受管块：写入/幂等替换/清除/fish 语法/shell 识别 |
 | `skills-hygiene.test.ts` | 扫 `templates/skills/` 拦截密钥/公网 IP/绝对路径泄漏 |
 | `plugin-manifest.test.ts` | `.claude-plugin` manifest 版本一致性、impeccable 收敛不回退、frontend-design 无死链 |
