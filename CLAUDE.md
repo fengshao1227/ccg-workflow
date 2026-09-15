@@ -759,7 +759,9 @@ npm http fetch POST <码> https://registry.npmjs.org/-/npm/v1/oidc/token/exchang
 
 ⚠ 普通日志级别看不到这行，这是区分「workflow 配错」和「npm 后台没配」的唯一依据。
 ⚠ **provenance 签名成功 ≠ npm 认证成功** —— 那走 Sigstore，与 npm 认证是两条独立路径，极易误判。
-⚠ Node 22 自带 npm 10.x 无 OIDC 支持，workflow 里必须先升到 npm 11（`npm install -g npm@11`，需 ≥ 11.5.1）。**不要用 `npm@latest`**：v3.6.5 那次它漂到 12.0.2，打印了 `+ ccg-workflow@3.6.5` 和 "being processed"，版本却从未出现在 registry（tarball 404、无 attestation）。3.6.4 用 npm 11 当场可 GET。
+⚠ Node 22 自带 npm 10.x 无 OIDC 支持，workflow 里必须先升到 npm 11（`npm install -g npm@11`，需 ≥ 11.5.1）。**不要用 `npm@latest`**。
+⚠ **自 2026-07-28 起 npm 发布后要过恶意扫描才可 GET**（通常约 5 分钟，高峰可 15 分钟以上）。`+ pkg@version` 只表示已暂存。再 PUT 同一版本会 409 `Cannot publish over previously staged version`，**不要因此升版本号**。publish.yml 把这条 409 当已暂存，再轮询 `npm view` 最多 15 分钟。若更久仍 404，去查维护者邮箱是否被 hold/block。
+https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/
 
 npm 网页的 README 有服务端渲染缓存，发布后要等一会儿才更新（无痕也绕不过）；
 想立刻确认内容用 `npm view ccg-workflow readme | head -20` 直接读 registry。

@@ -125,24 +125,44 @@ jobs:
       # exchange succeeded. Provenance signing is Sigstore — it can succeed
       # while npm auth still failed, so do not treat a signed statement as
       # proof the tarball landed.
+      #
+      # Since 2026-07-28 npm scans every publish before it is GET-able
+      # (typically ~5 min, up to 15+). A first PUT that prints `+ pkg@version`
+      # occupies the version as *staged*. A second PUT then 409s with
+      # "Cannot publish over previously staged version" even though
+      # `npm view` still 404s. That 409 means "already accepted, wait for
+      # the scan" — not "try a new version".
+      # https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance --access public --loglevel verbose
+        run: |
+          set +e
+          out=$(npm publish --provenance --access public --loglevel verbose 2>&1)
+          code=$?
+          printf '%s\n' "$out"
+          if [ "$code" -eq 0 ]; then
+            exit 0
+          fi
+          if printf '%s\n' "$out" | grep -qiE 'Cannot publish over previously staged version|code E409'; then
+            echo "Version already staged by an earlier run — waiting for npm's publish-time scan to promote it"
+            exit 0
+          fi
+          exit "$code"
 
-      # `+ pkg@version` is not enough. v3.6.5's npm 12 run printed that and
-      # the version never became GET-able. Fail the job unless the registry
-      # actually serves the version we just claimed to publish.
+      # `+ pkg@version` is not enough. Fail unless the registry actually
+      # serves the version. Budget matches npm's documented scan window
+      # (typically 5 min, up to 15+): 45 × 20s = 15 min.
       - name: Verify published version is on the registry
         if: ${{ !inputs.dry_run }}
         run: |
           PKG="$(node -p "require('./package.json').version")"
-          for i in 1 2 3 4 5 6 7 8 9 10; do
+          for i in $(seq 1 45); do
             if npm view "ccg-workflow@$PKG" version >/dev/null 2>&1; then
               echo "ccg-workflow@$PKG is live on the registry"
               exit 0
             fi
-            echo "attempt $i: ccg-workflow@$PKG not visible yet, waiting 15s"
-            sleep 15
+            echo "attempt $i/45: ccg-workflow@$PKG not visible yet (npm scan), waiting 20s"
+            sleep 20
           done
-          echo "::error::npm publish exited 0 but ccg-workflow@$PKG is still not on the registry after 150s"
+          echo "::error::ccg-workflow@$PKG is still not on the registry after 15 min. If the publish 409'd as staged, npm may be holding it for review — check the maintainer email, do not bump the version."
           exit 1
