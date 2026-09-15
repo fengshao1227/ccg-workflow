@@ -46,10 +46,14 @@ jobs:
           cache: pnpm
 
       # Node 22 ships npm 10.x, which has no OIDC support. Trusted publishing
-      # needs >= 11.5.1, so upgrade before anything touches the registry.
+      # needs >= 11.5.1. Pin to 11 — `npm@latest` floated to 12.0.2 on the
+      # v3.6.5 run, printed `+ ccg-workflow@3.6.5` plus a "being processed"
+      # notice, and the version never appeared on the registry (tarball 404,
+      # no attestations) sixteen minutes later. 3.6.4 published on npm 11
+      # without that notice and was live immediately.
       - name: Upgrade npm for OIDC support
         run: |
-          npm install -g npm@latest
+          npm install -g npm@11
           echo "npm $(npm --version)"
 
       - name: Install dependencies
@@ -114,11 +118,31 @@ jobs:
         if: inputs.dry_run
         run: npm pack --dry-run
 
-      # If this ever fails with ENEEDAUTH, re-run with --loglevel verbose: npm
-      # only reveals the OIDC exchange result at that level. A 404 from
-      # /-/npm/v1/oidc/token/exchange/package/<name> means npm has no trusted
-      # publisher recorded for the package (check the package's Access page,
-      # not the account settings); 201 means the exchange succeeded.
+      # Verbose is required to see the OIDC exchange line:
+      #   npm http fetch POST <201|404> .../oidc/token/exchange/package/ccg-workflow
+      # A 404 there means npm has no trusted publisher for the package (check
+      # the package's Access page, not the account settings); 201 means the
+      # exchange succeeded. Provenance signing is Sigstore — it can succeed
+      # while npm auth still failed, so do not treat a signed statement as
+      # proof the tarball landed.
       - name: Publish
         if: ${{ !inputs.dry_run }}
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --loglevel verbose
+
+      # `+ pkg@version` is not enough. v3.6.5's npm 12 run printed that and
+      # the version never became GET-able. Fail the job unless the registry
+      # actually serves the version we just claimed to publish.
+      - name: Verify published version is on the registry
+        if: ${{ !inputs.dry_run }}
+        run: |
+          PKG="$(node -p "require('./package.json').version")"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if npm view "ccg-workflow@$PKG" version >/dev/null 2>&1; then
+              echo "ccg-workflow@$PKG is live on the registry"
+              exit 0
+            fi
+            echo "attempt $i: ccg-workflow@$PKG not visible yet, waiting 15s"
+            sleep 15
+          done
+          echo "::error::npm publish exited 0 but ccg-workflow@$PKG is still not on the registry after 150s"
+          exit 1
