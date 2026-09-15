@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.6.6] - 2026-09-15
+
+### 🔄 变更
+
+- **重发 3.6.5 的内容。** 3.6.5 的第一次 `npm publish` 打印了 `+ ccg-workflow@3.6.5`，随后同一版本的 PUT 全部 409 `Cannot publish over previously staged version "3.6.5"`，而 `npm view` / tarball / attestations 对 owner 也一直 404。版本号被 npm 内部占住、对外不可装。3.6.6 是同一份代码（PackyCode 赞助商 + `sponsors.ts` 表 + npm 11 钉死 + 暂存 409 当已接受）。不要再发 3.6.5。
+
 ## [3.6.5] - 2026-09-15
+
+> ⚠ 此版本 **从未出现在 npm registry**。CI 收下暂存后扫描未放行，号作废。功能以 3.6.6 为准。
 
 ### ✨ 新功能
 
