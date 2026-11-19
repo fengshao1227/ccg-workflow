@@ -1,6 +1,6 @@
 {
   "name": "ccg-workflow",
-  "version": "3.7.5",
+  "version": "3.7.6",
   "description": "Claude + Codex + Gemini multi-model collaboration system - smart routing development workflow",
   "type": "module",
   "packageManager": "pnpm@10.17.1",
@@ -100,15 +100,15 @@
     "docs:preview": "vitepress preview docs"
   },
   "dependencies": {
-    "ansis": "^4.1.0",
+    "ansis": "^4.5.0",
     "cac": "^6.7.14",
-    "fs-extra": "^11.3.2",
+    "fs-extra": "^11.4.1",
     "i18next": "^25.5.2",
-    "i18next-fs-backend": "^2.6.0",
+    "i18next-fs-backend": "^2.7.0",
     "inquirer": "^12.9.6",
     "ora": "^9.0.0",
     "pathe": "^2.0.3",
-    "smol-toml": "^1.4.2"
+    "smol-toml": "^1.9.1"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
@@ -121,7 +121,7 @@
     "@types/node": "^22.0.0",
     "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.36.0",
-    "tsx": "^4.20.5",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.2",
     "unbuild": "^3.6.1",
     "vitepress": "^1.6.4",

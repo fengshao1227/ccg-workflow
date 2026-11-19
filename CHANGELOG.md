@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.7.6] - 2026-11-19
+
+### 🐛 修复
+
+- **Codex 模式的 hook 不再被静默跳过** — codex-cli 0.129 起，没在 `/hooks` 里信任过的 hook 不会运行，`codex exec` 下跳过时没有任何提示，新装的 Codex 模式因此不会注入工作流提示。`ccg codex-mode install` 现在为 CCG 自己的 `ccg-workflow.py` 写入信任记录（`~/.codex/config.toml` 的 `[hooks.state]`），等同于在 `/hooks` 里点了信任，不碰其他 hook。如果以后 codex 改了校验方式，这条 hook 会显示为已修改，在 `/hooks` 里再信任一次即可。
+- **不再覆盖你的 `~/.codex/hooks.json`** — 以前安装会整份覆盖、卸载会整份删除，用户自己配的 hook 会被冲掉。现在安装改为合并，CCG 的 hook 追加在最后；卸载只移除 CCG 那条和它的信任记录，文件里没有别的内容时才删除。
+
+### ✨ 新功能
+
+- **`ccg doctor` 检查 Codex hook 信任** — 未信任时给出警告，并提示重新运行 `ccg codex-mode install` 或在 Codex 里用 `/hooks` 信任。
+
+### 🔄 变更
+
+- 依赖小版本升级：ansis 4.5、fs-extra 11.4、smol-toml 1.9、i18next-fs-backend 2.7、tsx 4.23。Binary 仍为 `5.16.1`。
+
 ## [3.7.5] - 2026-11-19
 
 ### 🐛 修复
