@@ -1,7 +1,10 @@
 name: Build codeagent-wrapper binaries
 
+# Publishes the `preset` release and R2 mirror that every install downloads.
+# Only main may publish: a push from any other branch would replace them.
 on:
   push:
+    branches: [main]
     paths:
       - 'codeagent-wrapper/**'
   workflow_dispatch:
