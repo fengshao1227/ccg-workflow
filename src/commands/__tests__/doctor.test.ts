@@ -5,6 +5,7 @@ import { join } from 'pathe'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { stringify } from 'smol-toml'
 import { doctor } from '../doctor'
+import { trustCcgCodexHooks } from '../../utils/codex-hook-trust'
 import { collectDoctorReport } from '../../utils/doctor-checks'
 import { installSkills } from '../../utils/skill-manager'
 
@@ -86,6 +87,10 @@ describe('CCG doctor inventory', () => {
     expect(report.failureCount).toBe(0)
     expect(report.checks.some(c => c.id === 'claude.hooks')).toBe(false)
     expect(report.checks.find(c => c.id === 'codex.hook-registration')?.status).toBe('pass')
+    expect(report.checks.find(c => c.id === 'codex.hook-trust')?.status).toBe('warn')
+    await trustCcgCodexHooks(join(home, '.codex'))
+    const trusted = await collectDoctorReport(deps())
+    expect(trusted.checks.find(c => c.id === 'codex.hook-trust')?.status).toBe('pass')
   })
 
   it('checks standalone Codex host without treating absent Claude config or delegation tools as damaged', async () => {

@@ -4,6 +4,7 @@ import { homedir } from 'node:os'
 import { join } from 'pathe'
 import { parse } from 'smol-toml'
 import { version } from '../../package.json'
+import { ccgHookTrustEntries } from './codex-hook-trust'
 import type { SkillManagerOptions } from './skill-manager'
 import { listSkills, SKILL_MANIFEST_FILE } from './skill-manager'
 
@@ -178,20 +179,29 @@ async function codexChecks(codexDir: string, managedAgents: boolean): Promise<Do
   const required = ['agents/ccg-implement.toml', 'agents/ccg-review.toml', 'agents/ccg-research.toml', 'hooks/ccg-workflow.py']
   const present = await Promise.all(required.map(path => fs.pathExists(join(codexDir, path))))
   let hookRegistered = false
+  let settings: RecordValue = {}
   try {
-    const settings = record(JSON.parse(await readText(join(codexDir, 'hooks.json')) || '{}'))
+    settings = record(JSON.parse(await readText(join(codexDir, 'hooks.json')) || '{}'))
     hookRegistered = registeredCommands(settings, 'UserPromptSubmit').some(cmd => references(cmd, join(codexDir, 'hooks', 'ccg-workflow.py')))
   }
   catch { /* Do not expose user hook commands. */ }
   let validConfig = false
+  let parsedConfig: RecordValue = {}
   const configText = await readText(join(codexDir, 'config.toml'))
-  try { validConfig = configText !== null && !!parse(configText) }
+  try {
+    parsedConfig = configText === null ? {} : record(parse(configText))
+    validConfig = configText !== null
+  }
   catch { /* Configuration contents and errors may contain provider secrets. */ }
+  const trustState = record(record(parsedConfig.hooks).state)
+  const trustEntries = ccgHookTrustEntries(settings, codexDir)
+  const hookTrusted = trustEntries.length > 0 && trustEntries.every(e => record(trustState[e.key]).trusted_hash === e.hash)
   const marker = await readText(join(codexDir, '.ccg-version'))
   return [
     check('codex.agents', 'Codex mode', managedAgents ? 'pass' : 'fail', managedAgents ? 'CCG managed AGENTS.md installed' : 'CCG managed AGENTS.md missing', 'Run ccg codex-mode install.'),
     check('codex.artifacts', 'Codex files', present.every(Boolean) ? 'pass' : 'fail', `${present.filter(Boolean).length}/${required.length} managed agent and hook files`, 'Run ccg codex-mode install.'),
     check('codex.hook-registration', 'Codex hooks', hookRegistered ? 'pass' : 'fail', hookRegistered ? 'CCG workflow hook registered' : 'CCG workflow hook not registered', 'Run ccg codex-mode install.'),
+    ...(hookRegistered ? [check('codex.hook-trust', 'Codex hook trust', hookTrusted ? 'pass' : 'warn', hookTrusted ? 'CCG workflow hook trusted' : 'CCG workflow hook not trusted; codex-cli >= 0.129 skips it', 'Run ccg codex-mode install, or trust it in Codex with /hooks.')] : []),
     check('codex.config', 'Codex config', validConfig ? 'pass' : 'fail', validConfig ? 'Readable Codex TOML' : 'Missing or invalid Codex TOML', 'Run ccg codex-mode install or repair the existing Codex config.toml.'),
     check('codex.version', 'Codex marker', /^\d+\.\d+\.\d+(?:-[\w.-]+)?$/.test(marker?.trim() || '') ? 'pass' : 'fail', marker ? 'CCG version marker present' : 'CCG version marker missing', 'Run ccg codex-mode install.'),
   ]

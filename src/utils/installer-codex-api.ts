@@ -27,13 +27,13 @@ export type CodexApiResult = {
   configPath?: string
 }
 
-async function readCodexConfig(configPath: string): Promise<Record<string, any>> {
+export async function readCodexConfig(configPath: string): Promise<Record<string, any>> {
   if (!(await fs.pathExists(configPath)))
     return {}
   return parseToml(await fs.readFile(configPath, 'utf-8')) as Record<string, any>
 }
 
-async function writeCodexConfig(configPath: string, config: Record<string, any>): Promise<void> {
+export async function writeCodexConfig(configPath: string, config: Record<string, any>): Promise<void> {
   const tmpPath = `${configPath}.tmp`
   await fs.writeFile(tmpPath, stringifyToml(config), 'utf-8')
   await fs.rename(tmpPath, configPath)
