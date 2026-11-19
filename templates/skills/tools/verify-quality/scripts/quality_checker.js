@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 const { parseCliArgs, buildReport, hasFatal } = require(path.join(__dirname, '..', '..', 'lib', 'shared.js'));
 
 // 质量规则配置
@@ -14,14 +15,32 @@ const MAX_PARAMETERS = 5;
 const MIN_FUNCTION_NAME_LENGTH = 2;
 
 const EXCLUDE_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv', 'venv', 'dist', 'build', '.tox']);
-const CODE_EXTENSIONS = new Set(['.py', '.js', '.ts', '.go', '.java', '.rs', '.c', '.cpp']);
+const CODE_EXTENSIONS = new Set(['.py', '.js', '.ts', '.go', '.java', '.rs', '.c', '.cpp', '.ps1', '.psm1', '.psd1', '.cmd', '.bat']);
 
 const COMMENT_PREFIXES = {
   '.js': '//', '.ts': '//', '.go': '//', '.java': '//',
   '.c': '//', '.cpp': '//', '.rs': '//',
+  '.ps1': '#', '.psm1': '#', '.psd1': '#',
 };
 
 // --- Analysis ---
+
+function classifyPowerShellLines(filePath) {
+  const exe = process.platform === 'win32' ? 'powershell.exe' : 'pwsh';
+  const script = path.join(__dirname, 'ps_comment_lines.ps1');
+  const result = spawnSync(exe, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, '-Path', filePath], { encoding: 'utf-8' });
+  if (result.error || result.status !== 0) return null;
+  const kinds = new Map();
+  for (const line of result.stdout.split(/\r?\n/)) {
+    const match = /^([KC]) (\d+)$/.exec(line);
+    if (match) kinds.set(Number(match[2]), match[1]);
+  }
+  return kinds;
+}
+
+function isBatchComment(stripped) {
+  return stripped.startsWith('::') || /^rem(\s|\.|$)/i.test(stripped);
+}
 
 function analyzeGenericFile(filePath) {
   const metrics = {
@@ -37,13 +56,29 @@ function analyzeGenericFile(filePath) {
 
   const lines = content.split('\n');
   metrics.lines = lines.length;
-  const prefix = COMMENT_PREFIXES[
-    path.extname(filePath).toLowerCase()
-  ] || '//';
+  const ext = path.extname(filePath).toLowerCase();
+  const prefix = COMMENT_PREFIXES[ext] || '//';
+  const isPowerShell = ['.ps1', '.psm1', '.psd1'].includes(ext);
+  const isBatch = ['.cmd', '.bat'].includes(ext);
+  const psKinds = isPowerShell ? classifyPowerShellLines(filePath) : null;
+  let inBlockComment = false;
 
   for (let i = 0; i < lines.length; i++) {
     const stripped = lines[i].trim();
     if (!stripped) metrics.blank_lines++;
+    else if (psKinds) {
+      if (psKinds.get(i + 1) === 'C') metrics.comment_lines++;
+      else metrics.code_lines++;
+    }
+    else if (isBatch && isBatchComment(stripped)) metrics.comment_lines++;
+    else if (isPowerShell && inBlockComment) {
+      metrics.comment_lines++;
+      if (stripped.includes('#>')) inBlockComment = false;
+    }
+    else if (isPowerShell && stripped.startsWith('<#')) {
+      metrics.comment_lines++;
+      inBlockComment = stripped.indexOf('#>', 2) === -1;
+    }
     else if (
       stripped.startsWith(prefix) ||
       stripped.startsWith('/*') ||

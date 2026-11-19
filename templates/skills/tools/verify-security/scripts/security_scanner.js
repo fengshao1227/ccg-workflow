@@ -156,6 +156,7 @@ const SECURITY_RULES = [
 const CODE_EXTENSIONS = new Set([
   '.py', '.js', '.ts', '.jsx', '.tsx', '.go',
   '.java', '.php', '.rb', '.yaml', '.yml', '.json',
+  '.ps1', '.psm1', '.psd1',
 ]);
 const DEFAULT_EXCLUDES = [
   '.git', 'node_modules', '__pycache__', '.venv', 'venv',
