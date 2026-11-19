@@ -74,7 +74,7 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    Bash({
      command: "~/.claude/bin/codeagent-wrapper --progress --backend {{BACKEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EOF'\nExplore backend context boundaries for <change description>:\n- Existing structures and patterns\n- Conventions in use\n- Hard constraints limiting solution space\n- Dependencies and risks\nOUTPUT: JSON using the output template above\nEOF",
      run_in_background: true,
-     timeout: 300000,
+     timeout: 3600000,
      description: "{{BACKEND_PRIMARY}}: backend boundary exploration"
    })
    ```
@@ -84,7 +84,7 @@ description: '需求 → 约束集（并行探索 + OPSX 提案）'
    Bash({
      command: "~/.claude/bin/codeagent-wrapper --progress --backend {{FRONTEND_PRIMARY}} {{GEMINI_MODEL_FLAG}}{{GROK_MODEL_FLAG}}{{KIMI_MODEL_FLAG}}{{OPENCODE_MODEL_FLAG}}- \"{{WORKDIR}}\" <<'EOF'\nExplore frontend context boundaries for <change description>:\n- Existing structures and patterns\n- Conventions in use\n- Hard constraints limiting solution space\n- Dependencies and risks\nOUTPUT: JSON using the output template above\nEOF",
      run_in_background: true,
-     timeout: 300000,
+     timeout: 3600000,
      description: "{{FRONTEND_PRIMARY}}: frontend boundary exploration"
    })
    ```

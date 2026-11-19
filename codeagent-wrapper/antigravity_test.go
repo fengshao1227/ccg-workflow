@@ -133,6 +133,19 @@ func TestParseAntigravityStream_ReportsFailure(t *testing.T) {
 	}
 }
 
+func TestParseAntigravityStream_ReportsDeniedActions(t *testing.T) {
+	// Captured from agy 1.5.10: read_file outside the workspace, no skip flag.
+	in := `{"event":"result","result":{"conversation_id":"c-2","status":"SUCCESS","response":"","num_turns":1,"denied_actions":[{"action":"read_file","display_name":"ReadFile"}]}}
+`
+	msg, _, failure := parseAntigravityStream(strings.NewReader(in), agyStreamHandlers{})
+	if msg != "" {
+		t.Fatalf("message = %q, want empty", msg)
+	}
+	if !strings.HasPrefix(failure, "permission denied in headless mode: read_file") {
+		t.Fatalf("failure = %q", failure)
+	}
+}
+
 func TestAgyFailure(t *testing.T) {
 	cases := []struct{ status, errText, want string }{
 		{"SUCCESS", "", ""},
