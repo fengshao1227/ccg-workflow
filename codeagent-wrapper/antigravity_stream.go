@@ -21,6 +21,11 @@ type agyEvent struct {
 		Status         string `json:"status"`
 		Response       string `json:"response"`
 		Error          string `json:"error"`
+		// A tool denied in headless mode ends the turn with status SUCCESS and
+		// an empty response; only this list says why (seen on agy 1.5.10).
+		DeniedActions []struct {
+			Action string `json:"action"`
+		} `json:"denied_actions"`
 	} `json:"result"`
 }
 
@@ -100,6 +105,14 @@ func parseAntigravityStream(r io.Reader, h agyStreamHandlers) (message, conversa
 			setID(ev.Result.ConversationID)
 			response = ev.Result.Response
 			failure = agyFailure(ev.Result.Status, ev.Result.Error)
+			if failure == "" && len(ev.Result.DeniedActions) > 0 {
+				var denied []string
+				for _, d := range ev.Result.DeniedActions {
+					denied = append(denied, d.Action)
+				}
+				failure = "permission denied in headless mode: " + strings.Join(denied, ", ") +
+					" (re-run with --skip-permissions, or allow it in a CODEAGENT_AGY_SETTINGS file)"
+			}
 		}
 	}
 	emitLine(partial.String())
