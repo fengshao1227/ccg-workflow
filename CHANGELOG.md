@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.7.5] - 2026-11-19
+
+### 🐛 修复
+
+- **Antigravity 工具被拒时报出原因**（#172）— agy 1.5.10 在无人值守模式下拒绝工具时，返回 `status: SUCCESS`、空的 `response` 和 `denied_actions` 列表，3.7.4 仍只报 `completed without agent_message output`。现在报 `agy failed: permission denied in headless mode: <操作>`，并提示用 `--skip-permissions` 或 `CODEAGENT_AGY_SETTINGS` 放行。只有整次调用没有任何输出时才算失败；被拒后仍给出回答的调用照常成功。
+- **spec 系列后台调用的超时**（#173）— `spec-research` / `spec-plan` / `spec-impl` / `spec-review` 的 8 处后台调用 `timeout` 从 `300000`（5 分钟）改为 `3600000`（60 分钟），与其余模板一致，长任务不会再被 5 分钟上限截断。
+
+### 🔄 变更
+
+- **Binary `5.16.0` → `5.16.1`**。感谢 @Overbaker 提交 #172 / #173。
+
 ## [3.7.4] - 2026-11-02
 
 ### 🔒 安全

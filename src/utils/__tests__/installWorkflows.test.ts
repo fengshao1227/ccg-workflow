@@ -14,7 +14,7 @@ vi.mock('node:child_process', async (original) => {
     const output = actual.execSync(command, options)
     const path = command.match(/^"([^"]+)" --version$/)?.[1]
     // Run the Node PE fixture for real; only normalize its wrapper identity.
-    return path && fixturePaths.has(path) ? Buffer.from('codeagent-wrapper version 5.16.0\n') : output
+    return path && fixturePaths.has(path) ? Buffer.from('codeagent-wrapper version 5.16.1\n') : output
   }) }
 })
 
@@ -23,7 +23,7 @@ async function prepareWrapper(directory: string): Promise<void> {
   const binary = join(directory, 'bin', process.platform === 'win32' ? 'codeagent-wrapper.exe' : 'codeagent-wrapper')
   await fs.ensureDir(join(directory, 'bin'))
   if (process.platform === 'win32') { await fs.copyFile(process.execPath, binary); fixturePaths.add(binary) }
-  else await fs.writeFile(binary, '#!/usr/bin/env node\nconsole.log("codeagent-wrapper version 5.16.0")\n', { mode: 0o755 })
+  else await fs.writeFile(binary, '#!/usr/bin/env node\nconsole.log("codeagent-wrapper version 5.16.1")\n', { mode: 0o755 })
 }
 
 // Collect all .md files recursively
